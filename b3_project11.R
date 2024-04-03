@@ -38,8 +38,19 @@ ui <- fluidPage(
                  ## output$plot
                  plotOutput("plot"),
                  textOutput("dataCube_path"),
-                 textOutput("taxaFile_path")
-        ),
+                 textOutput("taxaFile_path"),
+                 fluidRow(
+                   column(
+                     selectizeInput("downloadOptions",
+                                    "Download Formats",
+                                    choices = c("PNG",
+                                                "SVG")),
+                     width = 8),
+                   column(
+                     downloadButton("downloadGo"),
+                     width = 4
+                   )
+        )),
         tabPanel(title = "Table",
                  DTOutput("table")
         ),
@@ -65,14 +76,12 @@ server <-function(input, output){
     # cube_name <- "data/europe_species_cube.csv"
     cube_name <- input$dataCube$datapath
 
-    # Load taxonomic info for cube
-    # tax_info <- "data/europe_species_info.csv"
-    tax_info <- input$taxaFile$datapath
-
     # Prepare cube
-    insect_data <- process_cube(cube_name, tax_info)
-
-    insect_data
+    if (!is.null(input$taxaFile$datapath)) {
+      process_cube(cube_name, input$taxaFile$datapath)
+    } else {
+      process_cube(cube_name)
+    }
   })
 
   output$table <- renderDT({
@@ -84,13 +93,25 @@ server <-function(input, output){
     paste("Hello,", input$metadata)
   )
 
-  output$plot <- renderPlot({
-    # Calculate diversity metric
-    map_obs_rich_insects <- obs_richness_map(dataCube())
-
-    # Plot diversity metric
-    plot(map_obs_rich_insects, title = "Observed Species Richness: Insects in Europe")
+  plot_to_render <- reactive({
+    obs_richness_map(dataCube())
   })
+
+  output$plot <- renderPlot({
+    # Plot diversity metric
+    plot(plot_to_render(), title = "Observed Species Richness: Insects in Europe")
+  })
+
+  plot_to_print <- reactive({
+    plot(plot_to_render())
+  })
+
+  output$downloadGo <- downloadHandler(
+    filename = function() { paste0(input$dataCube$datapath,".",tolower(input$downloadOptions))},
+    content = function(filename) {
+      ggsave(filename, plot = plot_to_print(), device = tolower(input$downloadOptions))
+    }
+  )
 
 }
 
