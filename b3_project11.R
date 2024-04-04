@@ -1,3 +1,5 @@
+# This is a push test from Lissa
+
 #install.packages("shiny")
 #install.packages("shinyWidgets")
 #install.packages("devtools")
@@ -7,8 +9,12 @@ library(shiny)
 library(shinyWidgets)
 library(b3gbi)
 library(DT)
+<<<<<<< HEAD
 
 #shinyWidgetsGallery()
+=======
+library(lubridate)
+>>>>>>> ab4ca9137df07d954b69d232f5a34a99b560a629
 
 # Hello, can you see this?
 # Test yani
@@ -21,7 +27,9 @@ ui <- fluidPage(
     tags$title("B³ Indicators"),
     tags$link(rel="icon", type="image/png", size="32x32", href="B3_logomark.png"),
     tags$meta(name="viewport", content="width=device-width"),
-    tags$link(rel = "stylesheet", type = "text/css", href = "style.css")
+    tags$link(rel = "stylesheet", type = "text/css", href = "style.css"),
+    tags$link(href="https://fonts.googleapis.com/css2?family=PT+Sans+Narrow:wght@400;700&display=swap", 
+              rel="stylesheet")
   ),
 
   # input = text fields, action buttons
@@ -47,6 +55,30 @@ ui <- fluidPage(
                        fileInput(inputId = "taxaFile",
                                  label = "Upload the taxa information"))
       # input$taxaFile
+<<<<<<< HEAD
+=======
+      fileInput(inputId = "taxaFile", label = "Upload the taxa information"),
+      # Spatial level
+      selectInput('spatiallevel', 'Spatial level', c("continent", "country","world")),
+      # Spatial resolution
+      selectInput('cellsize', 'Spatial resolution in kilometers', c(10,100)),
+      # Date range
+      sliderInput("daterange",
+                  "Date range:",
+                  min = 1900,
+                  max = year(Sys.Date()),
+                  value=c(1900, year(Sys.Date())),
+                  sep = ""),
+      # Taxa selection
+      selectInput( ## select taxa from the database
+        inputId = "scientificname",
+        label = "Scientific name:",
+        choices = NULL ,
+        multiple = T 
+      )
+      
+      # shinyWidgetsGallery()
+>>>>>>> ab4ca9137df07d954b69d232f5a34a99b560a629
 
     ),
     # output = tables, plots, texts
@@ -103,13 +135,24 @@ ui <- fluidPage(
 
 )
 
-server <-function(input, output){
+server <-function(input, output, session){
 
   options(shiny.maxRequestSize=500*1024^2)
 
+  # update input$scientificname options based on the imported DataCube ---_
+  observeEvent(input$taxaFile, {
+    freezeReactiveValue(input, "scientificname")
+    updateSelectInput(session = session, inputId = "scientificname",
+                      #choices = sort(unique(dataCube()$data$scientificName))
+                      choices = sort(unique(read.csv(input$taxaFile$datapath)$scientificName))
+                      )
+  })
+  
+  
   dataCube <- reactive({
     # Load GBIF data cube
     # cube_name <- "data/europe_species_cube.csv"
+    req(input$dataCube$datapath)
     cube_name <- input$dataCube$datapath
 
     # Prepare cube
@@ -118,10 +161,16 @@ server <-function(input, output){
     } else {
       process_cube(cube_name)
     }
+    
   })
-
+  
+  
   output$table <- renderDT({
+    
+    req(dataCube())
+    
     dataCube()$data
+
   })
 
 
@@ -139,10 +188,13 @@ server <-function(input, output){
   )
 
   plot_to_render <- reactive({
+    req(dataCube())
     obs_richness_map(dataCube())
+
   })
 
   output$plot <- renderPlot({
+    req(plot_to_render())
     # Plot diversity metric
     plot(plot_to_render(), title = "Observed Species Richness: Insects in Europe")
   })

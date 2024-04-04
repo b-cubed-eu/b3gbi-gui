@@ -1,5 +1,6 @@
+@import url('https://fonts.googleapis.com/css?family=PT+Sans+Narrow:wght@400;700&display=swap');
 
-html, .col-sm-4, .col-sm-8, body {
+html, body {
   background-color: #f2fbfa;
   color: #fff;
 }
@@ -9,20 +10,31 @@ body {
 
 h2 {
 	color: #000;
+	font-family: "PT Sans Narrow", sans-serif;
+	font-weight: 700;
+	font-style: normal;
 }
 .well {
   background-color: #267270;
 }
 
 .tab-content {
-  background-color: #fff;
+  background-color: #fff !important;
   color: #000;
   min-height: 100vh;
   border-left: 1px solid #ddd;
   border-right: 1px solid #ddd;
   padding: 10px;
 }
-
+/*
+#tab-2828-2 .row .col-sm-8 {
+  background-color: #fff;
+  color: #000;
+  min-height: 100vh;
+  border-left: 1px solid #ddd;
+  padding: 10px;
+}
+*/
 .btn {
   background-color: #6cddb4;
 }	
