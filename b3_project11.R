@@ -20,12 +20,12 @@ ui <- fluidPage(
     tags$meta(name="viewport", content="width=device-width"),
     tags$link(rel = "stylesheet", type = "text/css", href = "style.css")
   ),
-  
+
   # input = text fields, action buttons
 
   # Application title
-  titlePanel(title = span(img(src = "B3_logomark.png", height = 50), 
-                          "B-Cubed: Biodiversity Indicators",
+  titlePanel(title = span(img(src = "B3_logomark.png", height = 50),
+                          "B-Cubed: General Biodiversity Indicators",
                           style="color:#000")),
 
   sidebarLayout(
