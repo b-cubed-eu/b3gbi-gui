@@ -60,10 +60,11 @@ ui <- fluidPage(
                                                 "SVG",
                                                 "TEX",
                                                 "TIFF")),
-                     width = 8),
+                     width = 6),
                    column(
                      downloadButton("downloadGo"),
-                     width = 4
+                     width = 4,
+                     style="padding:18px;"
                    )
         )),
         tabPanel(title = "Table",
