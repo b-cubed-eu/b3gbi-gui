@@ -1,0 +1,28 @@
+
+html, .col-sm-4, .col-sm-8, body {
+  background-color: #f2fbfa;
+  color: #fff;
+}
+body {
+  min-height: 100vh;
+}
+
+h2 {
+	color: #000;
+}
+.well {
+  background-color: #267270;
+}
+
+.tab-content {
+  background-color: #fff;
+  color: #000;
+  min-height: 100vh;
+  border-left: 1px solid #ddd;
+  border-right: 1px solid #ddd;
+  padding: 10px;
+}
+
+.btn {
+  background-color: #6cddb4;
+}	
