@@ -9,6 +9,8 @@ library(shiny)
 library(shinyWidgets)
 library(b3gbi)
 library(DT)
+library(lubridate)
+
 # Hello, can you see this?
 # Test yani
 
@@ -38,6 +40,25 @@ ui <- fluidPage(
                 ),
       # input$taxaFile
       fileInput(inputId = "taxaFile", label = "Upload the taxa information"),
+      # Spatial level
+      selectInput('spatiallevel', 'Spatial level', c("continent", "country","world")),
+      # Spatial resolution
+      selectInput('cellsize', 'Spatial resolution in kilometers', c(10,100)),
+      # Date range
+      sliderInput("daterange",
+                  "Date range:",
+                  min = 1900,
+                  max = year(Sys.Date()),
+                  value=c(1900, year(Sys.Date())),
+                  sep = ""),
+      # Taxa selection
+      selectInput( ## select taxa from the database
+        inputId = "scientificname",
+        label = "Scientific name:",
+        choices = NULL ,
+        multiple = T 
+      )
+      
       # shinyWidgetsGallery()
 
     ),
@@ -93,10 +114,20 @@ ui <- fluidPage(
 
 )
 
-server <-function(input, output){
+server <-function(input, output, session){
 
   options(shiny.maxRequestSize=500*1024^2)
 
+  # update input$scientificname options based on the imported DataCube ---_
+  observeEvent(input$taxaFile, {
+    freezeReactiveValue(input, "scientificname")
+    updateSelectInput(session = session, inputId = "scientificname",
+                      #choices = sort(unique(dataCube()$data$scientificName))
+                      choices = sort(unique(read.csv(input$taxaFile$datapath)$scientificName))
+                      )
+  })
+  
+  
   dataCube <- reactive({
     # Load GBIF data cube
     # cube_name <- "data/europe_species_cube.csv"
@@ -109,11 +140,16 @@ server <-function(input, output){
     } else {
       process_cube(cube_name)
     }
+    
   })
-
+  
+  
   output$table <- renderDT({
+    
     req(dataCube())
+    
     dataCube()$data
+
   })
 
 
@@ -133,6 +169,7 @@ server <-function(input, output){
   plot_to_render <- reactive({
     req(dataCube())
     obs_richness_map(dataCube())
+
   })
 
   output$plot <- renderPlot({
