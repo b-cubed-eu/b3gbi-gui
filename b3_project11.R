@@ -7,6 +7,9 @@ library(shiny)
 library(shinyWidgets)
 library(b3gbi)
 library(DT)
+
+#shinyWidgetsGallery()
+
 # Hello, can you see this?
 # Test yani
 
@@ -34,9 +37,16 @@ ui <- fluidPage(
       fileInput(inputId = "dataCube",
                 label = "Upload the data cube",
                 ),
+
+      checkboxInput(
+        inputId = "old_bcube",
+        label = "Using an old B-cube version?",
+        value = FALSE
+      ),
+      conditionalPanel(condition ="input.old_bcube == 'TRUE'",
+                       fileInput(inputId = "taxaFile",
+                                 label = "Upload the taxa information"))
       # input$taxaFile
-      fileInput(inputId = "taxaFile", label = "Upload the taxa information"),
-      # shinyWidgetsGallery()
 
     ),
     # output = tables, plots, texts
@@ -46,6 +56,8 @@ ui <- fluidPage(
                  ## output$metadata
                  textOutput("metadata")
         ),
+
+
 
         tabPanel(title = "Plot",
                  ## output$plot
