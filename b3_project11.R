@@ -23,7 +23,7 @@ ui <- fluidPage(
     tags$link(rel="icon", type="image/png", size="32x32", href="B3_logomark.png"),
     tags$meta(name="viewport", content="width=device-width"),
     tags$link(rel = "stylesheet", type = "text/css", href = "style.css"),
-    tags$link(href="https://fonts.googleapis.com/css2?family=PT+Sans+Narrow:wght@400;700&display=swap", 
+    tags$link(href="https://fonts.googleapis.com/css2?family=PT+Sans+Narrow:wght@400;700&display=swap",
               rel="stylesheet")
   ),
 
@@ -35,11 +35,6 @@ ui <- fluidPage(
 
 
   # Application title
-<<<<<<< Updated upstream
-  titlePanel(title = span(img(src = "B3_logomark.png", height = 50),
-                          "B-Cubed: General Biodiversity Indicators",
-                          style="color:#000")),
-=======
   (
     div(
       img(src = "B3_logomark.png", height = 50),
@@ -48,7 +43,6 @@ ui <- fluidPage(
       style = "font-size: 16px; color: #555;"
     )
   ),
->>>>>>> Stashed changes
 
   sidebarLayout(
     sidebarPanel(
@@ -57,7 +51,6 @@ ui <- fluidPage(
                 label = HTML("Upload the data cube"),
                 ),
       # input$taxaFile
-<<<<<<< Updated upstream
       fileInput(inputId = "taxaFile", label = "Upload the taxa information"),
       # Spatial level
       selectInput('spatiallevel', 'Spatial level', c("continent", "country","world")),
@@ -75,16 +68,9 @@ ui <- fluidPage(
         inputId = "scientificname",
         label = "Scientific name:",
         choices = NULL ,
-        multiple = T 
+        multiple = T
       )
-      
-=======
-      fileInput(inputId = "taxaFile", label = HTML("Upload the taxa information<br><br><span style='font-style: italic;'>Note: taxa information is already integrated into some data cubes</span>")),
 
-
-
-
->>>>>>> Stashed changes
       # shinyWidgetsGallery()
 
     ),
@@ -113,7 +99,8 @@ ui <- fluidPage(
                                                 "PNG",
                                                 "SVG",
                                                 "TEX",
-                                                "TIFF")),
+                                                "TIFF"),
+                                    selected = "PNG"),
                      width = 6),
                    column(
                      downloadButton("downloadGo"),
@@ -152,8 +139,8 @@ server <-function(input, output, session){
                       choices = sort(unique(read.csv(input$taxaFile$datapath)$scientificName))
                       )
   })
-  
-  
+
+
   dataCube <- reactive({
     # Load GBIF data cube
     # cube_name <- "data/europe_species_cube.csv"
@@ -166,14 +153,14 @@ server <-function(input, output, session){
     } else {
       process_cube(cube_name)
     }
-    
+
   })
-  
-  
+
+
   output$table <- renderDT({
-    
+
     req(dataCube())
-    
+
     dataCube()$data
 
   })
@@ -201,7 +188,8 @@ server <-function(input, output, session){
   output$plot <- renderPlot({
     req(plot_to_render())
     # Plot diversity metric
-    plot(plot_to_render(), title = "Observed Species Richness: Insects in Europe")
+    plot(plot_to_render(),
+         title = "Observed Species Richness: Insects in Europe")
   })
 
   plot_to_print <- reactive({
@@ -216,7 +204,9 @@ server <-function(input, output, session){
                ".",
                tolower(input$downloadOptions))},
     content = function(filename) {
-      ggsave(filename, plot = plot_to_print(), device = tolower(input$downloadOptions))
+      ggsave(filename,
+             plot = plot_to_print(),
+             device = tolower(input$downloadOptions))
     }
   )
 
