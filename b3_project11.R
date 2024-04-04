@@ -10,6 +10,14 @@ library(DT)
 # Hello, can you see this?
 
 ui <- fluidPage(
+  # Style
+  tags$head(
+    tags$title("B³ Indicators"),
+    tags$link(rel="icon", type="image/png", size="32x32", href="B3_logomark.png"),
+    tags$meta(name="viewport", content="width=device-width"),
+    tags$link(rel = "stylesheet", type = "text/css", href = "style.css")
+  ),
+  
   # input = text fields, action buttons
 
   # Application title
