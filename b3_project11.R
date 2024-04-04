@@ -100,6 +100,7 @@ server <-function(input, output){
   dataCube <- reactive({
     # Load GBIF data cube
     # cube_name <- "data/europe_species_cube.csv"
+    req(input$dataCube$datapath)
     cube_name <- input$dataCube$datapath
 
     # Prepare cube
@@ -111,6 +112,7 @@ server <-function(input, output){
   })
 
   output$table <- renderDT({
+    req(dataCube())
     dataCube()$data
   })
 
@@ -129,10 +131,12 @@ server <-function(input, output){
   )
 
   plot_to_render <- reactive({
+    req(dataCube())
     obs_richness_map(dataCube())
   })
 
   output$plot <- renderPlot({
+    req(plot_to_render())
     # Plot diversity metric
     plot(plot_to_render(), title = "Observed Species Richness: Insects in Europe")
   })
