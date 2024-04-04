@@ -35,14 +35,20 @@ ui <- fluidPage(
 
 
   # Application title
+
+
+  titlePanel(title = span(img(src = "B3_logomark.png", height = 50),
+                          "B-Cubed: General Biodiversity Indicators",
+                          style="color:#000")),
+
+
   (
     div(
-      img(src = "B3_logomark.png", height = 50),
-      h2("B-Cubed: Biodiversity Indicators"),
       HTML("<p><span style='font-size: 18px;'>Welcome to the B-Cubed: Biodiversity Indicators Shiny app!</span><br><br>Start by uploading your data cube using the file browser in the left-hand panel. You can also use this panel to choose the biodiversity indicator(s), taxa, geographical area, and temporal window of interest for your data. Use the tabs to visualize the outputs.<br><br>In the Metadata tab, you will find the metadata associated with the data analysis options you selected. The Plot tab visualizes the biodiversity indicators on a map, the Table tab prints the data cube data, and in the Report tab, you can view the raw code used to produce outputs.</p>"),
       style = "font-size: 16px; color: #555;"
     )
   ),
+
 
   sidebarLayout(
     sidebarPanel(
@@ -51,7 +57,11 @@ ui <- fluidPage(
                 label = HTML("Upload the data cube"),
                 ),
       # input$taxaFile
-      fileInput(inputId = "taxaFile", label = "Upload the taxa information"),
+
+
+      fileInput(inputId = "taxaFile", label = HTML("Upload the taxa information<br><span style='font-style: italic;'>Note: taxa information is already integrated into some data cubes</span>"),
+      ),
+
       # Spatial level
       selectInput('spatiallevel', 'Spatial level', c("continent", "country","world")),
       # Spatial resolution
@@ -70,6 +80,7 @@ ui <- fluidPage(
         choices = NULL ,
         multiple = T
       )
+
 
       # shinyWidgetsGallery()
 
