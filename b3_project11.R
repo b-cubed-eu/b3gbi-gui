@@ -10,13 +10,14 @@ library(shinyWidgets)
 library(b3gbi)
 library(DT)
 library(lubridate)
-
+library(shinyjs)
 # Hello, can you see this?
 # Test yani
 
 #test
 
 ui <- fluidPage(
+  useShinyjs(),  # Set up shinyjs
   # Style
   tags$head(
     tags$title("B³ Indicators"),
@@ -26,21 +27,14 @@ ui <- fluidPage(
     tags$link(href="https://fonts.googleapis.com/css2?family=PT+Sans+Narrow:wght@400;700&display=swap",
               rel="stylesheet")
   ),
-
+  
   # input = text fields, action buttons
-
-
-
-
-
-
   # Application title
 
 
   titlePanel(title = span(img(src = "B3_logomark.png", height = 50),
                           "B-Cubed: General Biodiversity Indicators",
                           style="color:#000")),
-
 
   (
     div(
@@ -63,27 +57,23 @@ ui <- fluidPage(
       ),
 
       # Spatial level
-      selectInput('spatiallevel', 'Spatial level', c("continent", "country","world")),
+      selectInput('spatiallevel', 'Spatial level', c("continent", "country","world"), selected = "continent"),
       # Spatial resolution
-      selectInput('cellsize', 'Spatial resolution in kilometers', c(10,100)),
+      textInput('cellsize', 'Spatial resolution in kilometers'),
       # Date range
       sliderInput("daterange",
                   "Date range:",
-                  min = 1900,
+                  min = 1100,
                   max = year(Sys.Date()),
-                  value=c(1900, year(Sys.Date())),
+                  value=c(1100, year(Sys.Date())),
                   sep = ""),
-      # Taxa selection
-      selectInput( ## select taxa from the database
-        inputId = "scientificname",
-        label = "Scientific name:",
+      # Select by family name if available
+      disabled(selectInput( ## select taxa from the database
+        inputId = "family",
+        label = "Subset by family",
         choices = NULL ,
         multiple = T
       )
-
-
-      # shinyWidgetsGallery()
-
     ),
     # output = tables, plots, texts
     mainPanel(
@@ -92,7 +82,7 @@ ui <- fluidPage(
                  ## output$metadata
                  textOutput("metadata")
         ),
-
+        
         tabPanel(title = "Plot",
                  ## output$plot
                  textOutput("plot_text"),
@@ -118,7 +108,7 @@ ui <- fluidPage(
                      width = 4,
                      style="padding:18px;"
                    )
-        )),
+                 )),
         tabPanel(title = "Table",
                  textOutput("table_text"),
                  HTML("<br>"),  # Adding line break for spacing
@@ -128,55 +118,71 @@ ui <- fluidPage(
         tabPanel(title = "Report",
                  textOutput("report_text")
         )
-      ),
+      )
     )
-  )
-
+  ))
+  
   # shinyWidgetsGallery()
-
-
 
 )
 
 server <-function(input, output, session){
-
+  
   options(shiny.maxRequestSize=500*1024^2)
-
-  # update input$scientificname options based on the imported DataCube ---_
-  observeEvent(input$taxaFile, {
-    freezeReactiveValue(input, "scientificname")
-    updateSelectInput(session = session, inputId = "scientificname",
-                      #choices = sort(unique(dataCube()$data$scientificName))
-                      choices = sort(unique(read.csv(input$taxaFile$datapath)$scientificName))
-                      )
-  })
-
 
   dataCube <- reactive({
     # Load GBIF data cube
     # cube_name <- "data/europe_species_cube.csv"
     req(input$dataCube$datapath)
     cube_name <- input$dataCube$datapath
-
+    
     # Prepare cube
     if (!is.null(input$taxaFile$datapath)) {
-      process_cube(cube_name, input$taxaFile$datapath)
+     process_cube(cube_name, input$taxaFile$datapath)
     } else {
-      process_cube(cube_name)
+     process_cube(cube_name)
     }
-
+  
   })
-
-
+  
+ 
   output$table <- renderDT({
 
     req(dataCube())
 
+  ## left out for now, this just for filtering datacube according to the family name 
+  #   if("year" %in% colnames(dataCube()$data)){ ## "year" will be replaced by "family" as soon as the code is fix
+  #     
+  #     enable(id = "family")
+  #     
+  #     # Update value options in input$family if the column "family" is available
+  #     observe({
+  #       freezeReactiveValue(input, "family")
+  #       
+  #       updateSelectInput(session = session, inputId = "family",
+  #                         #choices = sort(unique(dataCube()$data$scientificName))
+  #                         choices = sort(unique(dataCube()$data$year))
+  #       )
+  #     })
+  #     
+  #   }
+  #   
+  # 
+  #   df <- as.data.frame/(dataCube()$data
+  #                        )
+  # if(isTruthy(input$family)){
+  #   
+  #   df
+  #   
+  # } else{
+  #  df %>% filter(year %in% input$family)
+  # }
+
     dataCube()$data
-
+    
   })
-
-
+  
+  
   output$metadata <- renderText(
     paste("In this tab you will be able to view the metadata associated with the options you have selected to visualise the biodiversity indicator(s).", input$metadata)
   )
@@ -189,24 +195,30 @@ server <-function(input, output, session){
   output$report_text <- renderText(
     paste("In this tab you can view a report summarising the code that was used to plot biodversity indicators from your data cube.", input$report_text)
   )
-
+  
   plot_to_render <- reactive({
     req(dataCube())
-    obs_richness_map(dataCube())
 
+        obs_richness_map(dataCube(), 
+                     cell_size = as.numeric(input$cellsize),
+                     level = input$spatiallevel,
+                     first_year = input$daterange[1],
+                     last_year =  input$daterange[2]
+                       )
+    
   })
-
+  
   output$plot <- renderPlot({
     req(plot_to_render())
     # Plot diversity metric
     plot(plot_to_render(),
          title = "Observed Species Richness: Insects in Europe")
   })
-
+  
   plot_to_print <- reactive({
     plot(plot_to_render())
   })
-
+  
   output$downloadGo <- downloadHandler(
     filename = function() {
       input$dataCube$name %>%
@@ -220,7 +232,7 @@ server <-function(input, output, session){
              device = tolower(input$downloadOptions))
     }
   )
-
+  
 }
 
 shinyApp(ui = ui, server = server)
