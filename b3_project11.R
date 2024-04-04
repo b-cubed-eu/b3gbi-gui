@@ -9,6 +9,8 @@ library(b3gbi)
 library(DT)
 # Hello, can you see this?
 
+#test
+
 ui <- fluidPage(
   # input = text fields, action buttons
 
@@ -36,6 +38,8 @@ ui <- fluidPage(
 
         tabPanel(title = "Plot",
                  ## output$plot
+                 textOutput("plot_text"),
+                 HTML("<br>"),  # Adding line break for spacing
                  plotOutput("plot"),
                  textOutput("dataCube_path"),
                  textOutput("taxaFile_path"),
@@ -57,10 +61,13 @@ ui <- fluidPage(
                    )
         )),
         tabPanel(title = "Table",
+                 textOutput("table_text"),
+                 HTML("<br>"),  # Adding line break for spacing
+                 HTML("<br>"),  # Adding line break for spacing
                  DTOutput("table")
         ),
         tabPanel(title = "Report",
-                 textOutput("name")
+                 textOutput("report_text")
         )
       ),
     )
@@ -95,7 +102,16 @@ server <-function(input, output){
 
 
   output$metadata <- renderText(
-    paste("Hello,", input$metadata)
+    paste("In this tab you will be able to view the metadata associated with the options you have selected to visualise the biodiversity indicator(s).", input$metadata)
+  )
+  output$plot_text <- renderText(
+    paste("In this tab you can view your selected biodiversity indicator projected onto a map. Use the left-hand panel to select the indicator, taxa, geographical area, and temporal window of interest.", input$plot_text)
+  )
+  output$table_text <- renderText(
+    paste("In this tab you can view your data cube as a table.", input$table_text)
+  )
+  output$report_text <- renderText(
+    paste("In this tab you can view a report summarising the code that was used to plot biodversity indicators from your data cube.", input$report_text)
   )
 
   plot_to_render <- reactive({
