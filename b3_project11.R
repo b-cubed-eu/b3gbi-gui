@@ -11,6 +11,8 @@ library(b3gbi)
 library(DT)
 library(lubridate)
 library(shinyjs)
+library(jsonlite)
+
 # Hello, can you see this?
 # Test yani
 
@@ -27,7 +29,7 @@ ui <- fluidPage(
     tags$link(href="https://fonts.googleapis.com/css2?family=PT+Sans+Narrow:wght@400;700&display=swap",
               rel="stylesheet")
   ),
-  
+
   # input = text fields, action buttons
   # Application title
 
@@ -73,7 +75,7 @@ ui <- fluidPage(
         label = "Subset by family",
         choices = NULL ,
         multiple = T
-      )
+      ))
     ),
     # output = tables, plots, texts
     mainPanel(
@@ -82,7 +84,7 @@ ui <- fluidPage(
                  ## output$metadata
                  textOutput("metadata")
         ),
-        
+
         tabPanel(title = "Plot",
                  ## output$plot
                  textOutput("plot_text"),
@@ -115,19 +117,28 @@ ui <- fluidPage(
                  HTML("<br>"),  # Adding line break for spacing
                  DTOutput("table")
         ),
+        tabPanel(title = "Export",
+                 HTML("<div>Download the processed cube data here.</div>"),
+                 HTML("<br>"),  # Adding line break for spacing
+                 HTML("<br>"),  # Adding line break for spacing
+                 downloadButton("downloadProcessedCube",
+                                label = "Processed Cube"),
+                 downloadButton("downloadMappedCube",
+                                label = "Mapped Cube")
+        ),
         tabPanel(title = "Report",
                  textOutput("report_text")
         )
       )
     )
   ))
-  
+
   # shinyWidgetsGallery()
 
-)
+
 
 server <-function(input, output, session){
-  
+
   options(shiny.maxRequestSize=500*1024^2)
 
   dataCube <- reactive({
@@ -135,54 +146,54 @@ server <-function(input, output, session){
     # cube_name <- "data/europe_species_cube.csv"
     req(input$dataCube$datapath)
     cube_name <- input$dataCube$datapath
-    
+
     # Prepare cube
     if (!is.null(input$taxaFile$datapath)) {
      process_cube(cube_name, input$taxaFile$datapath)
     } else {
      process_cube(cube_name)
     }
-  
+
   })
-  
- 
+
+
   output$table <- renderDT({
 
     req(dataCube())
 
-  ## left out for now, this just for filtering datacube according to the family name 
+  ## left out for now, this just for filtering datacube according to the family name
   #   if("year" %in% colnames(dataCube()$data)){ ## "year" will be replaced by "family" as soon as the code is fix
-  #     
+  #
   #     enable(id = "family")
-  #     
+  #
   #     # Update value options in input$family if the column "family" is available
   #     observe({
   #       freezeReactiveValue(input, "family")
-  #       
+  #
   #       updateSelectInput(session = session, inputId = "family",
   #                         #choices = sort(unique(dataCube()$data$scientificName))
   #                         choices = sort(unique(dataCube()$data$year))
   #       )
   #     })
-  #     
+  #
   #   }
-  #   
-  # 
+  #
+  #
   #   df <- as.data.frame/(dataCube()$data
   #                        )
   # if(isTruthy(input$family)){
-  #   
+  #
   #   df
-  #   
+  #
   # } else{
   #  df %>% filter(year %in% input$family)
   # }
 
     dataCube()$data
-    
+
   })
-  
-  
+
+
   output$metadata <- renderText(
     paste("In this tab you will be able to view the metadata associated with the options you have selected to visualise the biodiversity indicator(s).", input$metadata)
   )
@@ -195,30 +206,30 @@ server <-function(input, output, session){
   output$report_text <- renderText(
     paste("In this tab you can view a report summarising the code that was used to plot biodversity indicators from your data cube.", input$report_text)
   )
-  
+
   plot_to_render <- reactive({
     req(dataCube())
 
-        obs_richness_map(dataCube(), 
+        obs_richness_map(dataCube(),
                      cell_size = as.numeric(input$cellsize),
                      level = input$spatiallevel,
                      first_year = input$daterange[1],
                      last_year =  input$daterange[2]
                        )
-    
+
   })
-  
+
   output$plot <- renderPlot({
     req(plot_to_render())
     # Plot diversity metric
     plot(plot_to_render(),
          title = "Observed Species Richness: Insects in Europe")
   })
-  
+
   plot_to_print <- reactive({
     plot(plot_to_render())
   })
-  
+
   output$downloadGo <- downloadHandler(
     filename = function() {
       input$dataCube$name %>%
@@ -232,7 +243,42 @@ server <-function(input, output, session){
              device = tolower(input$downloadOptions))
     }
   )
-  
+  output$downloadProcessedCube <- downloadHandler(
+    filename = function() {
+      input$dataCube$name %>%
+        gsub("\\..*","",.) %>%
+        paste0(.,
+               ".",
+               "json")},
+    content = function(filename) {
+      toexport = toJSON(unclass(dataCube()),
+                        digits=NA,
+                        pretty=T,
+                        flatten=T,
+                        auto_unbox=T)
+      write(toexport,
+            filename)
+    }
+  )
+  output$downloadMappedCube <- downloadHandler(
+    filename = function() {
+      input$dataCube$name %>%
+        gsub("\\..*","",.) %>%
+        paste0(.,
+               "_mapped_",
+               ".",
+               "json")},
+    content = function(filename) {
+      toexport = toJSON(unclass(plot_to_render()),
+                        digits=NA,
+                        pretty=T,
+                        flatten=T,
+                        auto_unbox=T)
+      write(toexport,
+            filename)
+    }
+  )
+
 }
 
 shinyApp(ui = ui, server = server)
