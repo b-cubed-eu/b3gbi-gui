@@ -43,8 +43,13 @@ ui <- fluidPage(
                    column(
                      selectizeInput("downloadOptions",
                                     "Download Formats",
-                                    choices = c("PNG",
-                                                "SVG")),
+                                    choices = c("EPS",
+                                                "JPEG",
+                                                "PDF",
+                                                "PNG",
+                                                "SVG",
+                                                "TEX",
+                                                "TIFF")),
                      width = 8),
                    column(
                      downloadButton("downloadGo"),
@@ -69,7 +74,7 @@ ui <- fluidPage(
 
 server <-function(input, output){
 
-  options(shiny.maxRequestSize=30*1024^2)
+  options(shiny.maxRequestSize=500*1024^2)
 
   dataCube <- reactive({
     # Load GBIF data cube
@@ -107,7 +112,12 @@ server <-function(input, output){
   })
 
   output$downloadGo <- downloadHandler(
-    filename = function() { paste0(input$dataCube$datapath,".",tolower(input$downloadOptions))},
+    filename = function() {
+      input$dataCube$name %>%
+        gsub("\\..*","",.) %>%
+        paste0(.,
+               ".",
+               tolower(input$downloadOptions))},
     content = function(filename) {
       ggsave(filename, plot = plot_to_print(), device = tolower(input$downloadOptions))
     }
