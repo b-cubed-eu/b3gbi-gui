@@ -82,7 +82,8 @@ ui <- fluidPage(
       tabsetPanel(
         tabPanel(title = "Metadata",
                  ## output$metadata
-                 textOutput("metadata")
+                 textOutput("metadata"),
+
         ),
 
         tabPanel(title = "Plot",
