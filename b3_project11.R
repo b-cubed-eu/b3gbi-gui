@@ -22,7 +22,9 @@ ui <- fluidPage(
     tags$title("B³ Indicators"),
     tags$link(rel="icon", type="image/png", size="32x32", href="B3_logomark.png"),
     tags$meta(name="viewport", content="width=device-width"),
-    tags$link(rel = "stylesheet", type = "text/css", href = "style.css")
+    tags$link(rel = "stylesheet", type = "text/css", href = "style.css"),
+    tags$link(href="https://fonts.googleapis.com/css2?family=PT+Sans+Narrow:wght@400;700&display=swap", 
+              rel="stylesheet")
   ),
 
   # input = text fields, action buttons
