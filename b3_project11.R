@@ -8,14 +8,25 @@ library(shinyWidgets)
 library(b3gbi)
 library(DT)
 # Hello, can you see this?
+# Test yani
 
 #test
 
 ui <- fluidPage(
+  # Style
+  tags$head(
+    tags$title("B³ Indicators"),
+    tags$link(rel="icon", type="image/png", size="32x32", href="B3_logomark.png"),
+    tags$meta(name="viewport", content="width=device-width"),
+    tags$link(rel = "stylesheet", type = "text/css", href = "style.css")
+  ),
+  
   # input = text fields, action buttons
 
   # Application title
-  titlePanel("B-Cubed: Biodiversity Indicators"),
+  titlePanel(title = span(img(src = "B3_logomark.png", height = 50), 
+                          "B-Cubed: Biodiversity Indicators",
+                          style="color:#000")),
 
   sidebarLayout(
     sidebarPanel(
@@ -54,10 +65,11 @@ ui <- fluidPage(
                                                 "SVG",
                                                 "TEX",
                                                 "TIFF")),
-                     width = 8),
+                     width = 6),
                    column(
                      downloadButton("downloadGo"),
-                     width = 4
+                     width = 4,
+                     style="padding:18px;"
                    )
         )),
         tabPanel(title = "Table",
