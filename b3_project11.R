@@ -126,6 +126,40 @@ ui <- fluidPage(
                  textOutput("metadata"),
 
         ),
+        tabPanel(
+          title = "Background",
+          h3("Biodiversity Indicators"),
+
+          em("Occurrences"),
+          p(strong("Total Occurrences")),
+          p("The total number of occurrences is calculated by summing the occurrences of all species observed for each cell or year. This variable provides an overview of the comprehensiveness and distribution of data in the cube being analysed, and may be helpful, or even vital, for interpreting the results of calculated indicators."),
+          p(strong("Density of Occurrences")),
+          p("Density is calculated by summing the total number of occurrences per square kilometre for each cell or year. This provides similar information to total occurrences, but is adjusted for cell area."),
+
+          em("Richness"),
+          p("Species richness is the total number of species present in a sample (Magurran, 1988). It is a fundamental and commonly used measure of biodiversity, providing a simple and intuitive overview of the status of biodiversity. However, richness is not well suited to measuring biodiversity change over time, as it only decreases when local extinctions occur and thus lags behind abundance for negative trends. While it may act as a leading indicator of alien species invasions, it will not indicate establishment because it ignores abundance. Nor will it necessarily indicate changes in local species composition, which can occur without any change in richness. Although richness is conceptually simple, it can be measured in different ways."),
+          p(strong("Cumulative Species Richness")),
+          p("Cumulative richness is calculated by adding the newly observed unique species each year to a cumulative sum. This indicator provides an estimation of whether and how many new species are still being discovered in a region. While an influx of alien species could cause an increase in cumulative richness, a fast-rising trend as shown in Fig. 2 is likely an indication that the dataset is not comprehensive and therefore observed richness will provide an underestimate of species richness."),
+
+          em("Evennes"),
+          p("Species evenness is a commonly used indicator that measures how uniformly individuals are distributed across species in a region or over time. It provides a complement to richness by taking relative abundance into account. Although GBIF provides information about abundances as individual counts, the majority of entries lack this information. Hence, evenness can only be calculated using the proportions of observations rather than proportions of individuals. Strictly speaking, the evenness measures therefore indicate how uniformly species are represented in the respective data set rather than the true evenness of the ecological community."),
+          p(strong("Pielou's Evenness")),
+          p("Pielou (1966)"),
+          p(strong("Williams' Evenness")),
+          p("Kvålseth (2015)"),
+
+          em("Rarity"),
+          p("Rarity is the scarcity or infrequency of a particular species in an area. A rare species might have a small population size, a limited distribution, or a unique ecological niche (Maciel, 2021; Rabinowitz, 1981). Rarity can also be a biodiversity indicator when summed over multiple species in an area, and may provide important insight for determining conservation priorities. It can be measured in different ways, but we will provide workflows to calculate rarity by abundance (using number of occurrences as a proxy) and by area. When measured over time rarity may indicate potential threats or changes in the environment."),
+          p(strong("Abundance-Based Rarity")),
+          p("Abundance-based rarity is the inverse of the proportion of total occurrences represented by a particular species. The total summed rarity for each grid cell or year is calculated (sum the rarity values of each species present there)."),
+          p(strong("Area-Based Rarity")),
+          p("Area-based rarity is the inverse of occupancy frequency (proportion of grid cells occupied) for a particular species. The total summed rarity for each grid cell or year is calculated (sum the rarity values of each species present there)."),
+          p(strong("Mean Year of Occurrence")),
+
+          p("The mean year of occurrence is calculated per cell, giving an indication of how recent the data is for each cell. A recent mean year is not necessarily an indication of quality, as some countries or regions have been conducting comprehensive biodiversity monitoring for many years and will therefore reflect an older mean year of occurrence, while others may show a recent mean year due to e.g. the sudden availability of large amounts of citizen science data."),
+          em("In this tab you can view all available biodiversity indicators."),
+          HTML("<br>")# Adding line break for spacing
+          ),
 
 ############################# Map tab
 
