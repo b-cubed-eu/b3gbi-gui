@@ -24,16 +24,6 @@ library(jsonlite)
 
 #test
 
-
-
-###############################################################################################################
-#####   UI     ################################################################################################
-###########################   UI     ##########################################################################
-##################################################   UI     ###################################################
-#########################################################################   UI     ############################
-###############################################################################################################
-
-
 ui <- fluidPage(
   useShinyjs(),  # Set up shinyjs
 
@@ -43,6 +33,8 @@ ui <- fluidPage(
     tags$link(rel="icon", type="image/png", size="32x32", href="B3_logomark.png"),
     tags$meta(name="viewport", content="width=device-width"),
     tags$link(rel = "stylesheet", type = "text/css", href = "style.css"),
+    tags$link(href="https://fonts.googleapis.com/css2?family=PT+Sans+Narrow:wght@400;700&display=swap",
+              rel="stylesheet")
   ),
 
   # input = text fields, action buttons
@@ -54,13 +46,14 @@ ui <- fluidPage(
                           style="color:#000")),
 
   (
-    div(
-      HTML("<h3>Welcome to the B-Cubed: Biodiversity Indicators Shiny app!</h3>"),
-      HTML("<p>Start by uploading your data cube using the file browser in the left-hand panel. You can also use this panel to choose the biodiversity indicator(s), taxa, geographical area, and temporal window of interest for your data. Use the tabs to visualize the outputs.</p>"),
-      HTML("<p>In the Metadata tab, you will find the metadata associated with the data analysis options you selected. The Plot tab visualizes the biodiversity indicators on a map, the Table tab prints the data cube data, and in the Report tab, you can view the raw code used to produce outputs.</p>")
-    )
-  ),
 
+
+    div(
+      HTML("<p><span style='font-size: 18px;'>Welcome to the B-Cubed: Biodiversity Indicators Shiny app!</span><br><br>The B-Cubed: Biodiversity Indicators Shiny app uses the R package <a href='https://github.com/b-cubed-eu/b3gbi' style='color: blue; text-decoration: none;'>b3gbi</a> to calculate and visualise widely used biodiversity indicators from a data cube; either one created using <a href='https://www.gbif.org/' style='color: blue; text-decoration: none;'>GBIF</a> or one created from your own data.<br><br>Start by uploading your data cube using the file browser in the left-hand panel. You can also use this panel to choose the biodiversity indicator(s), taxa, geographical area, and temporal window of interest for your data. Use the tabs to visualize the outputs.<br><br>In the Explore Your Data tab, you will find the metadata summarising your data cube. The Plot tab visualizes the biodiversity indicators on a map, the Table tab prints the data cube data, and in the Report tab, you can view the raw code used to produce outputs.</p>"),
+      style = "font-size: 16px; color: #555;"
+    )
+
+  ),
 
   sidebarLayout(
 
@@ -70,17 +63,11 @@ ui <- fluidPage(
 #######################################################
 
     sidebarPanel(
-      tabsetPanel(
-        tabPanel(
-          "Input data",
-          # input$dataCube
-          fileInput(inputId = "dataCube",
-                    label = HTML("Upload the data cube")
-                    ),
 
-        ),
-        tabPanel(
-          "Options",
+      # input$dataCube
+      fileInput(inputId = "dataCube",
+                label = HTML("Upload the data cube")
+                ),
 
           # the indicators
           selectInput(
@@ -90,38 +77,43 @@ ui <- fluidPage(
             selected = "Observed Species Richness",
           ),
 
-          # Spatial level
-          selectInput('spatiallevel',
-                      'Spatial level',
-                      c("continent", "country","world"),
-                      selected = "continent"
-                      ),
+      # Spatial level
+      selectInput('spatiallevel',
+                  'Spatial level',
+                  c("continent", "country","world"),
+                  selected = "continent"
+                  ),
 
           # Spatial resolution
           numericInput('cellsize',
                     'Spatial resolution in kilometers',
                     value = 100),
 
-          # Date range
-          sliderInput("daterange",
-                      "Date range:",
-                      min = 1100,
-                      max = year(Sys.Date()),
-                      value=c(1100, year(Sys.Date())),
-                      sep = ""
-                      ),
+      # Date range
+      sliderInput("daterange",
+                  "Date range:",
+                  min = 1100,
+                  max = year(Sys.Date()),
+                  value=c(1100, year(Sys.Date())),
+                  sep = ""
+                  ),
 
-          # Select by family name if available
-          disabled(
-            selectInput( ## select taxa from the database
-              inputId = "family",
-              label = "Subset by family",
-              choices = NULL ,
-              multiple = T
-              )
-          ),
+      # Select by family name if available
+      disabled(
+        selectInput( ## select taxa from the database
+          inputId = "family",
+          label = "Subset by family",
+          choices = NULL ,
+          multiple = T
+          )
+      ), # do we need a comma here?
 
-        ),
+      # the indicators
+      selectInput(
+        inputId = "indicatorsToAnalyse",
+        label = "What indicators do you want to analyse?", multiple = FALSE,
+        choices = as.character(sapply(b3gbi::available_indicators, "[[", 2)),
+        selected = "Observed Species Richness",
       ),
     ),
 
@@ -132,15 +124,45 @@ ui <- fluidPage(
     # output = tables, plots, texts
     mainPanel(
       tabsetPanel(
-
-
-##################### Metadata tab
-
-        tabPanel(title = "Metadata",
+        tabPanel(title = "Explore Your Data",
                  ## output$metadata
                  textOutput("metadata"),
 
         ),
+        tabPanel(
+          title = "Background",
+          h3("Biodiversity Indicators"),
+
+          em("Occurrences"),
+          p(strong("Total Occurrences")),
+          p("The total number of occurrences is calculated by summing the occurrences of all species observed for each cell or year. This variable provides an overview of the comprehensiveness and distribution of data in the cube being analysed, and may be helpful, or even vital, for interpreting the results of calculated indicators."),
+          p(strong("Density of Occurrences")),
+          p("Density is calculated by summing the total number of occurrences per square kilometre for each cell or year. This provides similar information to total occurrences, but is adjusted for cell area."),
+
+          em("Richness"),
+          p("Species richness is the total number of species present in a sample (Magurran, 1988). It is a fundamental and commonly used measure of biodiversity, providing a simple and intuitive overview of the status of biodiversity. However, richness is not well suited to measuring biodiversity change over time, as it only decreases when local extinctions occur and thus lags behind abundance for negative trends. While it may act as a leading indicator of alien species invasions, it will not indicate establishment because it ignores abundance. Nor will it necessarily indicate changes in local species composition, which can occur without any change in richness. Although richness is conceptually simple, it can be measured in different ways."),
+          p(strong("Cumulative Species Richness")),
+          p("Cumulative richness is calculated by adding the newly observed unique species each year to a cumulative sum. This indicator provides an estimation of whether and how many new species are still being discovered in a region. While an influx of alien species could cause an increase in cumulative richness, a fast-rising trend as shown in Fig. 2 is likely an indication that the dataset is not comprehensive and therefore observed richness will provide an underestimate of species richness."),
+
+          em("Evennes"),
+          p("Species evenness is a commonly used indicator that measures how uniformly individuals are distributed across species in a region or over time. It provides a complement to richness by taking relative abundance into account. Although GBIF provides information about abundances as individual counts, the majority of entries lack this information. Hence, evenness can only be calculated using the proportions of observations rather than proportions of individuals. Strictly speaking, the evenness measures therefore indicate how uniformly species are represented in the respective data set rather than the true evenness of the ecological community."),
+          p(strong("Pielou's Evenness")),
+          p("Pielou (1966)"),
+          p(strong("Williams' Evenness")),
+          p("Kvålseth (2015)"),
+
+          em("Rarity"),
+          p("Rarity is the scarcity or infrequency of a particular species in an area. A rare species might have a small population size, a limited distribution, or a unique ecological niche (Maciel, 2021; Rabinowitz, 1981). Rarity can also be a biodiversity indicator when summed over multiple species in an area, and may provide important insight for determining conservation priorities. It can be measured in different ways, but we will provide workflows to calculate rarity by abundance (using number of occurrences as a proxy) and by area. When measured over time rarity may indicate potential threats or changes in the environment."),
+          p(strong("Abundance-Based Rarity")),
+          p("Abundance-based rarity is the inverse of the proportion of total occurrences represented by a particular species. The total summed rarity for each grid cell or year is calculated (sum the rarity values of each species present there)."),
+          p(strong("Area-Based Rarity")),
+          p("Area-based rarity is the inverse of occupancy frequency (proportion of grid cells occupied) for a particular species. The total summed rarity for each grid cell or year is calculated (sum the rarity values of each species present there)."),
+          p(strong("Mean Year of Occurrence")),
+
+          p("The mean year of occurrence is calculated per cell, giving an indication of how recent the data is for each cell. A recent mean year is not necessarily an indication of quality, as some countries or regions have been conducting comprehensive biodiversity monitoring for many years and will therefore reflect an older mean year of occurrence, while others may show a recent mean year due to e.g. the sudden availability of large amounts of citizen science data."),
+          em("In this tab you can view all available biodiversity indicators."),
+          HTML("<br>")# Adding line break for spacing
+          ),
 
 ############################# Map tab
 
@@ -212,20 +234,15 @@ ui <- fluidPage(
                      )
                    ),
                  ),
-
-##################### Table tab
-
+#####################
         tabPanel(title = "Table",
                  textOutput("table_text"),
                  HTML("<br>"),  # Adding line break for spacing
                  HTML("<br>"),  # Adding line break for spacing
                  DTOutput("table")
         ),
-
-##################### Export tab
-
         tabPanel(title = "Export",
-                 HTML("<div>Download the processed cube data here.</div>"),
+                 HTML("<div>Download the processed data cube here.</div>"),
                  HTML("<br>"),  # Adding line break for spacing
                  HTML("<br>"),  # Adding line break for spacing
                  downloadButton("downloadProcessedCube",
@@ -233,16 +250,12 @@ ui <- fluidPage(
                  downloadButton("downloadMappedCube",
                                 label = "Mapped Cube")
         ),
-
-##################### Report tab
-
         tabPanel(title = "Report",
                  textOutput("report_text")
         )
       )
     )
   ))
-
 
 
 ###############################################################################################################
@@ -256,9 +269,6 @@ ui <- fluidPage(
 server <-function(input, output, session){
 
   options(shiny.maxRequestSize=500*1024^2)
-
-
-############################ GENERAL Reactives and observers
 
   # update input$scientificname options based on the imported DataCube ---_
   observeEvent(input$taxaFile, {
@@ -285,23 +295,41 @@ server <-function(input, output, session){
 
   })
 
-############################ metadata tab outputs
 
-  output$metadata <- renderText(
-    paste("In this tab you will be able to view the metadata associated with the options you have selected to visualise the biodiversity indicator(s).")
+  output$table <- renderDT({
+
+    req(dataCube())
+
+    dataCube()$data
+
+  })
+
+
+output$metadata <- renderText(
+  paste("In this tab you will be able to view the metadata summarising your data cube.", input$metadata)
+)
+
+  output$plot_text <- renderText(
+    paste("In this tab you can view your selected biodiversity indicator projected onto a map. Use the left-hand panel to select the indicator, taxa, geographical area, and temporal window of interest.", input$plot_text)
+  )
+  output$table_text <- renderText(
+    paste("In this tab you can view your data cube as a table.", input$table_text)
+  )
+  output$report_text <- renderText(
+    paste("In this tab you can view a report summarising the code that was used to plot biodversity indicators from your data cube.", input$report_text)
   )
 
-
-############################ Maps tab outputs
+#  plot_to_render <- reactive({
+#    req(dataCube())
+#
+#    obs_richness_map(dataCube())
+#
+#  })
 
   plot_to_render_map <- reactive({
     req(dataCube())
 
-    params <- list(data = dataCube(),
-                   cell_size = input$cellsize,
-                   level = input$spatiallevel,
-                   first_year = input$daterange[1],
-                   last_year = input$daterange[2])
+    params <- list(data = dataCube())
 
     if(input$indicatorsToAnalyse == "Observed Species Richness"){
       do.call(obs_richness_map, params)
@@ -327,6 +355,11 @@ server <-function(input, output, session){
 
   })
 
+#  output$plot <- renderPlot({
+#    req(plot_to_render())
+#    # Plot diversity metric
+#    plot(plot_to_render(), title = "Observed Species Richness: Insects in Europe")
+#  })
 
   output$plot_map <- renderPlot({
     req(plot_to_render_map())
@@ -336,6 +369,21 @@ server <-function(input, output, session){
          title = paste(input$indicatorsToAnalyse, ": Insects in Europe"))
   })
 
+#  plot_to_print <- reactive({
+#    plot(plot_to_render())
+#  })
+
+#  output$downloadGo <- downloadHandler(
+#    filename = function() {
+#      input$dataCube$name %>%
+#        gsub("\\..*","",.) %>%
+#        paste0(.,
+#               ".",
+#               tolower(input$downloadOptions))},
+#    content = function(filename) {
+#      ggsave(filename, plot = plot_to_print(), device = tolower(input$downloadOptions))
+#    }
+#  )
 
   plot_to_print_map <- reactive({
     plot(plot_to_render_map())
@@ -355,9 +403,42 @@ server <-function(input, output, session){
     }
   )
 
-#  output$map_text <- renderText(
-#    paste("In this tab you can view your selected biodiversity indicator projected onto a map. Use the left-hand panel to select the indicator, taxa, geographical area, and temporal window of interest.", input$text_ts)
-#  )
+  output$downloadProcessedCube <- downloadHandler(
+    filename = function() {
+      input$dataCube$name %>%
+        gsub("\\..*","",.) %>%
+        paste0(.,
+               ".",
+               "json")},
+    content = function(filename) {
+      toexport = toJSON(unclass(dataCube()),
+                        digits=NA,
+                        pretty=T,
+                        flatten=T,
+                        auto_unbox=T)
+      write(toexport,
+            filename)
+    }
+  )
+  output$downloadMappedCube <- downloadHandler(
+    filename = function() {
+      input$dataCube$name %>%
+        gsub("\\..*","",.) %>%
+        paste0(.,
+               "_mapped_",
+               ".",
+               "json")},
+    content = function(filename) {
+      toexport = toJSON(unclass(plot_to_render()),
+                        digits=NA,
+                        pretty=T,
+                        flatten=T,
+                        auto_unbox=T)
+      write(toexport,
+            filename)
+    }
+  )
+
 
 
 output$figure_legend_map_text <- renderText({
@@ -373,16 +454,11 @@ output$figure_legend_map_text <- renderText({
 
 
 
-############################ time-series tab outputs
 
   plot_to_render_ts <- reactive({
     req(dataCube())
 
-    params <- list(data = dataCube(),
-                   cell_size = input$cellsize,
-                   level = input$spatiallevel,
-                   first_year = input$daterange[1],
-                   last_year = input$daterange[2])
+    params <- list(data = dataCube())
 
     if(input$indicatorsToAnalyse == "Observed Species Richness"){
       do.call(obs_richness_ts, params)
@@ -522,7 +598,6 @@ output$figure_legend_map_text <- renderText({
             filename)
     }
   )
-
 
 
 }
