@@ -1,54 +1,75 @@
-# Using this theme for any B-cubed shiny app
-This `www` directory can be copied and used for any B-cubed shiny app. Some parts need to be integrated into the UI function, however (`fluidPage` in our case).
+@import url('https://fonts.googleapis.com/css?family=PT+Sans+Narrow:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=PT+Sans+Caption:wght@400;700&display=swap');
 
-1. The head section at the beginning of the `fluidPage` function:
-
-```
-  tags$head(
-    tags$title("B³ Indicators"),
-    tags$link(rel="icon", type="image/png", size="32x32", href="B3_logomark.png"),
-    tags$meta(name="viewport", content="width=device-width"),
-    tags$link(rel = "stylesheet", type = "text/css", href = "style.css"),
-  ),
-```
-
-2. The title and introductory section just after that:
-
-```
-  titlePanel(title = span(img(src = "B3_logomark.png", height = 50),
-                          "Your title here",
-                          style="color:#000")),
-  (
-    div(
-      HTML("<h3>Your subtitle here</h3>"),
-      HTML("<p>Your introductory text here</p>"),
-      HTML("<p>More introductory text</p>")
-    )
-  ),
-```
-
-3. The sidebar must be divided into tabs:
-
-```
-  sidebarLayout(
-    sidebarPanel(
-      tabsetPanel(
-        tabPanel(
-          "Name of tab 1",
-          ...
-        ),
-        tabPanel(
-	      "Name of tab 2",
-	      ...
-        ),
-      ),
-    ),
-```
-
-If there are to be no tabs in the sidebar, the style.css file must be simplified. All sections which start with `.well` must be removed and replaced by the following:
-
-```
-.well {
-  background-color: #267270;
+html, body {
+  background-color: #f2fbfa;
+  color: #fff;
 }
-```
+body {
+  min-height: 100vh;
+}
+
+h2 {
+	color: #000;
+	font-family: "PT Sans Narrow", sans-serif;
+	font-weight: 700;
+	font-style: normal;
+}
+h3 {
+	color: #555;
+	font-family: "PT Sans Caption", sans-serif;
+	font-weight: 400;
+	font-style: normal;
+}
+p {
+	font-size: 14px; 
+	color: #555;
+}
+
+
+
+.well {
+	padding: 0px;
+	background-color: #f2fbfa;
+	border: none;
+	box-shadow: none;
+}
+.well .nav-tabs .active a, .well .nav-tabs .active a:hover, .well .nav-tabs .active a:focus {
+  background-color: #267270 !important;
+  color: #fff;
+}
+.nav-tabs a:hover {
+	color: #3a9631;
+	background-color: #f2fbfa !important;
+}
+
+.nav {
+  font-family: "PT Sans Caption", sans-serif;
+  font-weight: 700;
+  font-style: normal;
+ }
+
+.well .tab-content {
+  background-color: #267270 !important;
+  color: #fff;
+  font-weight: 400;
+  min-height: 100vh;
+  border-left: 1px solid #ddd;
+  border-right: 1px solid #ddd;
+  padding: 10px;
+}
+
+
+.col-sm-8 .tab-content {
+  background-color: #fff;
+  color: #000;
+  min-height: 100vh;
+  border-left: 1px solid #ddd;
+  border-right: 1px solid #ddd;
+  padding: 10px;
+}
+
+
+.btn {
+  background-color: #6cddb4;
+}	
