@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css?family=PT+Sans+Narrow:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=PT+Sans+Caption:wght@400;700&display=swap');
 
 html, body {
   background-color: #f2fbfa;
@@ -14,27 +15,56 @@ h2 {
 	font-weight: 700;
 	font-style: normal;
 }
-.well {
-  background-color: #267270;
+h3 {
+	color: #555;
+	font-family: "PT Sans Caption", sans-serif;
+	font-weight: 400;
+	font-style: normal;
 }
 
-.tab-content {
-  background-color: #fff !important;
+
+.well {
+	padding: 0px;
+	background-color: #f2fbfa;
+	border: none;
+	box-shadow: none;
+}
+.well .nav-tabs .active a, .well .nav-tabs .active a:hover, .well .nav-tabs .active a:focus {
+  background-color: #267270 !important;
+  color: #fff;
+}
+.nav-tabs a:hover {
+	color: #3a9631;
+	background-color: #f2fbfa !important;
+}
+
+.nav {
+  font-family: "PT Sans Caption", sans-serif;
+  font-weight: 700;
+  font-style: normal;
+ }
+
+.well .tab-content {
+  background-color: #267270 !important;
+  color: #fff;
+  font-weight: 400;
+  min-height: 100vh;
+  border-left: 1px solid #ddd;
+  border-right: 1px solid #ddd;
+  padding: 10px;
+}
+
+
+.col-sm-8 .tab-content {
+  background-color: #fff;
   color: #000;
   min-height: 100vh;
   border-left: 1px solid #ddd;
   border-right: 1px solid #ddd;
   padding: 10px;
 }
-/*
-#tab-2828-2 .row .col-sm-8 {
-  background-color: #fff;
-  color: #000;
-  min-height: 100vh;
-  border-left: 1px solid #ddd;
-  padding: 10px;
-}
-*/
+
+
 .btn {
   background-color: #6cddb4;
 }	
