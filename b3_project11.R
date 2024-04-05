@@ -47,62 +47,69 @@ ui <- fluidPage(
 
   (
     div(
-      HTML("<p><span style='font-size: 18px;'>Welcome to the B-Cubed: Biodiversity Indicators Shiny app!</span><br><br>Start by uploading your data cube using the file browser in the left-hand panel. You can also use this panel to choose the biodiversity indicator(s), taxa, geographical area, and temporal window of interest for your data. Use the tabs to visualize the outputs.<br><br>In the Metadata tab, you will find the metadata associated with the data analysis options you selected. The Plot tab visualizes the biodiversity indicators on a map, the Table tab prints the data cube data, and in the Report tab, you can view the raw code used to produce outputs.</p>"),
-      style = "font-size: 16px; color: #555;"
+      HTML("<h3>Welcome to the B-Cubed: Biodiversity Indicators Shiny app!</h3>"),
+      HTML("<p>Start by uploading your data cube using the file browser in the left-hand panel. You can also use this panel to choose the biodiversity indicator(s), taxa, geographical area, and temporal window of interest for your data. Use the tabs to visualize the outputs.</p>"),
+      HTML("<p>In the Metadata tab, you will find the metadata associated with the data analysis options you selected. The Plot tab visualizes the biodiversity indicators on a map, the Table tab prints the data cube data, and in the Report tab, you can view the raw code used to produce outputs.</p>")
     )
   ),
 
 
   sidebarLayout(
     sidebarPanel(
-
-      # input$dataCube
-      fileInput(inputId = "dataCube",
-                label = HTML("Upload the data cube")
-                ),
-
-      # input$taxaFile
-      fileInput(inputId = "taxaFile",
-      label = HTML("Upload the taxa information<br><span style='font-style: italic;'>Note: taxa information is already integrated into some data cubes</span>")
-      ),
-
-      # Spatial level
-      selectInput('spatiallevel',
-                  'Spatial level',
-                  c("continent", "country","world"),
-                  selected = "continent"
-                  ),
-
-      # Spatial resolution
-      textInput('cellsize',
-                'Spatial resolution in kilometers'
-                ),
-
-      # Date range
-      sliderInput("daterange",
-                  "Date range:",
-                  min = 1100,
-                  max = year(Sys.Date()),
-                  value=c(1100, year(Sys.Date())),
-                  sep = ""
-                  ),
-
-      # Select by family name if available
-      disabled(
-        selectInput( ## select taxa from the database
-          inputId = "family",
-          label = "Subset by family",
-          choices = NULL ,
-          multiple = T
-          )
-      ), # do we need a comma here?
-
-      # the indicators
-      selectInput(
-        inputId = "indicatorsToAnalyse",
-        label = "What indicators do you want to analyse?", multiple = FALSE,
-        choices = as.character(sapply(b3gbi::available_indicators, "[[", 2)),
-        selected = "Observed Species Richness",
+      tabsetPanel(
+        tabPanel(
+          "Input data",
+          # input$dataCube
+          fileInput(inputId = "dataCube",
+                    label = HTML("Upload the data cube")
+                    ),
+    
+          # input$taxaFile
+          fileInput(inputId = "taxaFile",
+                    label = HTML("Upload the taxa information<br><span style='font-style: italic;'>Note: taxa information is already integrated into some data cubes</span>")
+                    ),
+        ),
+        tabPanel(
+          "Options",
+          # Spatial level
+          selectInput('spatiallevel',
+                      'Spatial level',
+                      c("continent", "country","world"),
+                      selected = "continent"
+                      ),
+    
+          # Spatial resolution
+          textInput('cellsize',
+                    'Spatial resolution in kilometers'
+                    ),
+    
+          # Date range
+          sliderInput("daterange",
+                      "Date range:",
+                      min = 1100,
+                      max = year(Sys.Date()),
+                      value=c(1100, year(Sys.Date())),
+                      sep = ""
+                      ),
+    
+          # Select by family name if available
+          disabled(
+            selectInput( ## select taxa from the database
+              inputId = "family",
+              label = "Subset by family",
+              choices = NULL ,
+              multiple = T
+              )
+          ), # do we need a comma here?
+    
+          # the indicators
+          selectInput(
+            inputId = "indicatorsToAnalyse",
+            label = "What indicators do you want to analyse?", multiple = FALSE,
+            choices = as.character(sapply(b3gbi::available_indicators, "[[", 2)),
+            selected = "Observed Species Richness",
+          ),
+        ),
       ),
     ),
 
