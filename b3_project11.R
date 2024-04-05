@@ -385,7 +385,7 @@ output$metadata <- renderText(
 
     # Plot diversity metric
     plot(plot_to_render_map(),
-         title = paste(input$indicatorsToAnalyse, ": Insects in Europe"))
+         title = paste(input$indicatorsToAnalyse))
   })
 
 #  plot_to_print <- reactive({
