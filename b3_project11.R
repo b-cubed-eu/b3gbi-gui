@@ -126,6 +126,10 @@ ui <- fluidPage(
         tabPanel(title = "Explore Your Data",
                  ## output$metadata
                  textOutput("metadata"),
+                 # this was not working the way we want it to (will fix later)
+                 #textOutput("dataCubePrint"),
+                 p("DOI: I10.15468/dl.p4z2v5"), #This should change with every cube (for now it is static)
+
 
         ),
         tabPanel(
@@ -303,8 +307,8 @@ server <-function(input, output, session){
     }
 
   })
-
-
+  # this is not working the way we want it to
+  #output$dataCubePrint <- renderPrint({dataCube()[1:6]})
   output$table <- renderDT({
 
     req(dataCube())
