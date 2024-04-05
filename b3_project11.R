@@ -26,6 +26,7 @@ library(jsonlite)
 
 ui <- fluidPage(
   useShinyjs(),  # Set up shinyjs
+
   # Style
   tags$head(
     tags$title("B³ Indicators"),
@@ -37,8 +38,8 @@ ui <- fluidPage(
   ),
 
   # input = text fields, action buttons
-  # Application title
 
+  # Application title
 
   titlePanel(title = span(img(src = "B3_logomark.png", height = 50),
                           "B-Cubed: General Biodiversity Indicators",
@@ -57,21 +58,25 @@ ui <- fluidPage(
 
       # input$dataCube
       fileInput(inputId = "dataCube",
-                label = HTML("Upload the data cube"),
+                label = HTML("Upload the data cube")
                 ),
 
       # input$taxaFile
       fileInput(inputId = "taxaFile",
-      label = HTML("Upload the taxa information<br><span style='font-style: italic;'>Note: taxa information is already integrated into some data cubes</span>"),
+      label = HTML("Upload the taxa information<br><span style='font-style: italic;'>Note: taxa information is already integrated into some data cubes</span>")
       ),
 
       # Spatial level
-      selectInput('spatiallevel', 'Spatial level', c("continent", "country","world"), selected = "continent"
-      ),
+      selectInput('spatiallevel',
+                  'Spatial level',
+                  c("continent", "country","world"),
+                  selected = "continent"
+                  ),
 
       # Spatial resolution
-      textInput('cellsize', 'Spatial resolution in kilometers'
-      ),
+      textInput('cellsize',
+                'Spatial resolution in kilometers'
+                ),
 
       # Date range
       sliderInput("daterange",
@@ -79,7 +84,8 @@ ui <- fluidPage(
                   min = 1100,
                   max = year(Sys.Date()),
                   value=c(1100, year(Sys.Date())),
-                  sep = ""),
+                  sep = ""
+                  ),
 
       # Select by family name if available
       disabled(
@@ -89,7 +95,7 @@ ui <- fluidPage(
           choices = NULL ,
           multiple = T
           )
-      ) # do we need a comma here?
+      ), # do we need a comma here?
 
       # the indicators
       selectInput(
@@ -339,7 +345,7 @@ server <-function(input, output, session){
              device = tolower(input$downloadOptions_map))
     }
   )
-  
+
   output$downloadProcessedCube <- downloadHandler(
     filename = function() {
       input$dataCube$name %>%
