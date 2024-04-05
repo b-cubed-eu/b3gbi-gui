@@ -16,6 +16,8 @@ library(DT)
 #shinyWidgetsGallery()
 
 library(lubridate)
+library(shinyjs)
+library(jsonlite)
 
 # Hello, can you see this?
 # Test yani
@@ -23,6 +25,7 @@ library(lubridate)
 #test
 
 ui <- fluidPage(
+  useShinyjs(),  # Set up shinyjs
   # Style
   tags$head(
     tags$title("B³ Indicators"),
@@ -34,51 +37,61 @@ ui <- fluidPage(
   ),
 
   # input = text fields, action buttons
-
   # Application title
+
+
   titlePanel(title = span(img(src = "B3_logomark.png", height = 50),
                           "B-Cubed: General Biodiversity Indicators",
                           style="color:#000")),
 
+  (
+    div(
+      HTML("<p><span style='font-size: 18px;'>Welcome to the B-Cubed: Biodiversity Indicators Shiny app!</span><br><br>Start by uploading your data cube using the file browser in the left-hand panel. You can also use this panel to choose the biodiversity indicator(s), taxa, geographical area, and temporal window of interest for your data. Use the tabs to visualize the outputs.<br><br>In the Metadata tab, you will find the metadata associated with the data analysis options you selected. The Plot tab visualizes the biodiversity indicators on a map, the Table tab prints the data cube data, and in the Report tab, you can view the raw code used to produce outputs.</p>"),
+      style = "font-size: 16px; color: #555;"
+    )
+  ),
+
+
   sidebarLayout(
     sidebarPanel(
+
       # input$dataCube
       fileInput(inputId = "dataCube",
-                label = "Upload the data cube",
+                label = HTML("Upload the data cube"),
                 ),
 
-      checkboxInput(
-        inputId = "old_bcube",
-        label = "Using an old B-cube version?",
-        value = TRUE
+      # input$taxaFile
+      fileInput(inputId = "taxaFile",
+      label = HTML("Upload the taxa information<br><span style='font-style: italic;'>Note: taxa information is already integrated into some data cubes</span>"),
       ),
-      conditionalPanel(condition = "input.old_bcube == TRUE",
-                       # input$taxaFile
-                       wellPanel(fileInput(inputId = "taxaFile",
-                                 label = "Upload the taxa information")
-                                 )
-                       ),
 
       # Spatial level
-      selectInput('spatiallevel', 'Spatial level', c("continent", "country","world")),
+      selectInput('spatiallevel', 'Spatial level', c("continent", "country","world"), selected = "continent"
+      ),
+
       # Spatial resolution
-      selectInput('cellsize', 'Spatial resolution in kilometers', c(10,100)),
+      textInput('cellsize', 'Spatial resolution in kilometers'
+      ),
+
       # Date range
       sliderInput("daterange",
                   "Date range:",
-                  min = 1900,
+                  min = 1100,
                   max = year(Sys.Date()),
-                  value=c(1900, year(Sys.Date())),
+                  value=c(1100, year(Sys.Date())),
                   sep = ""),
-      # Taxa selection
-      selectInput( ## select taxa from the database
-        inputId = "scientificname",
-        label = "Scientific name:",
-        choices = NULL ,
-        multiple = T
-      ),
-      # the indicators
 
+      # Select by family name if available
+      disabled(
+        selectInput( ## select taxa from the database
+          inputId = "family",
+          label = "Subset by family",
+          choices = NULL ,
+          multiple = T
+          )
+      ) # do we need a comma here?
+
+      # the indicators
       selectInput(
         inputId = "indicatorsToAnalyse",
         label = "What indicators do you want to analyse?", multiple = FALSE,
@@ -86,12 +99,16 @@ ui <- fluidPage(
         selected = "Observed Species Richness",
       ),
     ),
+
+
+
     # output = tables, plots, texts
     mainPanel(
       tabsetPanel(
         tabPanel(title = "Metadata",
                  ## output$metadata
-                 textOutput("metadata")
+                 textOutput("metadata"),
+
         ),
 
 #############################
@@ -160,25 +177,32 @@ ui <- fluidPage(
                  )
         ########################################
                  ),
-#####################3
+#####################
         tabPanel(title = "Table",
                  textOutput("table_text"),
                  HTML("<br>"),  # Adding line break for spacing
                  HTML("<br>"),  # Adding line break for spacing
                  DTOutput("table")
         ),
+        tabPanel(title = "Export",
+                 HTML("<div>Download the processed cube data here.</div>"),
+                 HTML("<br>"),  # Adding line break for spacing
+                 HTML("<br>"),  # Adding line break for spacing
+                 downloadButton("downloadProcessedCube",
+                                label = "Processed Cube"),
+                 downloadButton("downloadMappedCube",
+                                label = "Mapped Cube")
+        ),
         tabPanel(title = "Report",
                  textOutput("report_text")
         )
-      ),
+      )
     )
-  )
+  ))
 
   # shinyWidgetsGallery()
 
 
-
-)
 
 server <-function(input, output, session){
 
@@ -202,9 +226,9 @@ server <-function(input, output, session){
 
     # Prepare cube
     if (!is.null(input$taxaFile$datapath)) {
-      process_cube(cube_name, input$taxaFile$datapath)
+     process_cube(cube_name, input$taxaFile$datapath)
     } else {
-      process_cube(cube_name)
+     process_cube(cube_name)
     }
 
   })
@@ -276,6 +300,7 @@ server <-function(input, output, session){
 
   output$plot_map <- renderPlot({
     req(plot_to_render_map())
+
     # Plot diversity metric
     plot(plot_to_render_map(),
          title = paste(input$indicatorsToAnalyse, ": Insects in Europe"))
@@ -309,7 +334,45 @@ server <-function(input, output, session){
                "_map.",
                tolower(input$downloadOptions_map))},
     content = function(filename) {
-      ggsave(filename, plot = plot_to_print_map(), device = tolower(input$downloadOptions_map))
+      ggsave(filename,
+             plot = plot_to_print_map(),
+             device = tolower(input$downloadOptions_map))
+    }
+  )
+  
+  output$downloadProcessedCube <- downloadHandler(
+    filename = function() {
+      input$dataCube$name %>%
+        gsub("\\..*","",.) %>%
+        paste0(.,
+               ".",
+               "json")},
+    content = function(filename) {
+      toexport = toJSON(unclass(dataCube()),
+                        digits=NA,
+                        pretty=T,
+                        flatten=T,
+                        auto_unbox=T)
+      write(toexport,
+            filename)
+    }
+  )
+  output$downloadMappedCube <- downloadHandler(
+    filename = function() {
+      input$dataCube$name %>%
+        gsub("\\..*","",.) %>%
+        paste0(.,
+               "_mapped_",
+               ".",
+               "json")},
+    content = function(filename) {
+      toexport = toJSON(unclass(plot_to_render()),
+                        digits=NA,
+                        pretty=T,
+                        flatten=T,
+                        auto_unbox=T)
+      write(toexport,
+            filename)
     }
   )
 
