@@ -1,5 +1,5 @@
 # Using this theme for any B-cubed shiny app
-This `www` directory can be copied and used for any B-cubed shiny app using the `fluidPage` function. Some parts need to be integrated into that function, however.
+This `www` directory can be copied and used for any B-cubed shiny app. Some parts need to be integrated into the UI function, however (`fluidPage` in our case).
 
 1. The head section at the beginning of the `fluidPage` function:
 
@@ -27,7 +27,7 @@ This `www` directory can be copied and used for any B-cubed shiny app using the 
   ),
 ```
 
-3. The sidebar must be divided into two tabs:
+3. The sidebar must be divided into tabs:
 
 ```
   sidebarLayout(
@@ -43,4 +43,13 @@ This `www` directory can be copied and used for any B-cubed shiny app using the 
         ),
       ),
     ),
+```
+
+
+If there are to be no tabs in the sidebar, the style.css file must be simplified. All sections which start with `.well` must be removed and replaced by the following:
+
+```
+.well {
+  background-color: #267270;
+}
 ```
