@@ -3,7 +3,7 @@
 #install.packages("shiny")
 #install.packages("shinyWidgets")
 #install.packages("devtools")
-#devtools::install_github("shawndove/b3gbi")
+#devtools::install_github("shawndove/b3gbi", force = TRUE)
 #install.packages("plotly")
 
 library(plotly)
@@ -85,7 +85,7 @@ ui <- fluidPage(
           # the indicators
           selectInput(
             inputId = "indicatorsToAnalyse",
-            label = "What indicators do you want to analyse?", multiple = FALSE,
+            label = "Biodiversity Indicator", multiple = FALSE,
             choices = as.character(sapply(b3gbi::available_indicators, "[[", 2)),
             selected = "Observed Species Richness",
           ),
@@ -100,7 +100,7 @@ ui <- fluidPage(
           # Spatial resolution
           numericInput('cellsize',
                     'Spatial resolution in kilometers',
-                    value = 10),
+                    value = 100),
 
           # Date range
           sliderInput("daterange",
@@ -151,9 +151,12 @@ ui <- fluidPage(
                  #the maps
                  em("Loading the plots will take a minute or forever. Calm yourself!"),
                  plotOutput("plot_map"),
-                 p(strong("Figure legend : What the heck am I looking at?")),
-                 p(strong("But what is this indicator?")),
-                 p(strong("And what does my plot say?")),
+                 HTML("<br>"),  # Adding line break for spacing
+                 p(strong("What the heck am I looking at?")),
+                 textOutput("figure_legend_map_text"),
+                 HTML("<br>"),  # Adding line break for spacing
+                 p(strong("But what does this indicator mean?")),
+                 ########### placer
                  fluidRow(
                    column(
                      selectizeInput(inputId = "downloadOptions_map",
@@ -183,9 +186,12 @@ ui <- fluidPage(
                  #the time series
                  em("Loading the plots will take a minute or forever. Calm yourself!"),
                  plotlyOutput("plot_ts"),
-                 p(strong("Figure legend : What the heck am I looking at?")),
-                 p(strong("But what is this index?")),
-                 p(strong("And what does my plot say?")),
+                 HTML("<br>"),
+                 p(strong("What the heck am I looking at?")),
+                 textOutput("figure_legend_ts_text"),
+                 HTML("<br>"),
+                 p(strong("But what does this indicator mean?")),
+                 HTML("<br>"),
                  fluidRow(
                    column(
                      selectizeInput("downloadOptions_ts",
@@ -354,6 +360,18 @@ server <-function(input, output, session){
 #  )
 
 
+output$figure_legend_map_text <- renderText({
+    paste(input$indicatorsToAnalyse,
+            " of taxa in region, visualised at ",
+            as.character(input$spatiallevel),
+            " level and observed from ",
+            as.character(input$daterange[1]),
+            " to ",
+            as.character(input$daterange[2]))
+})
+
+
+
 
 ############################ time-series tab outputs
 
@@ -416,6 +434,15 @@ server <-function(input, output, session){
 #  output$timeSeries_text <- renderText(
 #    paste("In this tab you can view the time-series plot of your selected biodiversity indicator. Use the left-hand panel to select the indicator, taxa, geographical area, and temporal window of interest.", input$text_ts)
 #  )
+
+  output$figure_legend_ts_text <- renderText({
+    paste(input$indicatorsToAnalyse,
+          " of taxa in region  from ",
+          as.character(input$daterange[1]),
+          " to ",
+          as.character(input$daterange[2]))
+  })
+
 
 ############################ table tab outputs
 
