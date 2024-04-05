@@ -56,6 +56,12 @@ ui <- fluidPage(
   ),
 
   sidebarLayout(
+
+
+#######################################################
+####################### Inputs ########################
+#######################################################
+
     sidebarPanel(
 
       # input$dataCube
@@ -75,10 +81,10 @@ ui <- fluidPage(
                   selected = "continent"
                   ),
 
-      # Spatial resolution
-      textInput('cellsize',
-                'Spatial resolution in kilometers'
-                ),
+          # Spatial resolution
+          numericInput('cellsize',
+                    'Spatial resolution in kilometers',
+                    value = 10),
 
       # Date range
       sliderInput("daterange",
@@ -108,7 +114,9 @@ ui <- fluidPage(
       ),
     ),
 
-
+#######################################################
+####################### Outputs #######################
+#######################################################
 
     # output = tables, plots, texts
     mainPanel(
@@ -119,71 +127,41 @@ ui <- fluidPage(
 
         ),
 
-#############################
-        tabPanel(title = "Plot",
-                 # the plots
-                 ## output$plot
-                 textOutput("plot_text"),
+############################# Map tab
+
+        tabPanel(
+                 title = "Map",
+                 em("In this tab you can view your selected biodiversity indicator projected onto a map. Use the left-hand panel to select the indicator, taxa, geographical area, and temporal window of interest."),
                  HTML("<br>"),  # Adding line break for spacing
 
-
-
-        ######################################
-                 tabsetPanel(
-                   tabPanel(title = "Map",
-                            #the maps
-                            em("Loading the plots will take a minute or forever. Calm yourself!"),
-                            plotOutput("plot_map"),
-                            p(strong("Figure legend : What the heck am I looking at?")),
-                            p(strong("But what is this index?")),
-                            p(strong("And what does my plot say?")),
-                            fluidRow(
-                              column(
-                                selectizeInput("downloadOptions_map",
-                                               "Download Formats",
-                                               choices = c("EPS",
-                                                           "JPEG",
-                                                           "PDF",
-                                                           "PNG",
-                                                           "SVG",
-                                                           "TEX",
-                                                           "TIFF")),
-                                width = 6),
-                              column(
-                                downloadButton("downloadGo_map"),
-                                width = 4,
-                                style="padding:18px;"
-                                )
-                              ),
-                            ),
-                   tabPanel(title = "Time-series",
-                            #the time series
-                            em("Loading the plots will take a minute or forever. Calm yourself!"),
-                            plotlyOutput("plot_ts"),
-                            p(strong("Figure legend : What the heck am I looking at?")),
-                            p(strong("But what is this index?")),
-                            p(strong("And what does my plot say?")),
-                            fluidRow(
-                              column(
-                                selectizeInput("downloadOptions_ts",
-                                               "Download Formats",
-                                               choices = c("EPS",
-                                                           "JPEG",
-                                                           "PDF",
-                                                           "PNG",
-                                                           "SVG",
-                                                           "TEX",
-                                                           "TIFF")),
-                                width = 6),
-                              column(
-                                downloadButton("downloadGo_ts"),
-                                width = 4,
-                                style="padding:18px;"
-                              )
-                            ),
-                            )
-                 )
-        ########################################
+        tabPanel(title = "Time-series",
+                 em("In this tab you can view the time-series plot of your selected biodiversity indicator. Use the left-hand panel to select the indicator, taxa, geographical area, and temporal window of interest."),
+                 HTML("<br>"),  # Adding line break for spacing
+                 #the time series
+                 em("Loading the plots will take a minute or forever. Calm yourself!"),
+                 plotlyOutput("plot_ts"),
+                 p(strong("Figure legend : What the heck am I looking at?")),
+                 p(strong("But what is this index?")),
+                 p(strong("And what does my plot say?")),
+                 fluidRow(
+                   column(
+                     selectizeInput("downloadOptions_ts",
+                                    "Download Formats",
+                                    choices = c("EPS",
+                                                "JPEG",
+                                                "PDF",
+                                                "PNG",
+                                                "SVG",
+                                                "TEX",
+                                                "TIFF")
+                                    ),
+                     width = 6),
+                   column(
+                     downloadButton("downloadGo_ts"),
+                     width = 4,
+                     style="padding:18px;"
+                     )
+                   ),
                  ),
 #####################
         tabPanel(title = "Table",
@@ -208,8 +186,13 @@ ui <- fluidPage(
     )
   ))
 
-  # shinyWidgetsGallery()
 
+###############################################################################################################
+#####   SERVER     ############################################################################################
+###########################   SERVER     ######################################################################
+##################################################   SERVER     ###############################################
+#########################################################################   SERVER     ########################
+###############################################################################################################
 
 
 server <-function(input, output, session){
@@ -388,6 +371,7 @@ output$metadata <- renderText(
 
 
 
+
   plot_to_render_ts <- reactive({
     req(dataCube())
 
@@ -437,6 +421,89 @@ output$metadata <- renderText(
                tolower(input$downloadOptions_ts))},
     content = function(filename) {
       ggsave(filename, plot = plot_to_print_ts(), device = tolower(input$downloadOptions_ts))
+    }
+  )
+
+#  output$timeSeries_text <- renderText(
+#    paste("In this tab you can view the time-series plot of your selected biodiversity indicator. Use the left-hand panel to select the indicator, taxa, geographical area, and temporal window of interest.", input$text_ts)
+#  )
+
+############################ table tab outputs
+
+
+
+  output$table <- renderDT({
+
+    req(dataCube())
+
+    dataCube()$data
+
+  })
+
+  output$table_text <- renderText(
+    paste("In this tab you can view your data cube as a table.", input$table_text)
+  )
+
+
+  ############################ metadata tab outputs
+
+#  output$plot_text <- renderText(
+#    paste("In this tab you can view your selected biodiversity indicator projected onto a map. Use the left-hand panel to select the indicator, taxa, geographical area, and temporal window of interest.", input$plot_text)
+#  )
+
+
+#  output$table_text <- renderText(
+#    paste("In this tab you can view your data cube as a table.", input$table_text)
+#  )
+
+  output$report_text <- renderText(
+    paste("In this tab you can view a report summarising the code that was used to plot biodversity indicators from your data cube.", input$report_text)
+  )
+
+  #  plot_to_render <- reactive({
+  #    req(dataCube())
+  #
+  #    obs_richness_map(dataCube())
+  #
+  #  })
+
+
+
+
+
+  output$downloadProcessedCube <- downloadHandler(
+    filename = function() {
+      input$dataCube$name %>%
+        gsub("\\..*","",.) %>%
+        paste0(.,
+               ".",
+               "json")},
+    content = function(filename) {
+      toexport = toJSON(unclass(dataCube()),
+                        digits=NA,
+                        pretty=T,
+                        flatten=T,
+                        auto_unbox=T)
+      write(toexport,
+            filename)
+    }
+  )
+  output$downloadMappedCube <- downloadHandler(
+    filename = function() {
+      input$dataCube$name %>%
+        gsub("\\..*","",.) %>%
+        paste0(.,
+               "_mapped_",
+               ".",
+               "json")},
+    content = function(filename) {
+      toexport = toJSON(unclass(plot_to_render()),
+                        digits=NA,
+                        pretty=T,
+                        flatten=T,
+                        auto_unbox=T)
+      write(toexport,
+            filename)
     }
   )
 
