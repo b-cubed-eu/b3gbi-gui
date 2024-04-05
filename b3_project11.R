@@ -132,7 +132,7 @@ ui <- fluidPage(
         tabPanel(
                  title = "Map",
                  em("In this tab you can view your selected biodiversity indicator projected onto a map. Use the left-hand panel to select the indicator, taxa, geographical area, and temporal window of interest."),
-                 HTML("<br>"),  # Adding line break for spacing
+                 HTML("<br>")),  # Adding line break for spacing
 
         tabPanel(title = "Time-series",
                  em("In this tab you can view the time-series plot of your selected biodiversity indicator. Use the left-hand panel to select the indicator, taxa, geographical area, and temporal window of interest."),
