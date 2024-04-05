@@ -43,8 +43,6 @@ ui <- fluidPage(
     tags$link(rel="icon", type="image/png", size="32x32", href="B3_logomark.png"),
     tags$meta(name="viewport", content="width=device-width"),
     tags$link(rel = "stylesheet", type = "text/css", href = "style.css"),
-    tags$link(href="https://fonts.googleapis.com/css2?family=PT+Sans+Narrow:wght@400;700&display=swap",
-              rel="stylesheet")
   ),
 
   # input = text fields, action buttons
@@ -57,67 +55,66 @@ ui <- fluidPage(
 
   (
     div(
-      HTML("<p><span style='font-size: 18px;'>Welcome to the B-Cubed: Biodiversity Indicators Shiny app!</span><br><br>Start by uploading your data cube using the file browser in the left-hand panel. You can also use this panel to choose the biodiversity indicator(s), taxa, geographical area, and temporal window of interest for your data. Use the tabs to visualize the outputs.<br><br>In the Metadata tab, you will find the metadata associated with the data analysis options you selected. The Plot tab visualizes the biodiversity indicators on a map, the Table tab prints the data cube data, and in the Report tab, you can view the raw code used to produce outputs.</p>"),
-      style = "font-size: 16px; color: #555;"
+      HTML("<h3>Welcome to the B-Cubed: Biodiversity Indicators Shiny app!</h3>"),
+      HTML("<p>Start by uploading your data cube using the file browser in the left-hand panel. You can also use this panel to choose the biodiversity indicator(s), taxa, geographical area, and temporal window of interest for your data. Use the tabs to visualize the outputs.</p>"),
+      HTML("<p>In the Metadata tab, you will find the metadata associated with the data analysis options you selected. The Plot tab visualizes the biodiversity indicators on a map, the Table tab prints the data cube data, and in the Report tab, you can view the raw code used to produce outputs.</p>")
     )
   ),
 
 
   sidebarLayout(
     sidebarPanel(
+      tabsetPanel(
+        tabPanel(
+          "Input data",
+          # input$dataCube
+          fileInput(inputId = "dataCube",
+                    label = HTML("Upload the data cube")
+                    ),
 
-      # input$dataCube
-      fileInput(inputId = "dataCube",
-                label = HTML("Upload the data cube")
-                ),
+        ),
+        tabPanel(
+          "Options",
+          # Spatial level
+          selectInput('spatiallevel',
+                      'Spatial level',
+                      c("continent", "country","world"),
+                      selected = "continent"
+                      ),
 
-      # the indicators
-      selectInput(
-        inputId = "indicatorsToAnalyse",
-        label = "Biodiversity Indicator",
-        multiple = FALSE,
-        choices = as.character(sapply(b3gbi::available_indicators, "[[", 2)),
-        selected = "Observed Species Richness",
+          # Spatial resolution
+          textInput('cellsize',
+                    'Spatial resolution in kilometers'
+                    ),
+
+          # Date range
+          sliderInput("daterange",
+                      "Date range:",
+                      min = 1100,
+                      max = year(Sys.Date()),
+                      value=c(1100, year(Sys.Date())),
+                      sep = ""
+                      ),
+
+          # Select by family name if available
+          disabled(
+            selectInput( ## select taxa from the database
+              inputId = "family",
+              label = "Subset by family",
+              choices = NULL ,
+              multiple = T
+              )
+          ), # do we need a comma here?
+
+          # the indicators
+          selectInput(
+            inputId = "indicatorsToAnalyse",
+            label = "What indicators do you want to analyse?", multiple = FALSE,
+            choices = as.character(sapply(b3gbi::available_indicators, "[[", 2)),
+            selected = "Observed Species Richness",
+          ),
+        ),
       ),
-
-      # input$taxaFile
-#      fileInput(inputId = "taxaFile",
-#      label = HTML("Upload the taxa information<br><span style='font-style: italic;'>Note: taxa information is already integrated into some data cubes</span>")
-#      ),
-
-      # Spatial level
-      selectInput(inputId ='spatiallevel',
-                  label = 'Spatial level',
-                  choices = c("continent", "country","world"),
-                  selected = "continent"
-                  ),
-
-      # Spatial resolution
-      numericInput(inputId = 'cellsize',
-                label = 'Spatial resolution in kilometers',
-                value = 10
-                ),
-
-      # Date range
-      sliderInput(inputId = "daterange",
-                  label = "Date range:",
-                  min = 1100,
-                  max = year(Sys.Date()),
-                  value=c(1100, year(Sys.Date())),
-                  sep = ""
-                  ),
-
-      # Select by family name if available
-      disabled(
-        selectInput( ## select taxa from the database
-          inputId = "family",
-          label = "Subset by family",
-          choices = NULL ,
-          multiple = T
-          )
-      ), # do we need a comma here?
-
-
     ),
 
 
@@ -137,7 +134,8 @@ ui <- fluidPage(
 
 ############################# Map tab
 
-        tabPanel(title = "Map",
+        tabPanel(
+                 title = "Map",
                  textOutput("map_text"),
                  HTML("<br>"),  # Adding line break for spacing
                  #the maps
@@ -156,7 +154,8 @@ ui <- fluidPage(
                                                 "PNG",
                                                 "SVG",
                                                 "TEX",
-                                                "TIFF")),
+                                                "TIFF")
+                                                ),
                      width = 6),
                    column(
                      downloadButton("downloadGo_map"),
