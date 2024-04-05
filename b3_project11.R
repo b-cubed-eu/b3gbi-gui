@@ -75,6 +75,15 @@ ui <- fluidPage(
         ),
         tabPanel(
           "Options",
+
+          # the indicators
+          selectInput(
+            inputId = "indicatorsToAnalyse",
+            label = "What indicators do you want to analyse?", multiple = FALSE,
+            choices = as.character(sapply(b3gbi::available_indicators, "[[", 2)),
+            selected = "Observed Species Richness",
+          ),
+
           # Spatial level
           selectInput('spatiallevel',
                       'Spatial level',
@@ -104,15 +113,8 @@ ui <- fluidPage(
               choices = NULL ,
               multiple = T
               )
-          ), # do we need a comma here?
-
-          # the indicators
-          selectInput(
-            inputId = "indicatorsToAnalyse",
-            label = "What indicators do you want to analyse?", multiple = FALSE,
-            choices = as.character(sapply(b3gbi::available_indicators, "[[", 2)),
-            selected = "Observed Species Richness",
           ),
+
         ),
       ),
     ),
