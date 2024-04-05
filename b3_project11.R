@@ -63,6 +63,12 @@ ui <- fluidPage(
 
 
   sidebarLayout(
+
+
+#######################################################
+####################### Inputs ########################
+#######################################################
+
     sidebarPanel(
       tabsetPanel(
         tabPanel(
@@ -92,9 +98,9 @@ ui <- fluidPage(
                       ),
 
           # Spatial resolution
-          textInput('cellsize',
-                    'Spatial resolution in kilometers'
-                    ),
+          numericInput('cellsize',
+                    'Spatial resolution in kilometers',
+                    value = 10),
 
           # Date range
           sliderInput("daterange",
@@ -119,7 +125,9 @@ ui <- fluidPage(
       ),
     ),
 
-
+#######################################################
+####################### Outputs #######################
+#######################################################
 
     # output = tables, plots, texts
     mainPanel(
@@ -138,7 +146,7 @@ ui <- fluidPage(
 
         tabPanel(
                  title = "Map",
-                 textOutput("map_text"),
+                 em("In this tab you can view your selected biodiversity indicator projected onto a map. Use the left-hand panel to select the indicator, taxa, geographical area, and temporal window of interest."),
                  HTML("<br>"),  # Adding line break for spacing
                  #the maps
                  em("Loading the plots will take a minute or forever. Calm yourself!"),
@@ -170,7 +178,7 @@ ui <- fluidPage(
 
 
         tabPanel(title = "Time-series",
-                 textOutput("timeSeries_text"),
+                 em("In this tab you can view the time-series plot of your selected biodiversity indicator. Use the left-hand panel to select the indicator, taxa, geographical area, and temporal window of interest."),
                  HTML("<br>"),  # Adding line break for spacing
                  #the time series
                  em("Loading the plots will take a minute or forever. Calm yourself!"),
@@ -228,6 +236,8 @@ ui <- fluidPage(
       )
     )
   ))
+
+
 
 ###############################################################################################################
 #####   SERVER     ############################################################################################
@@ -339,9 +349,9 @@ server <-function(input, output, session){
     }
   )
 
-  output$map_text <- renderText(
-    paste("In this tab you can view your selected biodiversity indicator projected onto a map. Use the left-hand panel to select the indicator, taxa, geographical area, and temporal window of interest.", input$text_ts)
-  )
+#  output$map_text <- renderText(
+#    paste("In this tab you can view your selected biodiversity indicator projected onto a map. Use the left-hand panel to select the indicator, taxa, geographical area, and temporal window of interest.", input$text_ts)
+#  )
 
 
 
@@ -403,9 +413,9 @@ server <-function(input, output, session){
     }
   )
 
-  output$timeSeries_text <- renderText(
-    paste("In this tab you can view the time-series plot of your selected biodiversity indicator. Use the left-hand panel to select the indicator, taxa, geographical area, and temporal window of interest.", input$text_ts)
-  )
+#  output$timeSeries_text <- renderText(
+#    paste("In this tab you can view the time-series plot of your selected biodiversity indicator. Use the left-hand panel to select the indicator, taxa, geographical area, and temporal window of interest.", input$text_ts)
+#  )
 
 ############################ table tab outputs
 
