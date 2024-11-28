@@ -556,74 +556,97 @@ server <-function(input, output, session){
     )
   })
 
-  units <- reactive({
-    stringr::str_extract(r$dataCube$resolutions, "(?<=[0-9,.]{1,6})[a-z]*$")
-    })
-
-  res_size <- reactive({
-    if (units() == "degrees") {
-      as.numeric(stringr::str_extract(r$dataCube$resolutions,
+  observeEvent(dataCube1(), {
+    units <- stringr::str_extract(r$dataCube$resolutions, "(?<=[0-9,.]{1,6})[a-z]*$")
+    if (units == "degrees") {
+      res_size <- as.numeric(stringr::str_extract(r$dataCube$resolutions,
                                       "[0-9,.]*(?=degrees)"))
-    } else if (units() == "km") {
-      s.numeric(stringr::str_extract(r$dataCube$resolutions,
-                                     "[0-9]*(?=km)"))
+      defaultres <- ifelse(res_size > 1, res_size, 1)
+      maxres <- 10
+    } else if (units == "km") {
+      res_size <- as.numeric(stringr::str_extract(r$dataCube$resolutions,
+                                                  "[0-9]*(?=km)"))
+      defaultres <- ifelse(res_size > 10, res_size, 10)
+      maxres <- 100
     }
+
+    updateNumericInput(inputId = "cellsize",
+                       min = res_size,
+                       max = maxres,
+                       value = defaultres,
+                       step = res_size)
+
+    daterangemin <- dataCube1()$first_year
+    daterangemax <- dataCube1()$last_year
+    value <- c(daterangemin, daterangemax)
+
+    updateSliderInput(inputId = "daterange",
+                      min = daterangemin,
+                      max = daterangemax,
+                      value = value)
   })
 
-  defaultres <- reactive({
-    if (units() == "degrees") {
-      ifelse(res_size() > 1, res_size(), 1)
-    } else if (units() == "km") {
-      ifelse(res_size() > 10, res_size(), 10)
-    }
-  })
-
-  maxres <- reactive({
-    if (units() == "degrees") {
-      10
-    } else if (units() == "km") {
-      100
-    }
-  })
+  # units <- reactive({
+  #   stringr::str_extract(r$dataCube$resolutions, "(?<=[0-9,.]{1,6})[a-z]*$")
+  #   })
+  #
+  # res_size <- reactive({
+  #   if (units() == "degrees") {
+  #     as.numeric(stringr::str_extract(r$dataCube$resolutions,
+  #                                     "[0-9,.]*(?=degrees)"))
+  #   } else if (units() == "km") {
+  #     as.numeric(stringr::str_extract(r$dataCube$resolutions,
+  #                                    "[0-9]*(?=km)"))
+  #   }
+  # })
+  #
+  # defaultres <- reactive({
+  #   if (units() == "degrees") {
+  #     ifelse(res_size() > 1, res_size(), 1)
+  #   } else if (units() == "km") {
+  #     ifelse(res_size() > 10, res_size(), 10)
+  #   }
+  # })
+  #
+  # maxres <- reactive({
+  #   if (units() == "degrees") {
+  #     10
+  #   } else if (units() == "km") {
+  #     100
+  #   }
+  # })
 
   # control spatial resolution options based on grid type of imported cube
-  observeEvent(dataCube1(), {
-    ressize <- res_size()
-    default <- defaultres()
-    max <- maxres()
-    updateNumericInput(inputId = "cellsize",
-                       min = ressize,
-                       max = max,
-                       value = default,
-                       step = ressize)
-  })
-
-  daterangemin <- reactive({
-    dataCube1()$first_year
-  })
-
-  daterangemax <- reactive({
-    max <- dataCube1()$last_year
-  })
-
-  # Change the min and max values on the daterange slider when a data cube is loaded
-  observeEvent(daterangemin(), {
-    min <- daterangemin()
-    value <- c(daterangemin(), daterangemax())
-    updateSliderInput(inputId = "daterange",
-                      min = min,
-                      max = max,
-                      value = value)
-  })
-
-  observeEvent(daterangemax(), {
-    max <- daterangemax()
-    value <- c(daterangemin(), daterangemax())
-    updateSliderInput(inputId = "daterange",
-                      min = min,
-                      max = max,
-                      value = value)
-  })
+  # observeEvent(dataCube1(), {
+  #
+  # })
+#
+#   daterangemin <- reactive({
+#     dataCube1()$first_year
+#   })
+#
+#   daterangemax <- reactive({
+#     dataCube1()$last_year
+#   })
+#
+#   # Change the min and max values on the daterange slider when a data cube is loaded
+#   observeEvent(c(daterangemin(),daterangemax()), {
+#     min <- daterangemin()
+#     value <- c(daterangemin(), daterangemax())
+#     updateSliderInput(inputId = "daterange",
+#                       min = min,
+#                       max = max,
+#                       value = value)
+#   })
+#
+#   observeEvent(daterangemax(), {
+#     max <- daterangemax()
+#     value <- c(daterangemin(), daterangemax())
+#     updateSliderInput(inputId = "daterange",
+#                       min = min,
+#                       max = max,
+#                       value = value)
+#   })
 
   familyupdate <- reactive({
     sort(unique(dataCube1()$data$family))
