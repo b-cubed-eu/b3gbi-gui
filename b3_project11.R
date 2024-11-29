@@ -673,43 +673,73 @@ server <-function(input, output, session){
    })
 
    # subset cube by family based on user input
-   # observeEvent(input$family, {
-   #   if (is.null(input$family)) {
-   #     r$dataCube1$data <- r$dataCube0.5$data <- r$dataCube$data
-   #   } else {
-   #     r$dataCube1$data <-
-   #       r$dataCube0.5$data <-
-   #       r$dataCube$data %>%
-   #       filter(family %in% input$family)
-   #   }
-   # }, ignoreNULL = FALSE)
-   #
-   # # subset cube by species based on user input
-   # observeEvent(c(input$species, input$family), {
-   #   if (is.null(input$species)) {
-   #     r$dataCube1$data <- r$dataCube0.5$data
-   #   } else {
-   #     r$dataCube1$data <-
-   #       r$dataCube0.5$data %>%
-   #       filter(scientificName %in% input$species)
-   #   }
-   # }, ignoreNULL = FALSE)
-
-   dataCube1 <- reactive({
-     if (is.null(input$family) & is.null(input$species)) {
-       r$dataCube
-     } else if (!is.null(input$family) & is.null(input$species)) {
-       r$dataCube %>%
-         filter(data, family %in% input$family)
-     } else if (is.null(input$family) & !is.null(input$species)) {
-       r$dataCube %>%
-         filter(data, scientificName %in% input$species)
+   observeEvent(input$family, {
+     if (is.null(input$family)) {
+       r$dataCube1$data <- r$dataCube0.5$data <- r$dataCube$data
      } else {
-       r$dataCube %>%
-         filter(data, family %in% input$family) %>%
-         filter(data, scientificName %in% input$species)
+       r$dataCube1$data <-
+         r$dataCube0.5$data <-
+         r$dataCube$data %>%
+         filter(family %in% input$family)
      }
-   })
+   }, ignoreNULL = FALSE)
+
+   # subset cube by species based on user input
+   observeEvent(c(input$species, input$family), {
+     if (is.null(input$species)) {
+       r$dataCube1$data <- r$dataCube0.5$data
+     } else {
+       r$dataCube1$data <-
+         r$dataCube0.5$data %>%
+         filter(scientificName %in% input$species)
+     }
+   }, ignoreNULL = FALSE)
+
+
+   # observeEvent(c(input$family, input$species), {
+   #
+   #   if (is.null(input$family) & is.null(input$species)) {
+   #     dataCube1()$data <- r$dataCube$data
+   #   } else if (!is.null(input$family) & is.null(input$species)) {
+   #     dataCube1()$data <- r$dataCube$data %>%
+   #       dplyr::filter(family %in% input$family)
+   #   } else if (is.null(input$family) & !is.null(input$species)) {
+   #     dataCube1()$data <- r$dataCube$data %>%
+   #       dplyr::filter(scientificName %in% input$species)
+   #   } else {
+   #     dataCube1()$data <- r$dataCube$data %>%
+   #       dplyr::filter(family %in% input$family) %>%
+   #       dplyr::filter(scientificName %in% input$species)
+   #   }
+   # })
+
+   # dataCube1 <- eventReactive(c(input$family, input$species), {
+   #   df <- r$dataCube
+   #
+   #   if (is.null(input$family) & is.null(input$species)) {
+   #     df$data <- r$dataCube$data
+   #   } else if (!is.null(input$family) & is.null(input$species)) {
+   #     df$data <- r$dataCube$data %>%
+   #       dplyr::filter(family %in% input$family)
+   #   } else if (is.null(input$family) & !is.null(input$species)) {
+   #     df$data <- r$dataCube$data %>%
+   #       dplyr::filter(scientificName %in% input$species)
+   #   } else {
+   #     df$data <- r$dataCube$data %>%
+   #       dplyr::filter(family %in% input$family) %>%
+   #       dplyr::filter(scientificName %in% input$species)
+   #   }
+   #   df
+   #   }, ignoreNULL = FALSE)
+
+   # observeEvent(c(input$family,input$species), {
+   #
+   #        # Filter the data based on input values
+   #   dataCube1()$data <- r$dataCube$data %>%
+   #     filter(if (!is.null(input$family)) family %in% input$family else TRUE) %>%
+   #     filter(if (!is.null(input$species)) scientificName %in% input$species else TRUE)
+   #
+   # })
 
 
 
