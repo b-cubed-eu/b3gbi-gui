@@ -355,7 +355,7 @@ server <-function(input, output, session){
 
   ################################ GENERAL reactives and observers
 
-  r <- reactiveValues(dataCube = NULL)
+  r <- reactiveValues(dataCube = NULL, dataCube1 = NULL)
 
   observeEvent(input$dataCube, {
     # Load GBIF data cube
@@ -370,7 +370,7 @@ server <-function(input, output, session){
       r$dataCube <- process_cube(input$dataCube$datapath)
   #  }
 
-  #  r$dataCube1 <- r$dataCube
+    r$dataCube1 <- r$dataCube
 
   })
 
