@@ -241,13 +241,14 @@ ui <- fluidPage(
                  #the maps
                  em("Loading the plots could take a few minutes, depending on the options you have selected."),
                  HTML("<br>"),  # Adding line break for spacing
-                 HTML("<br>"),  # Adding line break for spacing
+                 em("Please provide a title for your plot:"),
+                  textInput("map_plot_title", label = NULL, value = ""),
                  actionButton("plot_map_bt", "Plot Map"),
                  HTML("<br>"),  # Adding line break for spacing
                  HTML("<br>"),  # Adding line break for spacing
                  plotOutput("plot_map"),
                  HTML("<br>"),  # Adding line break for spacing
-                 p(strong("What the heck am I looking at?")),
+                 p(strong("What am I looking at?")),
                  textOutput("figure_legend_map_text"),
                  HTML("<br>"),  # Adding line break for spacing
                  p(strong("But what does this indicator mean?")),
@@ -282,13 +283,16 @@ ui <- fluidPage(
                  #the time series
                  em("Loading the plot could take a few minutes, depending on the options you have selected."),
                  HTML("<br>"),  # Adding line break for spacing
+                 em("Please provide a title for your plot:"),
+                  textInput("ts_plot_title", label = NULL, value = ""),
+                 HTML("<br>"),  # Adding line break for spacing
                  HTML("<br>"),  # Adding line break for spacing
                  actionButton("plot_ts_bt", "Plot Time Series"),
                  HTML("<br>"),  # Adding line break for spacing
                  HTML("<br>"),  # Adding line break for spacing
                  plotlyOutput("plot_ts"),
                  HTML("<br>"),
-                 p(strong("What the heck am I looking at?")),
+                 p(strong("What am I looking at?")),
                  textOutput("figure_legend_ts_text"),
                  HTML("<br>"),
                  p(strong("But what does this indicator mean?")),
@@ -588,68 +592,6 @@ server <-function(input, output, session){
                       value = value)
   })
 
-  # units <- reactive({
-  #   stringr::str_extract(r$dataCube$resolutions, "(?<=[0-9,.]{1,6})[a-z]*$")
-  #   })
-  #
-  # res_size <- reactive({
-  #   if (units() == "degrees") {
-  #     as.numeric(stringr::str_extract(r$dataCube$resolutions,
-  #                                     "[0-9,.]*(?=degrees)"))
-  #   } else if (units() == "km") {
-  #     as.numeric(stringr::str_extract(r$dataCube$resolutions,
-  #                                    "[0-9]*(?=km)"))
-  #   }
-  # })
-  #
-  # defaultres <- reactive({
-  #   if (units() == "degrees") {
-  #     ifelse(res_size() > 1, res_size(), 1)
-  #   } else if (units() == "km") {
-  #     ifelse(res_size() > 10, res_size(), 10)
-  #   }
-  # })
-  #
-  # maxres <- reactive({
-  #   if (units() == "degrees") {
-  #     10
-  #   } else if (units() == "km") {
-  #     100
-  #   }
-  # })
-
-  # control spatial resolution options based on grid type of imported cube
-  # observeEvent(dataCube1(), {
-  #
-  # })
-#
-#   daterangemin <- reactive({
-#     dataCube1()$first_year
-#   })
-#
-#   daterangemax <- reactive({
-#     dataCube1()$last_year
-#   })
-#
-#   # Change the min and max values on the daterange slider when a data cube is loaded
-#   observeEvent(c(daterangemin(),daterangemax()), {
-#     min <- daterangemin()
-#     value <- c(daterangemin(), daterangemax())
-#     updateSliderInput(inputId = "daterange",
-#                       min = min,
-#                       max = max,
-#                       value = value)
-#   })
-#
-#   observeEvent(daterangemax(), {
-#     max <- daterangemax()
-#     value <- c(daterangemin(), daterangemax())
-#     updateSliderInput(inputId = "daterange",
-#                       min = min,
-#                       max = max,
-#                       value = value)
-#   })
-
   all_families <- reactive({
     req(r$dataCube)
     sort(unique(r$dataCube$data$family))
@@ -669,144 +611,77 @@ server <-function(input, output, session){
     )
   })
 
+  observeEvent(input$family, {
+    available_species <- all_species()
 
-   observeEvent(input$family, {
-     if (is.null(input$family) || length(input$family) == 0) {
-       updateSelectInput(session,
-                         inputId = "species",
-                         choices = all_species(),
-                         selected = NULL)
-     }
-   })
+    if (is.null(input$family) || length(input$family) == 0) {
+      updateSelectInput(session,
+                        inputId = "species",
+                        choices = available_species,
+                        selected = NULL)
+      r$dataCube1$data <- r$dataCube$data  # Reset data when family is deselected
 
-   observeEvent(input$family, {
-     available_species <- all_species()
+      # Debug print statement to ensure filtering is being applied
+      print(paste("Filtered data rows:", nrow(r$dataCube1$data)))
 
-     # Filter species based on family selection
-     if (!is.null(input$family) && length(input$family) > 0) {
-       available_species <- r$dataCube$data %>%
-         dplyr::filter(family %in% input$family) %>%
-         dplyr::pull(scientificName) %>%
-         unique() %>%
-         sort()
-     }
+    } else {
+      available_species <- r$dataCube$data %>%
+        dplyr::filter(family %in% input$family) %>%
+        dplyr::pull(scientificName) %>%
+        unique() %>%
+        sort()
+      updateSelectInput(
+        session,
+        inputId = "species",
+        choices = available_species,
+        selected = intersect(input$species, available_species) # Retain valid selections
+      )
+    }
+  })
 
-     updateSelectInput(
-       session,
-       inputId = "species",
-       choices = available_species,
-       selected = intersect(input$species, available_species) # Retain valid selections
-     )
-   })
+observeEvent(list(input$family, input$species), {
+  req(r$dataCube)
 
-   observeEvent(c(input$family, input$species), {
-     req(r$dataCube)
+  # Print current input state for debugging
+  if (length(input$family) == 0 && length(input$species) == 0) {
+    print("Both families and species are deselected.")
+  } else {
+    print(paste("Current Families:", 
+        ifelse(length(input$family) == 0, "None", paste(input$family, collapse = ", "))))
+    print(paste("Current Species:", 
+        ifelse(length(input$species) == 0, "None", paste(input$species, collapse = ", "))))
+  }
 
-     # Start with the full dataset
-     filtered_data <- r$dataCube$data
+  # Start with the full dataset
+  filtered_data <- r$dataCube$data
 
-     # Filter by family if a family is selected
-     if (!is.null(input$family) && length(input$family) > 0) {
-       filtered_data <- filtered_data[filtered_data$family %in% input$family, ]
-     }
+  # Filter by family if any family is selected
+  if (length(input$family) > 0) {
+    filtered_data <- filtered_data[filtered_data$family %in% input$family, ]
+  }
 
-     # Filter by species if a species is selected
-     if (!is.null(input$species) && length(input$species) > 0) {
-       filtered_data <- filtered_data[filtered_data$scientificName %in% input$species, ]
-     }
+  # Further filter by species if any species is selected
+  if (length(input$species) > 0) {
+    filtered_data <- filtered_data[filtered_data$scientificName %in% input$species, ]
+  }
 
-     # Update the reactive value with the filtered data
-     r$dataCube1$data <- filtered_data
+  # Update the reactive value with the filtered or reset data
+  r$dataCube1$data <- filtered_data
 
-     # Debug print statement to ensure filtering is being applied
-     print(paste("Filtered data rows:", nrow(filtered_data)))
-   })
+  # Debug print statement to ensure filtering is being applied
+  print(paste("Filtered data rows:", nrow(filtered_data)))
+})
 
-
-   # # subset cube by family based on user input
-   # observeEvent(input$family, {
-   #   req(r$dataCube)
-   #   # if (is.null(input$family)) {
-   #   #   r$dataCube1$data <- r$dataCube0.5$data <- r$dataCube$data
-   #   # } else {
-   #   #   r$dataCube1$data <-
-   #   #     r$dataCube0.5$data <-
-   #   #     r$dataCube$data %>%
-   #   #     filter(family %in% input$family)
-   #   # }
-   #   r$dataCube1$data <- r$dataCube$data %>%
-   #     dplyr::filter((is.null(input$species) | scientificName %in% input$species))
-   #   print("Filtered by family:")
-   #   print(r$dataCube1$data)
-   # })
-   # #}, ignoreNULL = FALSE)
-   #
-   # observeEvent(input$species, {
-   #   req(r$dataCube)
-   #   r$dataCube1$data <- r$dataCube1$data %>%
-   #     dplyr::filter((is.null(input$species) | scientificName %in% input$species))
-   #   print("Filtered by species:")
-   #   print(r$datCube1$data)
-   # })
-
-   # # subset cube by species based on user input
-   # observeEvent(c(input$species, input$family), {
-   #   if (is.null(input$species)) {
-   #     r$dataCube1$data <- r$dataCube0.5$data
-   #   } else {
-   #     r$dataCube1$data <-
-   #       r$dataCube0.5$data %>%
-   #       filter(scientificName %in% input$species)
-   #   }
-   # }, ignoreNULL = FALSE)
-
-
-   # observeEvent(c(input$family, input$species), {
-   #
-   #   if (is.null(input$family) & is.null(input$species)) {
-   #     dataCube1()$data <- r$dataCube$data
-   #   } else if (!is.null(input$family) & is.null(input$species)) {
-   #     dataCube1()$data <- r$dataCube$data %>%
-   #       dplyr::filter(family %in% input$family)
-   #   } else if (is.null(input$family) & !is.null(input$species)) {
-   #     dataCube1()$data <- r$dataCube$data %>%
-   #       dplyr::filter(scientificName %in% input$species)
-   #   } else {
-   #     dataCube1()$data <- r$dataCube$data %>%
-   #       dplyr::filter(family %in% input$family) %>%
-   #       dplyr::filter(scientificName %in% input$species)
-   #   }
-   # })
-
-   # dataCube1 <- eventReactive(c(input$family, input$species), {
-   #   df <- r$dataCube
-   #
-   #   if (is.null(input$family) & is.null(input$species)) {
-   #     df$data <- r$dataCube$data
-   #   } else if (!is.null(input$family) & is.null(input$species)) {
-   #     df$data <- r$dataCube$data %>%
-   #       dplyr::filter(family %in% input$family)
-   #   } else if (is.null(input$family) & !is.null(input$species)) {
-   #     df$data <- r$dataCube$data %>%
-   #       dplyr::filter(scientificName %in% input$species)
-   #   } else {
-   #     df$data <- r$dataCube$data %>%
-   #       dplyr::filter(family %in% input$family) %>%
-   #       dplyr::filter(scientificName %in% input$species)
-   #   }
-   #   df
-   #   }, ignoreNULL = FALSE)
-
-   # observeEvent(c(input$family,input$species), {
-   #
-   #        # Filter the data based on input values
-   #   dataCube1()$data <- r$dataCube$data %>%
-   #     filter(if (!is.null(input$family)) family %in% input$family else TRUE) %>%
-   #     filter(if (!is.null(input$species)) scientificName %in% input$species else TRUE)
-   #
-   # })
-
-
+  observeEvent(input$species, {
+    if (is.null(input$species) || length(input$species) == 0) {
+      if (is.null(input$family) || length(input$family) == 0) {
+        r$dataCube1$data <- r$dataCube$data  # Reset data when species and family are deselected
+      } else {
+        r$dataCube1$data <- r$dataCube$data %>%
+          dplyr::filter(family %in% input$family)
+      }
+    }
+  })
 
    ############################ metadata tab outputs
 
@@ -887,7 +762,7 @@ server <-function(input, output, session){
 
     # Plot diversity metric
     plot(plot_to_render_map(),
-         title = paste(input$indicatorsToAnalyse))
+         paste(title = input$map_plot_title))
   })
 
   plot_to_print_map <- reactive({
@@ -936,12 +811,10 @@ server <-function(input, output, session){
     )
   })
 
-#  observeEvent(input$plot_map_bt, {
     output$figure_legend_map_text <-
       renderText({
         fig_legend()
       })
-#  })
 
   ############################ time series tab outputs
 
@@ -981,7 +854,7 @@ server <-function(input, output, session){
     req(plot_to_render_ts())
     # Plot diversity metric
     plot(plot_to_render_ts(),
-         title = paste(input$indicatorsToAnalyse, ": Insects in Europe"))
+         title = paste(input$ts_plot_title))
   })
 
   plot_to_print_ts <- reactive({
@@ -1027,12 +900,11 @@ server <-function(input, output, session){
     )
   })
 
-#  observeEvent(input$plot_ts_bt, {
     output$figure_legend_ts_text <-
       renderText({
         fig_legend_ts()
       })
-#  })
+
 
 
 
