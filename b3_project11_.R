@@ -374,141 +374,219 @@ server <-function(input, output, session){
 
   })
 
-  observeEvent(regionupdate, {
-    choices <- regionupdate()
+  # observeEvent(regionupdate, {
+  #   choices <- regionupdate()
+  #   updateSelectInput(
+  #     inputId = "region",
+  #     choices = choices
+  #   )
+  # })
+
+  observe({
     updateSelectInput(
+      session = session,
       inputId = "region",
-      choices = choices
+      choices = regionupdate(),
+      selected = NULL
     )
   })
 
   # update input$region options based on user-selected spatial level
   regionupdate <- reactive({
     if (input$spatiallevel == "continent") {
-      continents
+      return(continents)
     } else if (input$spatiallevel == "country") {
       if (input$countrytype == "countries") {
-        if (input$mapres == "10") {
-          countries10$ADMIN
-        } else if (input$mapres == "50") {
-          countries50$ADMIN
-        } else if (input$mapres == "110") {
-          countries110$ADMIN
-        } else {
-          NULL
-        }
+        return(switch(
+          input$mapres,
+          "10" = countries10$ADMIN,
+          "50" = countries50$ADMIN,
+          "110" = countries110$ADMIN
+        ))
+        # if (input$mapres == "10") {
+        #   countries10$ADMIN
+        # } else if (input$mapres == "50") {
+        #   countries50$ADMIN
+        # } else if (input$mapres == "110") {
+        #   countries110$ADMIN
+        # } else {
+        #   NULL
+        # }
       } else if (input$countrytype == "map_units") {
-        if (input$mapres == "10") {
-          mapunits10$ADMIN
-        } else if (input$mapres == "50") {
-          mapunits50$ADMIN
-        } else if (input$mapres == "110") {
-          mapunits110$ADMIN
-        } else {
-          NULL
-        }
+        return(switch(
+          input$mapres,
+          "10" = mapunits10$ADMIN,
+          "50" = mapunits50$ADMIN,
+          "110" = mapunits110$ADMIN
+        ))
+        # if (input$mapres == "10") {
+        #   mapunits10$ADMIN
+        # } else if (input$mapres == "50") {
+        #   mapunits50$ADMIN
+        # } else if (input$mapres == "110") {
+        #   mapunits110$ADMIN
+        # } else {
+        #   NULL
+        # }
       } else if (input$countrytype == "sovereignty") {
-        if (input$mapres == "10") {
-          sovereignties10$ADMIN
-        } else if (input$mapres == "50") {
-          sovereignties50$ADMIN
-        } else if (input$mapres == "110") {
-          sovereignties110$ADMIN
-        } else {
-          NULL
-        }
+        return(switch(
+          input$mapres,
+          "10" = sovereignties10$ADMIN,
+          "50" = sovereignties50$ADMIN,
+          "110" = sovereignties110$ADMIN
+        ))
+        # if (input$mapres == "10") {
+        #   sovereignties10$ADMIN
+        # } else if (input$mapres == "50") {
+        #   sovereignties50$ADMIN
+        # } else if (input$mapres == "110") {
+        #   sovereignties110$ADMIN
+        # } else {
+        #   NULL
+        # }
       } else if (input$countrytype == "tiny_countries") {
-        if (input$mapres == "50") {
-          tinycountries50$ADMIN
-        } else if (input$mapres == "110") {
-          tinycountries110$ADMIN
-        } else {
-          NULL
-        }
+        return(switch(
+          input$mapres,
+          "50" = tinycountries50$ADMIN,
+          "110" = tinycountries110$ADMIN
+        ))
+        # if (input$mapres == "50") {
+        #   tinycountries50$ADMIN
+        # } else if (input$mapres == "110") {
+        #   tinycountries110$ADMIN
+        # } else {
+        #   NULL
+        # }
       } else {
         NULL
       }
     } else if (input$spatiallevel == "sovereignty") {
       if (input$countrytype == "countries") {
-        if (input$mapres == "10") {
-          countries10$SOVEREIGNT
-        } else if (input$mapres == "50") {
-          countries50$SOVEREIGNT
-        } else if (input$mapres == "110") {
-          countries110$SOVEREIGNT
-        } else {
-          NULL
-        }
+        return(switch(
+          input$mapres,
+          "10" = countries10$SOVEREIGNT,
+          "50" = countries50$SOVEREIGNT,
+          "110" = countries110$SOVEREIGNT
+        ))
+        # if (input$mapres == "10") {
+        #   countries10$SOVEREIGNT
+        # } else if (input$mapres == "50") {
+        #   countries50$SOVEREIGNT
+        # } else if (input$mapres == "110") {
+        #   countries110$SOVEREIGNT
+        # } else {
+        #   NULL
+        # }
       } else if (input$countrytype == "map_units") {
-        if (input$mapres == "10") {
-          mapunits10$SOVEREIGNT
-        } else if (input$mapres == "50") {
-          mapunits50$SOVEREIGNT
-        } else if (input$mapres == "110") {
-          mapunits110$SOVEREIGNT
-        } else {
-          NULL
-        }
+        return(switch(
+          input$mapres,
+          "10" = mapunits10$SOVEREIGNT,
+          "50" = mapunits50$SOVEREIGNT,
+          "110" = mapunits110$SOVEREIGNT
+        ))
+        # if (input$mapres == "10") {
+        #   mapunits10$SOVEREIGNT
+        # } else if (input$mapres == "50") {
+        #   mapunits50$SOVEREIGNT
+        # } else if (input$mapres == "110") {
+        #   mapunits110$SOVEREIGNT
+        # } else {
+        #   NULL
+        # }
       } else if (input$countrytype == "sovereignty") {
-        if (input$mapres == "10") {
-          sovereignties10$SOVEREIGNT
-        } else if (input$mapres == "50") {
-          sovereignties50$SOVEREIGNT
-        } else if (input$mapres == "110") {
-          sovereignties110$SOVEREIGNT
-        } else {
-          NULL
-        }
+        return(switch(
+          input$mapres,
+          "10" = sovereignties10$SOVEREIGNT,
+          "50" = sovereignties50$SOVEREIGNT,
+          "110" = sovereignties110$SOVEREIGNT
+        ))
+        # if (input$mapres == "10") {
+        #   sovereignties10$SOVEREIGNT
+        # } else if (input$mapres == "50") {
+        #   sovereignties50$SOVEREIGNT
+        # } else if (input$mapres == "110") {
+        #   sovereignties110$SOVEREIGNT
+        # } else {
+        #   NULL
+        # }
       } else if (input$countrytype == "tiny_countries") {
-        if (input$mapres == "50") {
-          tinycountries50$SOVEREIGNT
-        } else if (input$mapres == "110") {
-          tinycountries110$SOVEREIGNT
-        } else {
-          NULL
-        }
+        return(switch(
+          input$mapres,
+          "50" = tinycountries50$SOVEREIGNT,
+          "110" = tinycountries110$SOVEREIGNT
+        ))
+        # if (input$mapres == "50") {
+        #   tinycountries50$SOVEREIGNT
+        # } else if (input$mapres == "110") {
+        #   tinycountries110$SOVEREIGNT
+        # } else {
+        #   NULL
+        # }
       } else {
         NULL
       }
     } else if (input$spatiallevel == "geounit") {
       if (input$countrytype == "countries") {
-        if (input$mapres == "10") {
-          countries10$GEOUNIT
-        } else if (input$mapres == "50") {
-          countries50$GEOUNIT
-        } else if (input$mapres == "110") {
-          countries110$GEOUNIT
-        } else {
-          NULL
-        }
+        return(switch(
+          input$mapres,
+          "10" = countries10$GEOUNIT,
+          "50" = countries50$GEOUNIT,
+          "110" = countries110$GEOUNIT
+        ))
+        # if (input$mapres == "10") {
+        #   countries10$GEOUNIT
+        # } else if (input$mapres == "50") {
+        #   countries50$GEOUNIT
+        # } else if (input$mapres == "110") {
+        #   countries110$GEOUNIT
+        # } else {
+        #   NULL
+        # }
       } else if (input$countrytype == "map_units") {
-        if (input$mapres == "10") {
-          mapunits10$GEOUNIT
-        } else if (input$mapres == "50") {
-          mapunits50$GEOUNIT
-        } else if (input$mapres == "110") {
-          mapunits110$GEOUNIT
-        } else {
-          NULL
-        }
+        return(switch(
+          input$mapres,
+          "10" = mapunits10$GEOUNIT,
+          "50" = mapunits50$GEOUNIT,
+          "110" = mapunits110$GEOUNIT
+        ))
+        # if (input$mapres == "10") {
+        #   mapunits10$GEOUNIT
+        # } else if (input$mapres == "50") {
+        #   mapunits50$GEOUNIT
+        # } else if (input$mapres == "110") {
+        #   mapunits110$GEOUNIT
+        # } else {
+        #   NULL
+        # }
       } else if (input$countrytype == "sovereignty") {
-        if (input$mapres == "10") {
-          sovereignties10$GEOUNIT
-        } else if (input$mapres == "50") {
-          sovereignties50$GEOUNIT
-        } else if (input$mapres == "110") {
-          sovereignties110$GEOUNIT
-        } else {
-          NULL
-        }
+        return(switch(
+          input$mapres,
+          "10" = sovereignties10$GEOUNIT,
+          "50" = sovereignties50$GEOUNIT,
+          "110" = sovereignties110$GEOUNIT
+        ))
+        # if (input$mapres == "10") {
+        #   sovereignties10$GEOUNIT
+        # } else if (input$mapres == "50") {
+        #   sovereignties50$GEOUNIT
+        # } else if (input$mapres == "110") {
+        #   sovereignties110$GEOUNIT
+        # } else {
+        #   NULL
+        # }
       } else if (input$countrytype == "tiny_countries") {
-        if (input$mapres == "50") {
-          tinycountries50$GEOUNIT
-        } else if (input$mapres == "110") {
-          tinycountries110$GEOUNIT
-        } else {
-          NULL
-        }
+        return(switch(
+          input$mapres,
+          "50" = tinycountries50$GEOUNIT,
+          "110" = tinycountries110$GEOUNIT
+        ))
+        # if (input$mapres == "50") {
+        #   tinycountries50$GEOUNIT
+        # } else if (input$mapres == "110") {
+        #   tinycountries110$GEOUNIT
+        # } else {
+        #   NULL
+        # }
       } else {
         NULL
       }
@@ -849,16 +927,16 @@ server <-function(input, output, session){
                      ifelse(input$mapres == 50, "medium",
                             "small"))
 
-    region <- ifelse(length(input$region)>0, input$region, NULL)
-
     params <- list(data = r$dataCube1,
                    cell_size = input$cellsize,
                    level = input$spatiallevel,
                    first_year = input$daterange[1],
                    last_year = input$daterange[2],
                    ne_type = input$countrytype,
-                   ne_scale = mapres,
-                   region = input$region)
+                   ne_scale = mapres)
+    if (!is.null(input$region) && length(input$region) > 0) {
+      params$region <- input$region
+    }
 
     if(input$indicatorsToAnalyse == "Observed Species Richness"){
       do.call(obs_richness_map, params)
@@ -1079,3 +1157,4 @@ server <-function(input, output, session){
 }
 
 shinyApp(ui = ui, server = server)
+
