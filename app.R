@@ -1,21 +1,10 @@
-# This is a push test from Lissa
-
-#install.packages("shiny")
-#install.packages("shinyWidgets")
-#install.packages("devtools")
-#devtools::install_github("shawndove/b3gbi", force = TRUE)
-#install.packages("plotly")
-
 library(plotly)
 library(shiny)
 library(shinyWidgets)
 library(b3gbi)
 library(DT)
 library(stringr)
-
-
-#shinyWidgetsGallery()
-
+library(rnaturalearthdata)
 library(lubridate)
 library(shinyjs)
 library(jsonlite)
@@ -64,7 +53,25 @@ ui <- fluidPage(
 
 
     div(
-      HTML("<p><span style='font-size: 18px;'>Welcome to the B-Cubed: Biodiversity Indicators Shiny app!</span><br><br>The B-Cubed: Biodiversity Indicators Shiny app uses the R package <a href='https://github.com/b-cubed-eu/b3gbi' style='color: blue; text-decoration: none;'>b3gbi</a> to calculate and visualise widely used biodiversity indicators from a data cube; either one created using <a href='https://www.gbif.org/' style='color: blue; text-decoration: none;'>GBIF</a> or one created from your own data.<br><br>Start by uploading your data cube using the file browser in the left-hand panel. You can also use this panel to choose the biodiversity indicator(s), taxa, geographical area, and temporal window of interest for your data. Use the tabs to visualize the outputs.<br><br>In the Explore Your Data tab, you will find the metadata summarising your data cube. The Plot tab visualizes the biodiversity indicators on a map, the Table tab prints the data cube data, and in the Report tab, you can view the raw code used to produce outputs.</p>"),
+      HTML(paste0(
+        "<p><span style='font-size: 18px;'>Welcome to the B-Cubed: ",
+        "Biodiversity Indicators Shiny app!</span><br><br>The B-Cubed: ",
+        "Biodiversity Indicators Shiny app uses the R package <a href='",
+        "https://github.com/b-cubed-eu/b3gbi' style='color: blue; ",
+        "text-decoration: none;'>b3gbi</a> to calculate and visualise widely ",
+        "used biodiversity indicators from a data cube; either one created ",
+        "using <a href='https://www.gbif.org/' style='color: blue; ",
+        "text-decoration: none;'>GBIF</a> or one created from your own data.",
+        "<br><br>Start by uploading your data cube using the file browser in ",
+        "the left-hand panel. You can also use this panel to choose the ",
+        "biodiversity indicator(s), taxa, geographical area, and temporal ",
+        "window of interest for your data. Use the tabs to visualize the ",
+        "outputs.<br><br>In the Explore Your Data tab, you will find the ",
+        "metadata summarising your data cube. The Plot tab visualizes the ",
+        "biodiversity indicators on a map, the Table tab prints the data cube ",
+        "data, and in the Report tab, you can view the raw code used to ",
+        "produce outputs.</p>"
+      )),
       style = "font-size: 16px; color: #555;"
     )
 
@@ -123,18 +130,25 @@ ui <- fluidPage(
           selectInput(
             inputId = 'mapres',
             label = 'Map resolution',
-            choices = c("10",
+            choices = c("110",
                         "50",
-                        "110"),
+                        "10"),
             selected = "50"
           ),
 
           # Spatial region
-          selectInput(
+          selectizeInput(
             inputId = 'region',
             label = 'Subset by region',
             choices = NULL,
-            multiple = T
+            multiple = T,
+            options = list(
+              create = T,
+              delimiter = " ",
+              persist = F,
+              plugins = list('remove_button'),
+              createOnBlur = T
+            )
           ),
 
           # Spatial resolution
@@ -338,6 +352,46 @@ ui <- fluidPage(
         ),
         tabPanel(title = "Report",
                  textOutput("report_text")
+        ),
+        tabPanel(title = "About",
+                 HTML(paste0(
+                   "This Shiny app was developed by: <br>",
+                   "Shawn Dove <br>",
+                   "Yanina Sica <br>",
+                   "Lissa Breugelmans <br>",
+                   "Melanie De Nolf <br>",
+                   "Arvin C. Diesmos <br>",
+                   "Mathias Dillen <br>",
+                   "Fábio Matos <br>",
+                   "Arman Pili <br>",
+                   "<br>",
+                   "The app is a graphical front end for the b3gbi R package, ",
+                   "an output of the B-cubed project.",
+                   "<br><br>",
+                   "<div>For more information about the b3gbi R package ",
+                   "please visit the ",
+                   "<a href='https://github.com/b-cubed-eu/b3gbi/' ",
+                   "style='color: blue; text-decoration: none;'> ",
+                   "GitHub page</a> or the ",
+                   "<a href='https://b-cubed-eu.r-universe.dev/b3gbi' ",
+                   "style='color: blue; text-decoration: none;'> ",
+                   "R Universe page </a>",
+                   "or the <a href='https://ec.europa.eu/info/funding-tenders/",
+                   "opportunities/portal/screen/opportunities/horizon-results-",
+                   "platform/83298' style='color: blue; text-decoration: ",
+                   "none;'> EU Horizon Results Platform page</a>.",
+                   "<br><br>",
+                   "For more information about the B-Cubed project ",
+                   "please visit the <a href='https://b-cubed.eu/' ",
+                   "style='color: blue; text-decoration: none;'>B-Cubed ",
+                   "website</a>.</div>",
+                   "<br>",
+                   "B-Cubed (Biodiversity Building Blocks for policy) receives ",
+                   "funding from the European Union’s Horizon Europe Research ",
+                   "and Innovation Programme (ID No 101059592).",
+                   "<br><br>",
+                   "This app is licensed under the MIT License.</div>"
+                 ))
         )
       )
     )
@@ -535,7 +589,8 @@ server <-function(input, output, session){
     choices <- reschoiceupdate()
     updateSelectInput(
       inputId = "mapres",
-      choices = choices
+      choices = choices,
+      selected = "50"
     )
   })
 
@@ -567,7 +622,7 @@ server <-function(input, output, session){
     if (units == "degrees") {
       res_size <- as.numeric(stringr::str_extract(r$dataCube$resolutions,
                                                   "[0-9,.]*(?=degrees)"))
-      defaultres <- ifelse(res_size > 1, res_size, 1)
+      defaultres <- ifelse(res_size > 0.25, res_size, 0.25)
       maxres <- 10
     } else if (units == "km") {
       res_size <- as.numeric(stringr::str_extract(r$dataCube$resolutions,
@@ -639,38 +694,38 @@ server <-function(input, output, session){
     }
   })
 
-observeEvent(list(input$family, input$species), {
-  req(r$dataCube)
+  observeEvent(list(input$family, input$species), {
+    req(r$dataCube)
 
-  # Print current input state for debugging
-  if (length(input$family) == 0 && length(input$species) == 0) {
-    print("Both families and species are deselected.")
-  } else {
-    print(paste("Current Families:",
-        ifelse(length(input$family) == 0, "None", paste(input$family, collapse = ", "))))
-    print(paste("Current Species:",
-        ifelse(length(input$species) == 0, "None", paste(input$species, collapse = ", "))))
-  }
+    # Print current input state for debugging
+    if (length(input$family) == 0 && length(input$species) == 0) {
+      print("Both families and species are deselected.")
+    } else {
+      print(paste("Current Families:",
+                  ifelse(length(input$family) == 0, "None", paste(input$family, collapse = ", "))))
+      print(paste("Current Species:",
+                  ifelse(length(input$species) == 0, "None", paste(input$species, collapse = ", "))))
+    }
 
-  # Start with the full dataset
-  filtered_data <- r$dataCube$data
+    # Start with the full dataset
+    filtered_data <- r$dataCube$data
 
-  # Filter by family if any family is selected
-  if (length(input$family) > 0) {
-    filtered_data <- filtered_data[filtered_data$family %in% input$family, ]
-  }
+    # Filter by family if any family is selected
+    if (length(input$family) > 0) {
+      filtered_data <- filtered_data[filtered_data$family %in% input$family, ]
+    }
 
-  # Further filter by species if any species is selected
-  if (length(input$species) > 0) {
-    filtered_data <- filtered_data[filtered_data$scientificName %in% input$species, ]
-  }
+    # Further filter by species if any species is selected
+    if (length(input$species) > 0) {
+      filtered_data <- filtered_data[filtered_data$scientificName %in% input$species, ]
+    }
 
-  # Update the reactive value with the filtered or reset data
-  r$dataCube1$data <- filtered_data
+    # Update the reactive value with the filtered or reset data
+    r$dataCube1$data <- filtered_data
 
-  # Debug print statement to ensure filtering is being applied
-  print(paste("Filtered data rows:", nrow(filtered_data)))
-})
+    # Debug print statement to ensure filtering is being applied
+    print(paste("Filtered data rows:", nrow(filtered_data)))
+  })
 
   observeEvent(input$species, {
     if (is.null(input$species) || length(input$species) == 0) {
@@ -720,49 +775,67 @@ observeEvent(list(input$family, input$species), {
   plot_to_render_map <- eventReactive(input$plot_map_bt, {
     req(r$dataCube1)
 
-    mapres <- ifelse(input$mapres == 10, "large",
-                     ifelse(input$mapres == 50, "medium",
-                            "small"))
-
-    region <- ifelse(length(input$region)>0, input$region, NULL)
-
-    params <- list(data = r$dataCube1,
-                   cell_size = input$cellsize,
-                   level = input$spatiallevel,
-                   first_year = input$daterange[1],
-                   last_year = input$daterange[2],
-                   ne_type = input$countrytype,
-                   ne_scale = mapres,
-                   region = input$region)
-
-    if(input$indicatorsToAnalyse == "Observed Species Richness"){
-      do.call(obs_richness_map, params)
-    } else if (input$indicatorsToAnalyse == "Total Occurrences"){
-      do.call(total_occ_map, params)
-    } else if (input$indicatorsToAnalyse == "Pielou's Evenness"){
-      do.call(pielou_evenness_map, params)
-    } else if (input$indicatorsToAnalyse == "Williams' Evenness"){
-      do.call(williams_evenness_map, params)
-    } else if (input$indicatorsToAnalyse == "Cumulative Species Richness"){
-      NULL
-    } else if (input$indicatorsToAnalyse == "Density of Occurrences"){
-      do.call(occ_density_map, params)
-    } else if (input$indicatorsToAnalyse == "Abundance-Based Rarity"){
-      do.call(ab_rarity_map, params)
-    } else if (input$indicatorsToAnalyse == "Area-Based Rarity"){
-      do.call(area_rarity_map, params)
-    } else if (input$indicatorsToAnalyse == "Mean Year of Occurrence"){
-      do.call(newness_map, params)
+    if (!input$mapres %in% c("10", "50", "110")) {
+      showNotification("Map resolution is not properly selected.", type = "error")
+      return(NULL)
     }
+
+    tryCatch({
+      withCallingHandlers({
+        mapres <- switch(input$mapres,
+                         "110" = "small",
+                         "50" = "medium",
+                         "10" = "large"
+        )
+
+        # When region is empty, ensure parameter is handled
+        region_param <- if (length(input$region) > 0) input$region else NULL
+
+        # Allow 'region' to be NULL to calculate for full dataset when not specified
+        params <- list(data = r$dataCube1,
+                       cell_size = input$cellsize,
+                       level = input$spatiallevel,
+                       first_year = input$daterange[1],
+                       last_year = input$daterange[2],
+                       ne_type = input$countrytype,
+                       ne_scale = mapres,
+                       region = region_param  # Ensure this handles NULL or entire dataset appropriately
+        )
+
+        # Example of utilizing an action if input is missing or NULL leads to avoiding
+        # ifelse usage like that
+        map <- do.call(switch(input$indicatorsToAnalyse,
+                              "Observed Species Richness" = obs_richness_map,
+                              "Total Occurrences" = total_occ_map,
+                              "Pielou's Evenness" = pielou_evenness_map,
+                              "Williams' Evenness" = williams_evenness_map,
+                              "Cumulative Species Richness" = NULL,
+                              "Density of Occurrences" = occ_density_map,
+                              "Abundance-Based Rarity" = ab_rarity_map,
+                              "Area-Based Rarity" = area_rarity_map,
+                              "Mean Year of Occurrence" = newness_map),
+                       params)
+
+        map # Return the map object
+
+      }, warning = function(w) {
+        showNotification(paste("Warning:", conditionMessage(w)), type = "warning")
+        invokeRestart("muffleWarning")
+      })
+
+    }, error = function(e) {
+      showNotification(paste("Error:", conditionMessage(e)), type = "error", duration = NULL)
+      return(NULL)
+    })
+
   })
 
   # output plot from imported cube
   output$plot_map <- renderPlot({
-    req(plot_to_render_map())
+    map <- plot_to_render_map()
+    req(map, message = "Plot data not generated.")
 
-    # Plot diversity metric
-    plot(plot_to_render_map(),
-         paste(title = input$map_plot_title))
+    plot(map, title = input$map_plot_title)
   })
 
   plot_to_print_map <- reactive({
@@ -811,10 +884,10 @@ observeEvent(list(input$family, input$species), {
     )
   })
 
-    output$figure_legend_map_text <-
-      renderText({
-        fig_legend()
-      })
+  output$figure_legend_map_text <-
+    renderText({
+      fig_legend()
+    })
 
   ############################ time series tab outputs
 
@@ -822,31 +895,40 @@ observeEvent(list(input$family, input$species), {
   plot_to_render_ts <- eventReactive(input$plot_ts_bt, {
     req(r$dataCube1)
 
-    params <- list(data = r$dataCube1,
-                   cell_size = input$cellsize,
-                   level = input$spatiallevel,
-                   first_year = input$daterange[1],
-                   last_year = input$daterange[2])
+    tryCatch({
+      withCallingHandlers({
+        params <- list(
+          data = r$dataCube1,
+          cell_size = input$cellsize,
+          level = input$spatiallevel,
+          first_year = input$daterange[1],
+          last_year = input$daterange[2]
+        )
 
-    if(input$indicatorsToAnalyse == "Observed Species Richness"){
-      do.call(obs_richness_ts, params)
-    } else if (input$indicatorsToAnalyse == "Total Occurrences"){
-      do.call(total_occ_ts, params)
-    } else if (input$indicatorsToAnalyse == "Pielou's Evenness"){
-      do.call(pielou_evenness_ts, params)
-    } else if (input$indicatorsToAnalyse == "Williams' Evenness"){
-      do.call(williams_evenness_ts, params)
-    } else if (input$indicatorsToAnalyse == "Cumulative Species Richness"){
-      do.call(cum_richness_ts, params)
-    } else if (input$indicatorsToAnalyse == "Density of Occurrences"){
-      do.call(occ_density_ts, params)
-    } else if (input$indicatorsToAnalyse == "Abundance-Based Rarity"){
-      do.call(ab_rarity_ts, params)
-    } else if (input$indicatorsToAnalyse == "Area-Based Rarity"){
-      do.call(area_rarity_ts, params)
-    } else if (input$indicatorsToAnalyse == "Mean Year of Occurrence"){
-      do.call(newness_ts, params)
-    }
+        ts_plot <- do.call(switch(input$indicatorsToAnalyse,
+                                  "Observed Species Richness" = obs_richness_ts,
+                                  "Total Occurrences" = total_occ_ts,
+                                  "Pielou's Evenness" = pielou_evenness_ts,
+                                  "Williams' Evenness" = williams_evenness_ts,
+                                  "Cumulative Species Richness" = cum_richness_ts,
+                                  "Density of Occurrences" = occ_density_ts,
+                                  "Abundance-Based Rarity" = ab_rarity_ts,
+                                  "Area-Based Rarity" = area_rarity_ts,
+                                  "Mean Year of Occurrence" = newness_ts),
+                           params)
+
+        ts_plot  # Return the plot object
+
+      }, warning = function(w) {
+        showNotification(paste("Warning:", conditionMessage(w)), type = "warning")
+        invokeRestart("muffleWarning")
+      })
+
+    }, error = function(e) {
+      showNotification(paste("Error:", e$message), type = "error", duration = NULL)
+      return(NULL)
+    })
+
   })
 
   # output time series from imported cube
