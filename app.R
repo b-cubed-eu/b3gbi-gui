@@ -11,7 +11,8 @@ library(jsonlite)
 
 # tiny countries not available at 10
 # type country, you get rnecountries, then ADMIN is country, etc..
-# type sovereignty, you get rnesov, then ADMIN is country, GEOUNIT is geounit, SOVEREIGNT is sovereignty
+# type sovereignty, you get rnesov, then ADMIN is country, GEOUNIT is geounit,
+#      SOVEREIGNT is sovereignty
 # type map_units, you get rnemapunits, then ADMIN is country, etc..
 # type tiny_countries, you oget rnetiny, then ADMIN is country, etc...
 continents <- readRDS("data/rnecontinents.RData")
@@ -33,10 +34,18 @@ ui <- fluidPage(
 
   # Style
   tags$head(
-    tags$title("B³ Indicators"),
-    tags$link(rel = "icon", type = "image/png", size = "32x32", href = "B3_logomark.png"),
-    tags$meta(name = "viewport", content = "width=device-width"),
-    tags$link(rel = "stylesheet", type = "text/css", href = "style.css"),
+    tags$title(
+      "B³ Indicators"
+    ),
+    tags$link(
+      rel = "icon", type = "image/png", size = "32x32", href = "B3_logomark.png"
+    ),
+    tags$meta(
+      name = "viewport", content = "width=device-width"
+    ),
+    tags$link(
+      rel = "stylesheet", type = "text/css", href = "style.css"
+    ),
     tags$link(
       href = "https://fonts.googleapis.com/css2?family=PT+Sans+Narrow:wght@400;700&display=swap",
       rel = "stylesheet"
@@ -48,15 +57,13 @@ ui <- fluidPage(
   # Application title
 
   titlePanel(title = span(img(src = "B3_logomark.png", height = 50),
-    "B-Cubed: General Biodiversity Indicators",
-    style = "color:#000"
+                          "B-Cubed: General Biodiversity Indicators",
+                          style = "color:#000"
   )),
   (
-
-
     div(
       HTML(paste0(
-        "<p><span style='font-size: 18px;'>Welcome to the B-Cubed: ",
+        "<p><span style='font-size: 18px;'><br>Welcome to the B-Cubed: ",
         "Biodiversity Indicators Shiny app!</span><br><br>The B-Cubed: ",
         "Biodiversity Indicators Shiny app uses the R package <a href='",
         "https://github.com/b-cubed-eu/b3gbi' style='color: blue; ",
@@ -72,12 +79,12 @@ ui <- fluidPage(
         "metadata summarising your data cube. The Plot tab visualizes the ",
         "biodiversity indicators on a map, the Table tab prints the data cube ",
         "data, and in the Report tab, you can view the raw code used to ",
-        "produce outputs.</p>"
+        "produce outputs.<br></p>"
       )),
       style = "font-size: 16px; color: #555;"
     )
-
   ),
+
   sidebarLayout(
 
     #######################################################
@@ -87,14 +94,17 @@ ui <- fluidPage(
       tabsetPanel(
         tabPanel(
           "Data cube",
+
           # input$dataCube
           fileInput(
             inputId = "dataCube",
             label = HTML("Upload the data cube")
           ),
         ),
+
         tabPanel(
           "Input filters",
+
           # the indicators
           selectInput(
             inputId = "indicatorsToAnalyse",
@@ -114,7 +124,7 @@ ui <- fluidPage(
               "sovereignty",
               "geounit"
             ),
-            selected = "country"
+            selected = "cube"
           ),
 
           # Country type
@@ -158,8 +168,10 @@ ui <- fluidPage(
           ),
 
           # Spatial resolution
-          numericInput("cellsize",
-            "Spatial resolution in kilometers or degrees (depending on grid type)",
+          numericInput(
+            "cellsize",
+            paste0("Spatial resolution in kilometers or degrees (depending on ",
+                   "grid type)"),
             min = 0,
             max = 100,
             step = 1,
@@ -168,11 +180,11 @@ ui <- fluidPage(
 
           # Date range
           sliderInput("daterange",
-            "Date range:",
-            min = 1100,
-            max = year(Sys.Date()),
-            value = c(1100, year(Sys.Date())),
-            sep = ""
+                      "Date range:",
+                      min = 1100,
+                      max = year(Sys.Date()),
+                      value = c(1100, year(Sys.Date())),
+                      sep = ""
           ),
 
           # Select by family name
@@ -182,7 +194,6 @@ ui <- fluidPage(
             choices = NULL,
             multiple = T
           ),
-
 
           # Select by species scientific name
           selectInput( ## select taxa from the database
@@ -203,65 +214,89 @@ ui <- fluidPage(
     # output = tables, plots, texts
     mainPanel(
       tabsetPanel(
+
         tabPanel(
           title = "Explore Your Data",
+          HTML("<br>"), # Adding line break for spacing
           ## output$metadata
-          textOutput("meta_text"),
+          em(
+            "In this tab you can view the metadata summarising ",
+            "your data cube."
+          ),
+          HTML("<br>"),
+          HTML("<br>"),
+       #   textOutput("meta_text"),
           verbatimTextOutput("metadata"),
           HTML("<br>"),
-          HTML("<br>"),
+          HTML("<br>")
         ),
+
         tabPanel(
           title = "Background",
-          em("In this tab you can view all available biodiversity indicators."),
+          HTML("<br>"),
+          em(
+            "In this tab you can view information on available biodiversity ",
+            "indicators."
+          ),
           h3("Biodiversity Indicators"),
           HTML("<br>"),
           em("Occurrences"),
           p(strong("Total Occurrences")),
           p(
-            "The total number of occurrences is calculated by summing the occurrences of all species ",
-            "observed for each cell or year. This variable provides an overview of the comprehensiveness ",
-            "and distribution of data in the cube being analysed, and may be helpful, or even vital, for ",
-            "interpreting the results of calculated indicators."
+            "The total number of occurrences is calculated by summing the ",
+            "occurrences of all species observed for each cell or year. This ",
+            "variable provides an overview of the comprehensiveness and ",
+            "distribution of data in the cube being analyzed, and may be ",
+            "helpful, or even vital, for interpreting the results of ",
+            "calculated indicators."
           ),
           p(strong("Density of Occurrences")),
           p(
-            "Density is calculated by summing the total number of occurrences per square kilometre for ",
-            "each cell or year. This provides similar information to total occurrences, but is adjusted ",
-            "for cell area."
+            "Density is calculated by summing the total number of occurrences ",
+            "per square km for each cell or year. This provides similar ",
+            "information to total occurrences, but is adjusted for cell area."
           ),
           HTML("<br>"),
           em("Richness"),
           p(
-            "Species richness is the total number of species present in a sample (Magurran, 1988). It is ",
-            "a fundamental and commonly used measure of biodiversity, providing a simple and intuitive ",
-            "overview of the status of biodiversity. However, richness is not well suited to measuring ",
-            "biodiversity change over time, as it only decreases when local extinctions occur and thus ",
-            "lags behind abundance for negative trends. While it may act as a leading indicator of alien ",
-            "species invasions, it will not indicate establishment because it ignores abundance. Nor will ",
-            "it necessarily indicate changes in local species composition, which can occur without any ",
-            "change in richness. Although richness is conceptually simple, it can be measured in different ",
-            "ways."
+            "Species richness is the total number of species present in a ",
+            "sample (Magurran, 1988). It is a fundamental and commonly used ",
+            "measure of biodiversity, providing a simple and intuitive ",
+            "overview of the status of biodiversity. However, richness is not ",
+            "well suited to measuring biodiversity change over time, as it ",
+            "only decreases when local extinctions occur and thus lags behind ",
+            "abundance for negative trends. While it may act as a leading ",
+            "indicator of alien species invasions, it will not indicate ",
+            "establishment because it ignores abundance. Nor will it ",
+            "necessarily indicate changes in local species composition, which ",
+            "can occur without any change in richness. Although richness is ",
+            "conceptually simple, it can be measured in different ways."
           ),
           p(strong("Cumulative Species Richness")),
           p(
-            "Cumulative richness is calculated by adding the newly observed unique species each year to a ",
-            "cumulative sum. This indicator provides an estimation of whether and how many new species are ",
-            "still being discovered in a region. While an influx of alien species could cause an increase ",
-            "in cumulative richness, a fast-rising trend as shown in Fig. 2 is likely an indication that ",
-            "the dataset is not comprehensive and therefore observed richness will provide an underestimate ",
-            "of species richness."
+            "Cumulative richness is calculated by adding the newly observed ",
+            "unique species each year to a cumulative sum. This indicator ",
+            "provides an estimation of whether and how many new species are ",
+            "still being discovered in a region. While an influx of alien ",
+            "species could cause an increase in cumulative richness, a fast-",
+            "rising trend as shown in Fig. 2 is likely an indication that the ",
+            "dataset is not comprehensive and therefore observed richness ",
+            "will provide an underestimate of species richness."
           ),
           HTML("<br>"),
           em("Evenness"),
           p(
-            "Species evenness is a commonly used indicator that measures how uniformly individuals are ",
-            "distributed across species in a region or over time. It provides a complement to richness by",
-            "taking relative abundance into account. Although GBIF provides information about abundances as ",
-            "individual counts, the majority of entries lack this information. Hence, evenness can only be ",
-            "calculated using the proportions of observations rather than proportions of individuals. Strictly ",
-            "speaking, the evenness measures therefore indicate how uniformly species are represented in the ",
-            "respective data set rather than the true evenness of the ecological community."
+            "Species evenness is a commonly used indicator that measures how ",
+            "uniformly individuals are distributed across species in a region ",
+            "or over time. It provides a complement to richness by taking ",
+            "relative abundance into account. Although GBIF provides ",
+            "information about abundances as individual counts, the majority ",
+            "of entries lack this information. Hence, evenness can only be ",
+            "calculated using the proportions of observations rather than ",
+            "proportions of individuals. Strictly speaking, the evenness ",
+            "measures therefore indicate how uniformly species are ",
+            "represented in the respective data set rather than the true ",
+            "evenness of the ecological community."
           ),
           p(strong("Pielou's Evenness")),
           p("Pielou (1966)"),
@@ -270,52 +305,69 @@ ui <- fluidPage(
           HTML("<br>"),
           em("Rarity"),
           p(
-            "Rarity is the scarcity or infrequency of a particular species in an area. A rare species might ",
-            "have a small population size, a limited distribution, or a unique ecological niche (Maciel, 2021; ",
-            "Rabinowitz, 1981). Rarity can also be a biodiversity indicator when summed over multiple species ",
-            "in an area, and may provide important insight for determining conservation priorities. It can be ",
-            "measured in different ways, but we will provide workflows to calculate rarity by abundance (using ",
-            "number of occurrences as a proxy) and by area. When measured over time rarity may indicate potential ",
-            "threats or changes in the environment."
+            "Rarity is the scarcity or infrequency of a particular species in ",
+            "an area. A rare species might have a small population size, a ",
+            "limited distribution, or a unique ecological niche (Maciel, ",
+            "2021; Rabinowitz, 1981). Rarity can also be a biodiversity ",
+            "indicator when summed over multiple species in an area, and may ",
+            "provide important insight for determining conservation ",
+            "priorities. It can be measured in different ways, but we will ",
+            "provide workflows to calculate rarity by abundance (using the ",
+            "number of occurrences as a proxy) and by area. When measured ",
+            "over time, rarity may indicate potential threats or changes in ",
+            "the environment."
           ),
           p(strong("Abundance-Based Rarity")),
           p(
-            "Abundance-based rarity is the inverse of the proportion of total occurrences represented by a ",
-            "particular species. The total summed rarity for each grid cell or year is calculated (sum the ",
+            "Abundance-based rarity is the inverse of the proportion of total ",
+            "occurrences represented by a particular species. The total ",
+            "summed rarity for each grid cell or year is calculated (sum the ",
             "rarity values of each species present there)."
           ),
           p(strong("Area-Based Rarity")),
           p(
-            "Area-based rarity is the inverse of occupancy frequency (proportion of grid cells occupied) for a ",
-            "particular species. The total summed rarity for each grid cell or year is calculated (sum the ",
-            "rarity values of each species present there)."
+            "Area-based rarity is the inverse of occupancy frequency ",
+            "(proportion of grid cells occupied) for a particular species. ",
+            "The total summed rarity for each grid cell or year is calculated ",
+            "(sum the rarity values of each species present there)."
           ),
           HTML("<br>"),
           p(strong("Mean Year of Occurrence")),
           p(
-            "The mean year of occurrence is calculated per cell, giving an indication of how recent the data is ",
-            "for each cell. A recent mean year is not necessarily an indication of quality, as some countries or ",
-            "regions have been conducting comprehensive biodiversity monitoring for many years and will therefore ",
-            "reflect an older mean year of occurrence, while others may show a recent mean year due to e.g. the ",
-            "sudden availability of large amounts of citizen science data."
+            "The mean year of occurrence is calculated per cell, giving an ",
+            "indication of how recent the data is for each cell. A recent ",
+            "mean year is not necessarily an indication of quality, as some ",
+            "countries or regions have been conducting comprehensive ",
+            "biodiversity monitoring for many years and will therefore ",
+            "reflect an older mean year of occurrence, while others may show ",
+            "a recent mean year due to e.g., the sudden availability of large ",
+            "amounts of citizen science data."
           ),
-          HTML("<br>") # Adding line break for spacing
+          HTML("<br>")  # Adding line break for spacing
         ),
 
         ############################# Map tab
 
         tabPanel(
           title = "Map",
+          HTML("<br>"),  # Adding line break for spacing
           em(
-            "In this tab you can view your selected biodiversity indicator projected onto a map. Use the ",
-            "left-hand panel to select the indicator, taxa, geographical area, and temporal window of interest."
+            "In this tab you can view your selected biodiversity indicator ",
+            "projected onto a map. Use the left-hand panel to select the ",
+            "indicator, taxa, geographical area, and temporal window of ",
+            "interest."
           ),
-          HTML("<br>"), # Adding line break for spacing
-          # the maps
-          em("Loading the plots could take a few minutes, depending on the options you have selected."),
-          HTML("<br>"), # Adding line break for spacing
+          HTML("<br>"),  # Adding line break for spacing
+          HTML("<br>"),  # Adding line break for spacing
+          em(
+            "Loading the plots could take a few minutes, depending on the ",
+            "options you have selected."
+          ),
+          HTML("<br>"),  # Adding line break for spacing
+          HTML("<br>"),  # Adding line break for spacing
           em("Please provide a title for your plot:"),
           textInput("map_plot_title", label = NULL, value = ""),
+          HTML("<br>"),  # Adding line break for spacing
           actionButton("plot_map_bt", "Plot Map"),
           HTML("<br>"), # Adding line break for spacing
           HTML("<br>"), # Adding line break for spacing
@@ -350,23 +402,30 @@ ui <- fluidPage(
               style = "padding:18px;"
             )
           ),
+          HTML("<br>")  # Adding line break for spacing
         ),
         ############################# Time Series tab
 
 
         tabPanel(
           title = "Time-series",
+          HTML("<br>"), # Adding line break for spacing
           em(
-            "In this tab you can view the time-series plot of your selected biodiversity indicator. Use the ",
-            "left-hand panel to select the indicator, taxa, geographical area, and temporal window of interest."
+            "In this tab you can view the time-series plot of your selected ",
+            "biodiversity indicator. Use the left-hand panel to select the ",
+            "indicator, taxa, geographical area, and temporal window of ",
+            "interest."
           ),
-          HTML("<br>"), # Adding line break for spacin
-          # the time series
-          em("Loading the plot could take a few minutes, depending on the options you have selected."),
+          HTML("<br>"), # Adding line break for spacing
+          HTML("<br>"), # Adding line break for spacing
+          em(
+            "Loading the plot could take a few minutes, depending on the ",
+            "options you have selected."
+          ),
+          HTML("<br>"),  # Adding line break for spacing
           HTML("<br>"), # Adding line break for spacing
           em("Please provide a title for your plot:"),
           textInput("ts_plot_title", label = NULL, value = ""),
-          HTML("<br>"), # Adding line break for spacing
           HTML("<br>"), # Adding line break for spacing
           actionButton("plot_ts_bt", "Plot Time Series"),
           HTML("<br>"), # Adding line break for spacing
@@ -378,20 +437,19 @@ ui <- fluidPage(
           HTML("<br>"),
           p(strong("But what does this indicator mean?")),
           p("Please consult the background tab for now"),
-          HTML("<br>"),
           fluidRow(
             column(
               selectizeInput("downloadOptions_ts",
-                "Download Formats",
-                choices = c(
-                  "EPS",
-                  "JPEG",
-                  "PDF",
-                  "PNG",
-                  "SVG",
-                  "TEX",
-                  "TIFF"
-                )
+                             "Download Formats",
+                             choices = c(
+                               "EPS",
+                               "JPEG",
+                               "PDF",
+                               "PNG",
+                               "SVG",
+                               "TEX",
+                               "TIFF"
+                             )
               ),
               width = 6
             ),
@@ -401,10 +459,12 @@ ui <- fluidPage(
               style = "padding:18px;"
             )
           ),
+          HTML("<br>")  # Adding line break for spacing
         ),
         #####################
         tabPanel(
           title = "Table",
+          HTML("<br>"),  # Adding line break for spacing
           textOutput("table_text"),
           HTML("<br>"), # Adding line break for spacing
           HTML("<br>"), # Adding line break for spacing
@@ -412,25 +472,32 @@ ui <- fluidPage(
         ),
         tabPanel(
           title = "Export",
+          HTML("<br>"),  # Adding line break for spacing
           HTML("<div>Download the processed data cube here.</div>"),
           HTML("<br>"), # Adding line break for spacing
-          HTML("<br>"), # Adding line break for spacing
           downloadButton("downloadProcessedCube",
-            label = "Processed Cube"
+                         label = "Processed Cube"
           ),
           downloadButton("downloadMappedCube",
-            label = "Mapped Cube"
+                         label = "Mapped Cube"
           ),
           downloadButton("downloadTimeSeriesData",
-            label = "Time Series Data"
+                         label = "Time Series Data"
           )
         ),
-        tabPanel(
-          title = "Report",
-          textOutput("report_text")
-        ),
+        # tabPanel(
+        #   title = "Report",
+        #   HTML("<br>"),  # Adding line break for spacing
+        #   em(
+        #     "In this tab you can view a report summarising the code that was ",
+        #     "used to plot biodversity indicators from your data cube."
+        #   ),
+        #   textOutput("report_text"),
+        #   HTML("<br>")  # Adding line break for spacing
+        # ),
         tabPanel(
           title = "About",
+          HTML("<br>"),  # Adding line break for spacing
           HTML(paste0(
             "This Shiny app was developed by: <br>",
             "Shawn Dove <br>",
@@ -468,7 +535,8 @@ ui <- fluidPage(
             "and Innovation Programme (ID No 101059592).",
             "<br><br>",
             "This app is licensed under the MIT License.</div>"
-          ))
+          )),
+          HTML("<br>"),  # Adding line break for spacing
         )
       )
     )
@@ -826,21 +894,11 @@ server <- function(input, output, session) {
 
   ############################ metadata tab outputs
 
-  # output message for metadata tab
-  output$meta_text <- renderText(
-    paste("In this tab you will be able to view the metadata summarising your data cube.", input$metadata)
-  )
-
+  # output metadata from imported cube
   output$metadata <- renderPrint({
     req(r$dataCube1)
     r$dataCube1
   })
-
-  # output message for report tab
-  output$report_text <- renderText(
-    paste("In this tab you can view a report summarising the code that was used to plot biodversity indicators from your data cube.", input$report_text)
-  )
-
 
   ############################ table tab outputs
 
@@ -1147,3 +1205,4 @@ server <- function(input, output, session) {
 }
 
 shinyApp(ui = ui, server = server)
+
