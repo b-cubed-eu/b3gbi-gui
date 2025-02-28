@@ -219,18 +219,13 @@ ui <- fluidPage(
             "title",
             label = "Custom Plot Title"
           ),
-          conditionalPanel(
-            condition = "input.title.length >= 40",
-            tags$hr(),
-            numericInput(
-              "wrap_length",
-              label = "Title Wrap Length (max. characters on a single line)",
-              min = 40,
-              max = 200,
-              step = 5,
-              value = 60
-            ),
-            tags$hr()
+          numericInput(
+            "wrap_length",
+            label = "Title Wrap Length (max. characters on a single line)",
+            min = 20,
+            max = 200,
+            step = 5,
+            value = 60
           ),
           checkboxInput(
             "ts_options",
@@ -244,10 +239,18 @@ ui <- fluidPage(
               label = "Custom X-Axis Label",
               value = ""
             ),
-            textInput(
-              "ts_y_label",
-              label = "Custom Y-Axis Label",
-              value = ""
+            checkboxInput(
+              "suppress_y",
+              label = "Suppress Y-Axis Values",
+              value = FALSE
+            ),
+            conditionalPanel(
+              condition = "input.suppress_y == false",
+              textInput(
+                "ts_y_label",
+                label = "Custom Y-Axis Label",
+                value = ""
+              )
             ),
 
             checkboxInput(
@@ -261,32 +264,32 @@ ui <- fluidPage(
                 "ts_x_expand_left",
                 paste0("Expand X Axis: Left"),
                 min = 0,
-                max = 100,
-                step = 0.1,
+                max = 1,
+                step = 0.01,
                 value = 0
               ),
               numericInput(
                 "ts_x_expand_right",
                 paste0("Expand X Axis: Right"),
                 min = 0,
-                max = 100,
-                step = 0.1,
+                max = 1,
+                step = 0.01,
                 value = 0
               ),
               numericInput(
                 "ts_y_expand_top",
                 paste0("Expand Y Axis: Top"),
                 min = 0,
-                max = 100,
-                step = 0.1,
+                max = 1,
+                step = 0.01,
                 value = 0
               ),
               numericInput(
                 "ts_y_expand_bottom",
                 paste0("Expand Y Axis: Bottom"),
                 min = 0,
-                max = 100,
-                step = 0.1,
+                max = 1,
+                step = 0.01,
                 value = 0
               ),
               tags$hr()
@@ -300,7 +303,7 @@ ui <- fluidPage(
               value = 10
             ),
             numericInput(
-              "ts_x_breaks",
+              "ts_y_breaks",
               paste0("Number of Y Axis Breaks (approximate)"),
               min = 0,
               max = 100,
@@ -317,8 +320,8 @@ ui <- fluidPage(
               "point_line",
               label = "Plot Indicator Values as Points or Line",
               choices = c(
-                "Points",
-                "Line"
+                "point",
+                "line"
               ),
               selected = "Points"
             ),
@@ -350,8 +353,8 @@ ui <- fluidPage(
               value = "darkorange"
             ),
             numericInput(
-              "line_alpha",
-              paste0("Transparency of Indicator Values"),
+              "linealpha",
+              paste0("Transparency of Indicator Line or Points"),
               min = 0,
               max = 1,
               step = 0.05,
@@ -654,10 +657,7 @@ ui <- fluidPage(
             "options you have selected."
           ),
           HTML("<br>"),  # Adding line break for spacing
-          HTML("<br>"),  # Adding line break for spacing
-          em("Please provide a title for your plot:"),
-          textInput("map_plot_title", label = NULL, value = ""),
-          HTML("<br>"),  # Adding line break for spacing
+          HTML("<br>"),
           actionButton("plot_map_bt", "Plot Map"),
           HTML("<br>"), # Adding line break for spacing
           HTML("<br>"), # Adding line break for spacing
@@ -713,10 +713,7 @@ ui <- fluidPage(
             "options you have selected."
           ),
           HTML("<br>"),  # Adding line break for spacing
-          HTML("<br>"), # Adding line break for spacing
-          em("Please provide a title for your plot:"),
-          textInput("ts_plot_title", label = NULL, value = ""),
-          HTML("<br>"), # Adding line break for spacing
+          HTML("<br>"),
           actionButton("plot_ts_bt", "Plot Time Series"),
           HTML("<br>"), # Adding line break for spacing
           HTML("<br>"), # Adding line break for spacing
@@ -1182,6 +1179,31 @@ server <- function(input, output, session) {
     }
   })
 
+  observeEvent(input$ts_expand, {
+    if (input$ts_expand == FALSE) {
+      updateNumericInput(
+        session,
+        inputId = "ts_x_expand_left",
+        value = 0
+      )
+      updateNumericInput(
+        session,
+        inputId = "ts_x_expand_right",
+        value = 0
+      )
+      updateNumericInput(
+        session,
+        inputId = "ts_y_expand_top",
+        value = 0
+      )
+      updateNumericInput(
+        session,
+        inputId = "ts_y_expand_bottom",
+        value = 0
+      )
+    }
+  })
+
   ############################ metadata tab outputs
 
   # output metadata from imported cube
@@ -1227,7 +1249,6 @@ server <- function(input, output, session) {
             # When region is empty, ensure parameter is handled
             region_param <- if (length(input$region) > 0) input$region else NULL
 
-            # Allow 'region' to be NULL to calculate for full dataset when not specified
             params <- list(
               data = r$dataCube1,
               cell_size = input$cellsize,
@@ -1236,7 +1257,7 @@ server <- function(input, output, session) {
               last_year = input$daterange[2],
               ne_type = input$countrytype,
               ne_scale = mapres,
-              region = region_param # Ensure this handles NULL or entire dataset appropriately
+              region = region_param
             )
 
             # Example of utilizing an action if input is missing or NULL leads to avoiding
@@ -1275,6 +1296,10 @@ server <- function(input, output, session) {
   output$plot_map <- renderPlot({
     map <- plot_to_render_map()
     req(map, message = "Plot data not generated.")
+
+    params <- list(
+      title =
+    )
 
     plot(map, title = input$map_plot_title)
   })
@@ -1385,10 +1410,76 @@ server <- function(input, output, session) {
   # output time series from imported cube
   output$plot_ts <- renderPlotly({
     req(plot_to_render_ts())
-    # Plot diversity metric
-    plot(plot_to_render_ts(),
-      title = paste(input$ts_plot_title)
+
+    ribboncolour <- if (input$ci_vis_type == "None") NA else input$ribboncolour
+    vistype <- if (input$ci_vis_type == "None") "ribbon" else input$ci_vis_type
+    gridlines <- if (input$ts_gridlines == "TRUE") FALSE else TRUE
+    if (
+      is.null(input$title) ||
+      length(input$title) == 0 ||
+      input$title == ""
+    ) {
+      title <- "auto"
+    } else {
+      title <- input$title
+    }
+    if (
+      is.null(input$ts_x_label) ||
+      length(input$ts_x_label) == 0 ||
+      input$ts_x_label == ""
+    ) {
+      xlabel <- NULL
+    } else {
+      xlabel <- input$ts_x_label
+    }
+    if (
+      is.null(input$ts_y_label) ||
+      length(input$ts_y_label) == 0 ||
+      input$ts_y_label == ""
+    ) {
+      ylabel <- NULL
+    } else {
+      ylabel <- input$ts_y_label
+    }
+
+    params <- list(
+      x = plot_to_render_ts(),
+      title = title,
+      suppress_y = input$suppress_y,
+      smoothed_trend = input$smoothed_trend,
+      x_label = xlabel,
+      y_label = ylabel,
+      x_expand = c(input$ts_x_expand_left, input$ts_x_expand_right),
+      y_expand = c(input$ts_y_expand_bottom, input$ts_y_expand_top),
+      x_breaks = input$ts_x_breaks,
+      y_breaks = input$ts_y_breaks,
+      gridoff = gridlines,
+      ci_type = input$vistype,
+      point_line = input$point_line,
+      pointsize = input$pointsize,
+      linewidth = input$linewidth,
+      linecolour = input$linecolour,
+      linealpha = input$linealpha,
+      error_width = input$error_width,
+      error_thickness = input$error_thickness,
+      error_alpha = input$error_alpha,
+      ribboncolour = ribboncolour,
+      ribbonalpha = input$ribbonalpha,
+      smooth_linetype = input$smooth_linetype,
+      smooth_linewidth = input$smooth_linewidth,
+      trendlinecolour = input$trendlinecolour,
+      trendlinealpha = input$trendlinealpha,
+      smooth_cilinewidth = input$smooth_cilinewidth,
+      envelopecolour = input$envelopecolour,
+      envelopealpha = input$envelopealpha,
+      smooth_cialpha = input$smooth_cialpha,
+      wrap_length = input$wrap_length
     )
+
+    # Plot diversity metric
+    ts_plot <- do.call(plot, params)
+
+    ts_plot
   })
 
   plot_to_print_ts <- reactive({
