@@ -232,254 +232,267 @@ ui <- fluidPage(
             ),
             tags$hr()
           ),
-          textInput(
-            "ts_x_label",
-            label = "Custom X-Axis Label",
-            value = ""
-          ),
-          textInput(
-            "ts_y_label",
-            label = "Custom Y-Axis Label",
-            value = ""
-          ),
-
           checkboxInput(
-            "ts_expand",
-            label = "Expand Axes"
+            "ts_options",
+            "Show Time Series Visualization Options",
           ),
           conditionalPanel(
-            condition = "input.ts_expand == true",
+            condition = "input.ts_options == true",
             tags$hr(),
-            numericInput(
-              "ts_x_expand_left",
-              paste0("Expand X Axis: Left"),
-              min = 0,
-              max = 100,
-              step = 0.1,
-              value = 0
+            textInput(
+              "ts_x_label",
+              label = "Custom X-Axis Label",
+              value = ""
             ),
-            numericInput(
-              "ts_x_expand_right",
-              paste0("Expand X Axis: Right"),
-              min = 0,
-              max = 100,
-              step = 0.1,
-              value = 0
+            textInput(
+              "ts_y_label",
+              label = "Custom Y-Axis Label",
+              value = ""
             ),
-            numericInput(
-              "ts_y_expand_top",
-              paste0("Expand Y Axis: Top"),
-              min = 0,
-              max = 100,
-              step = 0.1,
-              value = 0
-            ),
-            numericInput(
-              "ts_y_expand_bottom",
-              paste0("Expand Y Axis: Bottom"),
-              min = 0,
-              max = 100,
-              step = 0.1,
-              value = 0
-            ),
-            tags$hr()
-          ),
-          numericInput(
-            "ts_x_breaks",
-            paste0("Number of X Axis Breaks (approximate)"),
-            min = 0,
-            max = 100,
-            step = 1,
-            value = 10
-          ),
-          numericInput(
-            "ts_x_breaks",
-            paste0("Number of Y Axis Breaks (approximate)"),
-            min = 0,
-            max = 100,
-            step = 1,
-            value = 6
-          ),
-          checkboxInput(
-            "ts_gridlines",
-            label = "Plot grid lines",
-            value = TRUE,
-          ),
 
-          selectInput(
-            "point_line",
-            label = "Plot Indicator Values as Points or Line",
-            choices = c(
-              "Points",
-              "Line"
+            checkboxInput(
+              "ts_expand",
+              label = "Expand Axes"
             ),
-            selected = "Points"
-          ),
-          conditionalPanel(
-            condition = "input.point_line === 'Points'",
-            numericInput(
-              "pointsize",
-              paste0("Size of Indicator Points"),
-              min = 0,
-              max = 1,
-              step = 0.1,
-              value = 2
-            )
-          ),
-          conditionalPanel(
-            condition = "input.point_line === 'Line'",
-            numericInput(
-              "linewidth",
-              paste0("Width of Indicator Line"),
-              min = 0,
-              max = 1,
-              step = 0.1,
-              value = 1
-            )
-          ),
-          colourInput(
-            "linecolour",
-            label = "Colour of Indicator Line or Points",
-            value = "darkorange"
-          ),
-          numericInput(
-            "line_alpha",
-            paste0("Transparency of Indicator Values"),
-            min = 0,
-            max = 1,
-            step = 0.05,
-            value = 1
-          ),
-
-          selectInput(
-            "ci_vis_type",
-            label = "Confidence Interval Type",
-            choices = c(
-              "Error Bars",
-              "Ribbon",
-              "None"
-            ),
-            selected = "None"
-          ),
-          conditionalPanel(
-            condition = "input.ci_vis_type === 'Error Bars'",
-            tags$hr(),
-            numericInput(
-              "error_width",
-              paste0("Width of Error Bars"),
-              min = 0,
-              max = 10,
-              step = 0.1,
-              value = 1
-            ),
-            numericInput(
-              "error_thickness",
-              paste0("Thickness of Error Bars"),
-              min = 0,
-              max = 10,
-              step = 0.1,
-              value = 1
-            ),
-            numericInput(
-              "error_alpha",
-              paste0("Error Bar Transparency"),
-              min = 0,
-              max = 1,
-              step = 0.05,
-              value = 1
-            ),
-            tags$hr()
-          ),
-          conditionalPanel(
-            condition = "input.ci_vis_type === 'Ribbon'",
-            tags$hr(),
-            colourInput(
-              "ribboncolour",
-              label = "Confidence Interval Ribbon Colour",
-              value = "goldenrod1"
-            ),
-            numericInput(
-              "ribbonalpha",
-              paste0("Confidence Interval Ribbon Transparency"),
-              min = 0,
-              max = 1,
-              step = 0.05,
-              value = 0.2
-            ),
-            tags$hr()
-          ),
-
-          checkboxInput(
-            "smoothed_trend",
-            label = "Plot Smoothed Trend Line",
-          ),
-          conditionalPanel(
-            condition = "input.smoothed_trend == true",
-            tags$hr(),
-            selectInput(
-              "smooth_linetype",
-              label = "Smoothed Trend Line Type",
-              choices = c(
-                "solid",
-                "dashed",
-                "dotted",
-                "dotdash",
-                "longdash",
-                "twodash"
+            conditionalPanel(
+              condition = "input.ts_expand == true",
+              tags$hr(),
+              numericInput(
+                "ts_x_expand_left",
+                paste0("Expand X Axis: Left"),
+                min = 0,
+                max = 100,
+                step = 0.1,
+                value = 0
               ),
-              selected = "solid"
+              numericInput(
+                "ts_x_expand_right",
+                paste0("Expand X Axis: Right"),
+                min = 0,
+                max = 100,
+                step = 0.1,
+                value = 0
+              ),
+              numericInput(
+                "ts_y_expand_top",
+                paste0("Expand Y Axis: Top"),
+                min = 0,
+                max = 100,
+                step = 0.1,
+                value = 0
+              ),
+              numericInput(
+                "ts_y_expand_bottom",
+                paste0("Expand Y Axis: Bottom"),
+                min = 0,
+                max = 100,
+                step = 0.1,
+                value = 0
+              ),
+              tags$hr()
             ),
             numericInput(
-              "smooth_linewidth",
-              paste0("Trend Line Width"),
+              "ts_x_breaks",
+              paste0("Number of X Axis Breaks (approximate)"),
               min = 0,
-              max = 1,
-              step = 0.1,
-              value = 1
+              max = 100,
+              step = 1,
+              value = 10
+            ),
+            numericInput(
+              "ts_x_breaks",
+              paste0("Number of Y Axis Breaks (approximate)"),
+              min = 0,
+              max = 100,
+              step = 1,
+              value = 6
+            ),
+            checkboxInput(
+              "ts_gridlines",
+              label = "Plot grid lines",
+              value = TRUE,
+            ),
+
+            selectInput(
+              "point_line",
+              label = "Plot Indicator Values as Points or Line",
+              choices = c(
+                "Points",
+                "Line"
+              ),
+              selected = "Points"
+            ),
+            conditionalPanel(
+              condition = "input.point_line === 'Points'",
+              numericInput(
+                "pointsize",
+                paste0("Size of Indicator Points"),
+                min = 0,
+                max = 1,
+                step = 0.1,
+                value = 2
+              )
+            ),
+            conditionalPanel(
+              condition = "input.point_line === 'Line'",
+              numericInput(
+                "linewidth",
+                paste0("Width of Indicator Line"),
+                min = 0,
+                max = 1,
+                step = 0.1,
+                value = 1
+              )
             ),
             colourInput(
-              "trendlinecolour",
-              paste0("Trend Line Colour"),
-              value = "blue"
+              "linecolour",
+              label = "Colour of Indicator Line or Points",
+              value = "darkorange"
             ),
             numericInput(
-              "trendlinealpha",
-              paste0("Trend Line Transparency"),
-              min = 0,
-              max = 1,
-              step = 0.05,
-              value = 0.5
-            ),
-            numericInput(
-              "smooth_cilinewidth",
-              paste0("Trend Envelope Edge Width"),
-              min = 0,
-              max = 1,
-              step = 0.1,
-              value = 1
-            ),
-            colourInput(
-              "envelopecolour",
-              paste0("Trend Envelope Colour"),
-              value = "lightsteelblue"
-            ),
-            numericInput(
-              "envelopealpha",
-              paste0("Trend Envelope Transparency"),
-              min = 0,
-              max = 1,
-              step = 0.05,
-              value = 0.2
-            ),
-            numericInput(
-              "smooth_cialpha",
-              paste0("Trend Envelope Edge Transparency"),
+              "line_alpha",
+              paste0("Transparency of Indicator Values"),
               min = 0,
               max = 1,
               step = 0.05,
               value = 1
+            ),
+
+            selectInput(
+              "ci_vis_type",
+              label = "Confidence Interval Type",
+              choices = c(
+                "Error Bars",
+                "Ribbon",
+                "None"
+              ),
+              selected = "None"
+            ),
+            conditionalPanel(
+              condition = "input.ci_vis_type === 'Error Bars'",
+              tags$hr(),
+              numericInput(
+                "error_width",
+                paste0("Width of Error Bars"),
+                min = 0,
+                max = 10,
+                step = 0.1,
+                value = 1
+              ),
+              numericInput(
+                "error_thickness",
+                paste0("Thickness of Error Bars"),
+                min = 0,
+                max = 10,
+                step = 0.1,
+                value = 1
+              ),
+              numericInput(
+                "error_alpha",
+                paste0("Error Bar Transparency"),
+                min = 0,
+                max = 1,
+                step = 0.05,
+                value = 1
+              ),
+              tags$hr()
+            ),
+            conditionalPanel(
+              condition = "input.ci_vis_type === 'Ribbon'",
+              tags$hr(),
+              colourInput(
+                "ribboncolour",
+                label = "Confidence Interval Ribbon Colour",
+                value = "goldenrod1"
+              ),
+              numericInput(
+                "ribbonalpha",
+                paste0("Confidence Interval Ribbon Transparency"),
+                min = 0,
+                max = 1,
+                step = 0.05,
+                value = 0.2
+              ),
+              tags$hr()
+            ),
+
+            checkboxInput(
+              "smoothed_trend",
+              label = "Plot Smoothed Trend Line",
+            ),
+            conditionalPanel(
+              condition = "input.smoothed_trend == true",
+              tags$hr(),
+              selectInput(
+                "smooth_linetype",
+                label = "Smoothed Trend Line Type",
+                choices = c(
+                  "solid",
+                  "dashed",
+                  "dotted",
+                  "dotdash",
+                  "longdash",
+                  "twodash"
+                ),
+                selected = "solid"
+              ),
+              numericInput(
+                "smooth_linewidth",
+                paste0("Trend Line Width"),
+                min = 0,
+                max = 1,
+                step = 0.1,
+                value = 1
+              ),
+              colourInput(
+                "trendlinecolour",
+                paste0("Trend Line Colour"),
+                value = "blue"
+              ),
+              numericInput(
+                "trendlinealpha",
+                paste0("Trend Line Transparency"),
+                min = 0,
+                max = 1,
+                step = 0.05,
+                value = 0.5
+              ),
+              numericInput(
+                "smooth_cilinewidth",
+                paste0("Trend Envelope Edge Width"),
+                min = 0,
+                max = 1,
+                step = 0.1,
+                value = 1
+              ),
+              colourInput(
+                "envelopecolour",
+                paste0("Trend Envelope Colour"),
+                value = "lightsteelblue"
+              ),
+              numericInput(
+                "envelopealpha",
+                paste0("Trend Envelope Transparency"),
+                min = 0,
+                max = 1,
+                step = 0.05,
+                value = 0.2
+              ),
+              numericInput(
+                "smooth_cialpha",
+                paste0("Trend Envelope Edge Transparency"),
+                min = 0,
+                max = 1,
+                step = 0.05,
+                value = 1
+              ),
+              tags$hr()
             ),
             tags$hr()
+          ),
+          checkboxInput(
+            "map_options",
+            "Show Map Visualization Options",
           )
         )
       )
