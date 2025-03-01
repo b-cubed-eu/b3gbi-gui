@@ -493,6 +493,102 @@ ui <- fluidPage(
           checkboxInput(
             "map_options",
             "Show Map Visualization Options",
+          ),
+          conditionalPanel(
+            condition = "map_options = true",
+            checkboxInput(
+              "custom_map_axes",
+              "Custom X and Y Axis Limits",
+
+            ),
+            conditionalPanel(
+              condition = map_limits = "true",
+              textInput(
+                "xcoord_max",
+                "Maximum X Coordinate Value",
+                value = ""
+              ),
+              textInput(
+                "xcoord_min",
+                "Minimum X Coordinate Value",
+                value = ""
+              ),
+              textInput(
+                "ycoord_max",
+                "Maximum Y Coordinate Value",
+                value = ""
+              ),
+              textInput(
+                "ycoord_min",
+                "Minimum Y Coordinate Value",
+                value = ""
+              )
+            ),
+            checkboxInput(
+              "europe_crop_eea",
+              paste0("Crop to mainland Europe (only applies to continental ",
+              "Europe and EEA grid"),
+              value = FALSE
+            ),
+            checkboxInput(
+              "crop_to_grid",
+              "Crop map to edges of grid",
+              value = TRUE
+            ),
+            colourInput(
+              "panel_bg",
+              "Customize Background Colour for Map",
+              value = NULL
+            ),
+            colourInput(
+              "land_fill_colour",
+              "Customize Colour for Land Areas Outside of Grid",
+              value = NULL
+            ),
+            selectInput(
+              "trans",
+              "Apply Scale Transformation to Indicator Values",
+              choices = c(
+                'None' = NULL,
+                'Exponential Transformation' = transform_exp,
+                'Log Transformation' = transform_log,
+                'Log10 Transformation' = transform_log10,
+                'Log1p Transformation' = transform_log1p,
+                'Log2 Transformation' = transform_log2,
+                'Square-root Transformation' = transform_sqrt,
+                'Reciprocal Transformation' = transform_reciprocal
+              ),
+              selected = NULL
+            ),
+            textInput(
+              "breaks",
+              "Custom Break Points for Legend",
+              value = ""
+            ),
+            textInput(
+              "labels",
+              paste0("Labels for Custom Legend Break Points (must have same ",
+                     "number of labels as breaks)",
+              value = ""
+            ),
+            textInput(
+              "legend_title",
+              "Custom Legend Title",
+              value = ""
+            ),
+            textInput(
+              "legend_limits",
+              "Custom Legend Scale Limits",
+              value = ""
+            ),
+            numericInput(
+              "legend_title_wrap_length",
+              "Legend Title Wrap Length (max characters on one line)",
+              min = 10,
+              max = 100,
+              step = 2,
+              value = 20
+            )
           )
         )
       )
