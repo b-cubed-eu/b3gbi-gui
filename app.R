@@ -108,7 +108,7 @@ ui <- fluidPage(
           fileInput(
             inputId = "dataCube",
             label = HTML("Upload the data cube")
-          ),
+          )
         ),
 
         tabPanel(
@@ -212,9 +212,11 @@ ui <- fluidPage(
             multiple = T
           )
         ),
+
         tabPanel(
           title = "Visualization Options",
           HTML("<br>"),
+
           textInput(
             "title",
             label = "Custom Plot Title"
@@ -229,7 +231,7 @@ ui <- fluidPage(
           ),
           checkboxInput(
             "ts_options",
-            "Show Time Series Visualization Options",
+            "Show Time Series Visualization Options"
           ),
           conditionalPanel(
             condition = "input.ts_options == true",
@@ -313,7 +315,7 @@ ui <- fluidPage(
             checkboxInput(
               "ts_gridlines",
               label = "Plot grid lines",
-              value = TRUE,
+              value = TRUE
             ),
 
             selectInput(
@@ -421,7 +423,7 @@ ui <- fluidPage(
 
             checkboxInput(
               "smoothed_trend",
-              label = "Plot Smoothed Trend Line",
+              label = "Plot Smoothed Trend Line"
             ),
             conditionalPanel(
               condition = "input.smoothed_trend == true",
@@ -493,37 +495,40 @@ ui <- fluidPage(
             ),
             tags$hr()
           ),
+
           checkboxInput(
             "map_options",
-            "Show Map Visualization Options",
+            "Show Map Visualization Options"
           ),
+
           conditionalPanel(
-            condition = "map_options = true",
+            condition = "input.map_options == true",
+            tags$hr(),
             checkboxInput(
               "custom_map_axes",
-              "Custom X and Y Axis Limits",
-
+              "Custom X and Y Axis Limits"
             ),
             conditionalPanel(
-              condition = map_limits = "true",
-              textInput(
-                "xcoord_max",
-                "Maximum X Coordinate Value",
-                value = ""
-              ),
+              condition = "input.custom_map_axes == true",
+              tags$hr(),
               textInput(
                 "xcoord_min",
                 "Minimum X Coordinate Value",
                 value = ""
               ),
               textInput(
-                "ycoord_max",
-                "Maximum Y Coordinate Value",
+                "xcoord_max",
+                "Maximum X Coordinate Value",
                 value = ""
               ),
               textInput(
                 "ycoord_min",
                 "Minimum Y Coordinate Value",
+                value = ""
+              ),
+              textInput(
+                "ycoord_max",
+                "Maximum Y Coordinate Value",
                 value = ""
               )
             ),
@@ -553,13 +558,13 @@ ui <- fluidPage(
               "Apply Scale Transformation to Indicator Values",
               choices = c(
                 'None' = NULL,
-                'Exponential Transformation' = transform_exp,
-                'Log Transformation' = transform_log,
-                'Log10 Transformation' = transform_log10,
-                'Log1p Transformation' = transform_log1p,
-                'Log2 Transformation' = transform_log2,
-                'Square-root Transformation' = transform_sqrt,
-                'Reciprocal Transformation' = transform_reciprocal
+                'Exponential Transformation' = "exp",
+                'Log Transformation' = "log",
+                'Log10 Transformation' = "log10",
+                'Log1p Transformation' = "log1p",
+                'Log2 Transformation' = "log2",
+                'Square-root Transformation' = "sqrt",
+                'Reciprocal Transformation' = "reciprocal"
               ),
               selected = NULL
             ),
@@ -569,9 +574,11 @@ ui <- fluidPage(
               value = ""
             ),
             textInput(
-              "labels",
-              paste0("Labels for Custom Legend Break Points (must have same ",
-                     "number of labels as breaks)",
+              inputId = "labels",
+              label = paste0(
+                "Labels for Custom Legend Break Points (must have same ",
+                "number of labels as breaks)"
+              ),
               value = ""
             ),
             textInput(
@@ -736,7 +743,6 @@ ui <- fluidPage(
         ),
 
         ############################# Map tab
-
         tabPanel(
           title = "Map",
           HTML("<br>"),  # Adding line break for spacing
@@ -790,9 +796,8 @@ ui <- fluidPage(
           ),
           HTML("<br>")  # Adding line break for spacing
         ),
+
         ############################# Time Series tab
-
-
         tabPanel(
           title = "Time-series",
           HTML("<br>"), # Adding line break for spacing
@@ -881,45 +886,47 @@ ui <- fluidPage(
         tabPanel(
           title = "About",
           HTML("<br>"),  # Adding line break for spacing
-          HTML(paste0(
-            "This Shiny app was developed by: <br><br>",
-            "Shawn Dove <br>",
-            "Yanina Sica <br>",
-            "Lissa Breugelmans <br>",
-            "Melanie De Nolf <br>",
-            "Arvin C. Diesmos <br>",
-            "Mathias Dillen <br>",
-            "Fábio Matos <br>",
-            "Arman Pili <br>",
-            "<br>",
-            "The app is a graphical front end for the b3gbi R package, ",
-            "an output of the B-cubed project.",
-            "<br><br>",
-            "<div>For more information about the b3gbi R package ",
-            "please visit the ",
-            "<a href='https://github.com/b-cubed-eu/b3gbi/' ",
-            "style='color: blue; text-decoration: none;'> ",
-            "GitHub page</a> or the ",
-            "<a href='https://b-cubed-eu.r-universe.dev/b3gbi' ",
-            "style='color: blue; text-decoration: none;'> ",
-            "R Universe page </a>",
-            "or the <a href='https://ec.europa.eu/info/funding-tenders/",
-            "opportunities/portal/screen/opportunities/horizon-results-",
-            "platform/83298' style='color: blue; text-decoration: ",
-            "none;'> EU Horizon Results Platform page</a>.",
-            "<br><br>",
-            "For more information about the B-Cubed project ",
-            "please visit the <a href='https://b-cubed.eu/' ",
-            "style='color: blue; text-decoration: none;'>B-Cubed ",
-            "website</a>.</div>",
-            "<br>",
-            "B-Cubed (Biodiversity Building Blocks for policy) receives ",
-            "funding from the European Union’s Horizon Europe Research ",
-            "and Innovation Programme (ID No 101059592).",
-            "<br><br>",
-            "This app is licensed under the MIT License.</div>"
-          )),
-          HTML("<br>"),  # Adding line break for spacing
+          HTML(
+            paste0(
+              "This Shiny app was developed by: <br><br>",
+              "Shawn Dove <br>",
+              "Yanina Sica <br>",
+              "Lissa Breugelmans <br>",
+              "Melanie De Nolf <br>",
+              "Arvin C. Diesmos <br>",
+              "Mathias Dillen <br>",
+              "Fábio Matos <br>",
+              "Arman Pili <br>",
+              "<br>",
+              "The app is a graphical front end for the b3gbi R package, ",
+              "an output of the B-cubed project.",
+              "<br><br>",
+              "<div>For more information about the b3gbi R package ",
+              "please visit the ",
+              "<a href='https://github.com/b-cubed-eu/b3gbi/' ",
+              "style='color: blue; text-decoration: none;'> ",
+              "GitHub page</a> or the ",
+              "<a href='https://b-cubed-eu.r-universe.dev/b3gbi' ",
+              "style='color: blue; text-decoration: none;'> ",
+              "R Universe page </a>",
+              "or the <a href='https://ec.europa.eu/info/funding-tenders/",
+              "opportunities/portal/screen/opportunities/horizon-results-",
+              "platform/83298' style='color: blue; text-decoration: ",
+              "none;'> EU Horizon Results Platform page</a>.",
+              "<br><br>",
+              "For more information about the B-Cubed project ",
+              "please visit the <a href='https://b-cubed.eu/' ",
+              "style='color: blue; text-decoration: none;'>B-Cubed ",
+              "website</a>.</div>",
+              "<br>",
+              "B-Cubed (Biodiversity Building Blocks for policy) receives ",
+              "funding from the European Union’s Horizon Europe Research ",
+              "and Innovation Programme (ID No 101059592).",
+              "<br><br>",
+              "This app is licensed under the MIT License.</div>"
+            )
+          ),
+          HTML("<br>")  # Adding line break for spacing
         )
       )
     )
@@ -1390,14 +1397,33 @@ server <- function(input, output, session) {
 
   # output plot from imported cube
   output$plot_map <- renderPlot({
-    map <- plot_to_render_map()
-    req(map, message = "Plot data not generated.")
+    req(plot_to_render_map())
+
+    xlims <- c(as.numeric(input$xcoord_min), as.numeric(input$xcoord_max))
+    ylims <- c(as.numeric(input$ycoord_min), as.numeric(input$ycoord_max))
+    breaks <- c(as.numeric(input$breaks))
+    labels <- c(input$labels)
+    legend_limits <- c(as.numeric(input$legend_limits))
 
     params <- list(
-      title =
+      x = plot_to_render_map(),
+      title = input$title,
+      title_wrap_length = input$wrap_length,
+      xlims = xlims,
+      ylims = ylims,
+      trans = input$trans,
+      breaks = breaks,
+      labels = labels,
+      Europe_crop_EEA = input$europe_crop_eea,
+      crop_to_grid = input$crop_to_grid,
+      panel_bg = input$panel_bg,
+      land_fill_colour = input$land_fill_colour,
+      legend_title = input$legend_title,
+      legend_limits = legend_limits,
+      legend_title_wrap_length = input$legend_title_wrap_length,
     )
 
-    plot(map, title = input$map_plot_title)
+    map_plot <- do.call(plot, params)
   })
 
   plot_to_print_map <- reactive({
