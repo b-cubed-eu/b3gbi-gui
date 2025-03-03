@@ -557,7 +557,7 @@ ui <- fluidPage(
               "trans",
               "Apply Scale Transformation to Indicator Values",
               choices = c(
-                'None' = NULL,
+                'None' = "none",
                 'Exponential Transformation' = "exp",
                 'Log Transformation' = "log",
                 'Log10 Transformation' = "log10",
@@ -1399,28 +1399,73 @@ server <- function(input, output, session) {
   output$plot_map <- renderPlot({
     req(plot_to_render_map())
 
-    xlims <- c(as.numeric(input$xcoord_min), as.numeric(input$xcoord_max))
-    ylims <- c(as.numeric(input$ycoord_min), as.numeric(input$ycoord_max))
-    breaks <- c(as.numeric(input$breaks))
-    labels <- c(input$labels)
-    legend_limits <- c(as.numeric(input$legend_limits))
+    if (input$xcoord_min == "" && input$xcoord_max == "") {
+      xlims <- NULL
+    } else if (input$xcoord_min == "" || input$xcoord_max == "") {
+      stop("To plot custom coordinates you must provide both min and max.")
+    } else {
+      xlims <- c(as.numeric(input$xcoord_min), as.numeric(input$xcoord_max))
+    }
+    if (input$ycoord_min == "" && input$ycoord_max == "") {
+      ylims <- NULL
+    } else if (input$ycoord_min == "" || input$ycoord_max == "") {
+      stop("To plot custom coordinates you must provide both min and max.")
+    } else {
+      ylims <- c(as.numeric(input$ycoord_min), as.numeric(input$ycoord_max))
+    }
+
+    if (input$breaks == "") {
+      breaks <- NULL
+    } else {
+      breaks <- c(as.numeric(input$breaks))
+    }
+
+    if (input$labels == "") {
+      labels <- NULL
+    } else {
+      labels <- c(input$labels)
+    }
+
+    if (input$legend_limits == "") {
+      legend_limits <- NULL
+    } else {
+      legend_limits <- c(as.numeric(input$legend_limits))
+    }
+
+    if (input$title == "") {
+      title <- NULL
+    } else {
+      title <- input$title
+    }
+
+    if (input$legend_title == "") {
+      legend_title <- NULL
+    } else {
+      legend_title <- input$legend_title
+    }
+
+    if (input$trans == "none") {
+      trans <- NULL
+    } else {
+      trans <- input$trans
+    }
 
     params <- list(
       x = plot_to_render_map(),
-      title = input$title,
+      title = title,
       title_wrap_length = input$wrap_length,
-      xlims = xlims,
-      ylims = ylims,
-      trans = input$trans,
-      breaks = breaks,
-      labels = labels,
+      # xlims = xlims,
+      # ylims = ylims,
+      # trans = trans,
+      # breaks = breaks,
+      # labels = labels,
       Europe_crop_EEA = input$europe_crop_eea,
       crop_to_grid = input$crop_to_grid,
       panel_bg = input$panel_bg,
       land_fill_colour = input$land_fill_colour,
-      legend_title = input$legend_title,
-      legend_limits = legend_limits,
-      legend_title_wrap_length = input$legend_title_wrap_length,
+      # legend_title = legend_title,
+      # legend_limits = legend_limits,
+      legend_title_wrap_length = input$legend_title_wrap_length
     )
 
     map_plot <- do.call(plot, params)
