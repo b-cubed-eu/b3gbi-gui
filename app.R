@@ -10,6 +10,11 @@ library(shinyjs)
 library(jsonlite)
 library(colourpicker)
 
+# Check for a specific package version
+if (packageVersion("b3gbi") < "0.4.3") {
+  stop("This app requires b3gbi version 0.4.3 or higher.")
+}
+
 # tiny countries not available at 10
 # type country, you get rnecountries, then ADMIN is country, etc..
 # type sovereignty, you get rnesov, then ADMIN is country, GEOUNIT is geounit,
@@ -524,28 +529,29 @@ ui <- fluidPage(
             ),
             conditionalPanel(
               condition = "input.custom_map_axes == true",
-              tags$hr(),
-              textInput(
-                "xcoord_min",
-                "Minimum X Coordinate Value",
-                value = ""
-              ),
-              textInput(
-                "xcoord_max",
-                "Maximum X Coordinate Value",
-                value = ""
-              ),
-              textInput(
-                "ycoord_min",
-                "Minimum Y Coordinate Value",
-                value = ""
-              ),
-              textInput(
-                "ycoord_max",
-                "Maximum Y Coordinate Value",
-                value = ""
-              ),
-              tags$hr(),
+              div(class = "checkbox-container"),
+              div(class = "custom-inline",
+                  textInput(
+                    "xcoord_min",
+                    "Minimum X Coordinate Value",
+                    value = ""
+                  ),
+                  textInput(
+                    "xcoord_max",
+                    "Maximum X Coordinate Value",
+                    value = ""
+                  ),
+                  textInput(
+                    "ycoord_min",
+                    "Minimum Y Coordinate Value",
+                    value = ""
+                  ),
+                  textInput(
+                    "ycoord_max",
+                    "Maximum Y Coordinate Value",
+                    value = ""
+                  )
+              )
             ),
             checkboxInput(
               "europe_crop_eea",
@@ -572,11 +578,12 @@ ui <- fluidPage(
                     value = ""
                   )
               ),
-              div(class = "checkbox-container",
-                  checkboxInput(
-                    "custom_land_fill",
-                    ""
-                  )),
+            div(class = "checkbox-container",
+                checkboxInput(
+                  "custom_land_fill",
+                  ""
+                )
+            ),
               div(class = "custom-inline",
                   colourInput(
                     "land_fill_colour",
@@ -585,20 +592,46 @@ ui <- fluidPage(
                     value = ""
                   )
             ),
-            selectInput(
-              "trans",
-              "Apply Scale Transformation to Indicator Values",
-              choices = c(
-                'None' = "none",
-                'Exponential Transformation' = "exp",
-                'Log Transformation' = "log",
-                'Log10 Transformation' = "log10",
-                'Log1p Transformation' = "log1p",
-                'Log2 Transformation' = "log2",
-                'Square-root Transformation' = "sqrt",
-                'Reciprocal Transformation' = "reciprocal"
-              ),
-              selected = NULL
+            div(class = "checkbox-container",
+                style = "vertical-align: top;",
+                checkboxInput(
+                  "trans_yesno",
+                  ""
+                )
+            ),
+            div(class = "custom-inline",
+                selectInput(
+                  "trans",
+                  "Apply Scale Transformation to Indicator Values",
+                  choices = c(
+                    'Exponential Transformation' = "exp",
+                    'Square-root Transformation' = "sqrt",
+                    'Log Transformation' = "log",
+                    'Log10 Transformation' = "log10",
+                    'Log1p Transformation' = "log1p",
+                    'Log2 Transformation' = "log2",
+                    'Pseudo-log Transformation' = "psseudo_log",
+                    'Reciprocal Transformation' = "reciprocal",
+                    'Reverse Transformation' = "reverse",
+                    'Box-Cox Transformation' = "boxcox",
+                    'Modulus Transformation' = "modulus",
+                    'Yeo-Johnson Transformation' = "yj"
+                  ),
+                  selected = "exp"
+                ),
+                conditionalPanel(
+                  condition = "input.trans == 'boxcox' ||
+                      input.trans == 'yj' ||
+                      input.trans == 'modulus'",
+                  numericInput(
+                    "bcpower",
+                    "Box-Cox Power",
+                    min = -5,
+                    max = 5,
+                    step = 0.5,
+                    value = 1
+                  )
+                )
             ),
             textInput(
               "breaks",
@@ -624,18 +657,19 @@ ui <- fluidPage(
             ),
             conditionalPanel(
               condition = "input.legend_limits == true",
-              tags$hr(),
-              textInput(
-                "legend_min",
-                "Minimum Legend Value",
-                value = ""
-              ),
-              textInput(
-                "legend_max",
-                "Maximum Legend Value",
-                value = ""
-              ),
-              tags$hr()
+              div(class = "checkbox-container"),
+              div(class = "custom-inline",
+                  textInput(
+                    "legend_min",
+                    "Minimum Legend Value",
+                    value = ""
+                  ),
+                  textInput(
+                    "legend_max",
+                    "Maximum Legend Value",
+                    value = ""
+                  )
+              )
             ),
             numericInput(
               "legend_title_wrap_length",
@@ -996,21 +1030,14 @@ server <- function(input, output, session) {
   r <- reactiveValues(dataCube = NULL, dataCube1 = NULL)
 
   observeEvent(input$dataCube, {
-    # Load GBIF data cube
-    # cube_name <- "data/europe_species_cube.csv"
-    # req(input$dataCube$datapath)
-    # cube_name <- input$dataCube$datapath
-
-    # Prepare cube
-    #  if (!is.null(input$taxaFile$datapath)) {
-    #    r$dataCube <- process_cube_old(cube_name, input$taxaFile$datapath)
-    #  } else {
+    # Load and prepare GBIF data cube
     r$dataCube <- process_cube(input$dataCube$datapath)
-    #  }
 
+    # Create copy of cube for filtering
     r$dataCube1 <- r$dataCube
   })
 
+  # Update region selection box when region options change
   observeEvent(regionupdate, {
     choices <- regionupdate()
     updateSelectInput(
@@ -1019,7 +1046,7 @@ server <- function(input, output, session) {
     )
   })
 
-  # update input$region options based on user-selected spatial level
+  # Change input$region options based on user-selected spatial level
   regionupdate <- reactive({
     if (input$spatiallevel == "continent") {
       continents
@@ -1154,7 +1181,7 @@ server <- function(input, output, session) {
     }
   })
 
-  # update map resolution options based on country type
+  # Change map resolution options based on selected country type
   reschoiceupdate <- reactive({
     if (input$countrytype == "tiny_countries") {
       c("50", "110")
@@ -1163,6 +1190,7 @@ server <- function(input, output, session) {
     }
   })
 
+  # Update map resolution selection box when map resolution options change
   observeEvent(reschoiceupdate(), {
     choices <- reschoiceupdate()
     updateSelectInput(
@@ -1172,6 +1200,7 @@ server <- function(input, output, session) {
     )
   })
 
+  # Change country type options based on spatial level and map resolution
   countrytypeupdate <- reactive({
     if (input$spatiallevel == "continent" |
       input$spatiallevel == "world" |
@@ -1184,7 +1213,7 @@ server <- function(input, output, session) {
     }
   })
 
-  # update country type options based on spatial level and map resolution
+  # Update country type selection box when country type options change
   observeEvent(countrytypeupdate(), {
     choices <- countrytypeupdate()
     updateSelectInput(
@@ -1193,6 +1222,7 @@ server <- function(input, output, session) {
     )
   })
 
+  # Update spatial level options based on user-selected spatial level
   observeEvent(input$dataCube, {
     req(r$dataCube)
 
@@ -1235,16 +1265,19 @@ server <- function(input, output, session) {
     )
   })
 
+  # Get all families in the data cube
   all_families <- reactive({
     req(r$dataCube)
     sort(unique(r$dataCube$data$family))
   })
 
+  # Get all species in the data cube
   all_species <- reactive({
     req(r$dataCube)
     sort(unique(r$datCube$data$scientificName))
   })
 
+  # Update family selection based on available families
   observeEvent(all_families(), {
     updateSelectInput(
       session,
@@ -1254,6 +1287,7 @@ server <- function(input, output, session) {
     )
   })
 
+  # Update species selection based on family selection
   observeEvent(input$family, {
     available_species <- all_species()
 
@@ -1282,6 +1316,7 @@ server <- function(input, output, session) {
     }
   })
 
+  # Filter data based on selected families and species
   observeEvent(list(input$family, input$species), {
     req(r$dataCube)
 
@@ -1319,6 +1354,7 @@ server <- function(input, output, session) {
     print(paste("Filtered data rows:", nrow(filtered_data)))
   })
 
+  # Update species selection based on family selection
   observeEvent(input$species, {
     if (is.null(input$species) || length(input$species) == 0) {
       if (is.null(input$family) || length(input$family) == 0) {
@@ -1330,6 +1366,9 @@ server <- function(input, output, session) {
     }
   })
 
+  ############################ time series visualization observe events
+
+  # Update time series axes expansion when custom axes checkbox is deselected
   observeEvent(input$ts_expand, {
     if (input$ts_expand == FALSE) {
       updateNumericInput(
@@ -1355,6 +1394,9 @@ server <- function(input, output, session) {
     }
   })
 
+  ############################ map visualization observe events
+
+  # Update map axes when custom map axes checkbox is deselected
   observeEvent(input$custom_map_axes, {
     if (input$custom_map_axes == FALSE) {
       updateNumericInput(
@@ -1380,6 +1422,7 @@ server <- function(input, output, session) {
     }
   })
 
+  # Update legend limits when custom legend checkbox is deselected
   observeEvent(input$legend_limits, {
     if (input$legend_limits == FALSE) {
       updateTextInput(
@@ -1395,6 +1438,7 @@ server <- function(input, output, session) {
     }
   })
 
+  # Update panel background (ocean) colour when custom_bg checkbox is deselected
   observeEvent(input$custom_bg, {
     if (input$custom_bg == FALSE) {
       updateTextInput(
@@ -1405,6 +1449,7 @@ server <- function(input, output, session) {
     }
   })
 
+  # Update land fill colour when custom_land_fill checkbox is deselected
   observeEvent(input$custom_land_fill, {
     if (input$custom_land_fill == FALSE) {
       updateTextInput(
@@ -1415,6 +1460,7 @@ server <- function(input, output, session) {
     }
   })
 
+  # Convert text input for legend breaks into a numeric vector
   parsed_breaks <- reactive({
     inputText <- input$breaks
     # Remove spaces and split by comma
@@ -1423,7 +1469,7 @@ server <- function(input, output, session) {
     as.numeric(breakpointVector)
   })
 
-  # Convert text input for labels into a character vector
+  # Convert text input for legend break labels into a character vector
   parsed_labels <- reactive({
     inputLabels <- input$labels
     if (inputLabels == "") {
@@ -1431,14 +1477,6 @@ server <- function(input, output, session) {
     }
     labelVector <- unlist(strsplit(inputLabels, ",\\s*"))
     labelVector
-  })
-
-  output$parsed_breaks <- renderPrint({
-    parsed_breaks()
-  })
-
-  output$parsed_labels <- renderPrint({
-    parsed_labels()
   })
 
   ############################ metadata tab outputs
@@ -1455,6 +1493,7 @@ server <- function(input, output, session) {
   output$table_text <- renderText(
     paste("In this tab you can view your data cube as a table.", input$table_text)
   )
+
   # output interactive table from imported cube
   output$table <- renderDataTable({
     req(r$dataCube1)
@@ -1463,6 +1502,16 @@ server <- function(input, output, session) {
 
 
   ############################ map tab outputs
+
+  # output custom legend breaks
+  output$parsed_breaks <- renderPrint({
+    parsed_breaks()
+  })
+
+  # output custom legend break labels
+  output$parsed_labels <- renderPrint({
+    parsed_labels()
+  })
 
   # create map from imported cube
   plot_to_render_map <- eventReactive(input$plot_map_bt, {
@@ -1564,7 +1613,7 @@ server <- function(input, output, session) {
     if (input$legend_min == "" && input$legend_max == "") {
       legend_limits <- NULL
     } else if (input$legend_min == "" || input$legend_max == "") {
-      warning("To plot custom legend limits you must provide both min and max.")
+      stop("To plot custom legend limits you must provide both min and max.")
     } else {
       legend_limits <- c(as.numeric(input$legend_min),
                          as.numeric(input$legend_max))
@@ -1582,10 +1631,18 @@ server <- function(input, output, session) {
       legend_title <- input$legend_title
     }
 
-    if (input$trans == "none") {
+    if (input$trans_yesno == FALSE ||
+        is.null(input$trans_yesno) ||
+        is.null(input$trans)) {
       trans <- NULL
     } else {
       trans <- input$trans
+    }
+
+    if (is.null(input$bcpower) || input$bcpower == "") {
+      bcpower <- NULL
+    } else {
+      bcpower <- input$bcpower
     }
 
     if (input$land_fill_colour == "") {
@@ -1607,6 +1664,7 @@ server <- function(input, output, session) {
       xlims = xlims,
       ylims = ylims,
       trans = trans,
+      bcpower = bcpower,
       breaks = breaks,
       labels = labels,
       Europe_crop_EEA = input$europe_crop_eea,
