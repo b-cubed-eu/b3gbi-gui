@@ -51,6 +51,20 @@ ui <- fluidPage(
       href = "https://fonts.googleapis.com/css2?family=PT+Sans+Narrow:wght@400",
       ";700&display=swap",
       rel = "stylesheet"
+    ),
+    tags$style(
+      HTML("
+        .custom-inline {
+        display: inline-block;
+        align-items: right;
+        width: 90%;
+        }
+        .checkbox-container {
+        display: inline-block;
+        align-items: left;
+        width: 8%;
+        }
+        ")
     )
   ),
 
@@ -530,7 +544,8 @@ ui <- fluidPage(
                 "ycoord_max",
                 "Maximum Y Coordinate Value",
                 value = ""
-              )
+              ),
+              tags$hr(),
             ),
             checkboxInput(
               "europe_crop_eea",
@@ -543,15 +558,32 @@ ui <- fluidPage(
               "Crop map to edges of grid",
               value = TRUE
             ),
-            colourInput(
-              "panel_bg",
-              "Customize Background Colour for Map",
-              value = NULL
-            ),
-            colourInput(
-              "land_fill_colour",
-              "Customize Colour for Land Areas Outside of Grid",
-              value = NULL
+              div(class = "checkbox-container",
+                  checkboxInput(
+                    "custom_bg",
+                    ""
+                  )
+              ),
+              div(class = "custom-inline",
+                  colourInput(
+                    "panel_bg",
+                    "Customize Background (Ocean) Colour",
+                    allowTransparent = TRUE,
+                    value = ""
+                  )
+              ),
+              div(class = "checkbox-container",
+                  checkboxInput(
+                    "custom_land_fill",
+                    ""
+                  )),
+              div(class = "custom-inline",
+                  colourInput(
+                    "land_fill_colour",
+                    "Customize Colour for Land Areas Outside of Grid",
+                    allowTransparent = TRUE,
+                    value = ""
+                  )
             ),
             selectInput(
               "trans",
@@ -586,10 +618,24 @@ ui <- fluidPage(
               "Custom Legend Title",
               value = ""
             ),
-            textInput(
+            checkboxInput(
               "legend_limits",
-              "Custom Legend Scale Limits",
-              value = ""
+              "Custom Legend Scale Limits"
+            ),
+            conditionalPanel(
+              condition = "input.legend_limits == true",
+              tags$hr(),
+              textInput(
+                "legend_min",
+                "Minimum Legend Value",
+                value = ""
+              ),
+              textInput(
+                "legend_max",
+                "Maximum Legend Value",
+                value = ""
+              ),
+              tags$hr()
             ),
             numericInput(
               "legend_title_wrap_length",
@@ -1150,7 +1196,9 @@ server <- function(input, output, session) {
   observeEvent(input$dataCube, {
     req(r$dataCube)
 
-    units <- stringr::str_extract(r$dataCube$resolutions, "(?<=[0-9,.]{1,6})[a-z]*$")
+    units <- stringr::str_extract(
+      r$dataCube$resolutions,
+      "(?<=[0-9,.]{1,6})[a-z]*$")
     if (units == "degrees") {
       res_size <- as.numeric(stringr::str_extract(
         r$dataCube$resolutions,
@@ -1307,6 +1355,92 @@ server <- function(input, output, session) {
     }
   })
 
+  observeEvent(input$custom_map_axes, {
+    if (input$custom_map_axes == FALSE) {
+      updateNumericInput(
+        session,
+        inputId = "xcoord_min",
+        value = ""
+      )
+      updateNumericInput(
+        session,
+        inputId = "xcoord_max",
+        value = ""
+      )
+      updateNumericInput(
+        session,
+        inputId = "ycoord_min",
+        value = ""
+      )
+      updateNumericInput(
+        session,
+        inputId = "ycoord_max",
+        value = ""
+      )
+    }
+  })
+
+  observeEvent(input$legend_limits, {
+    if (input$legend_limits == FALSE) {
+      updateTextInput(
+        session,
+        inputId = "legend_min",
+        value = ""
+      )
+      updateTextInput(
+        session,
+        inputId = "legend_max",
+        value = ""
+      )
+    }
+  })
+
+  observeEvent(input$custom_bg, {
+    if (input$custom_bg == FALSE) {
+      updateTextInput(
+        session,
+        inputId = "panel_bg",
+        value = "#92c5f0"
+      )
+    }
+  })
+
+  observeEvent(input$custom_land_fill, {
+    if (input$custom_land_fill == FALSE) {
+      updateTextInput(
+        session,
+        inputId = "land_fill_colour",
+        value = "grey85"
+      )
+    }
+  })
+
+  parsed_breaks <- reactive({
+    inputText <- input$breaks
+    # Remove spaces and split by comma
+    breakpointVector <- unlist(strsplit(inputText, ",\\s*"))
+    # Convert to numeric, suppress any conversion warnings of invalid entries
+    as.numeric(breakpointVector)
+  })
+
+  # Convert text input for labels into a character vector
+  parsed_labels <- reactive({
+    inputLabels <- input$labels
+    if (inputLabels == "") {
+      return(NULL)
+    }
+    labelVector <- unlist(strsplit(inputLabels, ",\\s*"))
+    labelVector
+  })
+
+  output$parsed_breaks <- renderPrint({
+    parsed_breaks()
+  })
+
+  output$parsed_labels <- renderPrint({
+    parsed_labels()
+  })
+
   ############################ metadata tab outputs
 
   # output metadata from imported cube
@@ -1414,22 +1548,26 @@ server <- function(input, output, session) {
       ylims <- c(as.numeric(input$ycoord_min), as.numeric(input$ycoord_max))
     }
 
-    if (input$breaks == "") {
+    breaks <- parsed_breaks()
+    labels <- parsed_labels()
+
+    if (is.null(breaks) || input$breaks == "" || any(is.na(breaks))) {
       breaks <- NULL
-    } else {
-      breaks <- c(as.numeric(input$breaks))
     }
 
-    if (input$labels == "") {
+    if (is.null(labels) ||
+        input$labels == "" ||
+        length(labels) != length(breaks)) {
       labels <- NULL
-    } else {
-      labels <- c(input$labels)
     }
 
-    if (input$legend_limits == "") {
+    if (input$legend_min == "" && input$legend_max == "") {
       legend_limits <- NULL
+    } else if (input$legend_min == "" || input$legend_max == "") {
+      warning("To plot custom legend limits you must provide both min and max.")
     } else {
-      legend_limits <- c(as.numeric(input$legend_limits))
+      legend_limits <- c(as.numeric(input$legend_min),
+                         as.numeric(input$legend_max))
     }
 
     if (input$title == "") {
@@ -1450,25 +1588,39 @@ server <- function(input, output, session) {
       trans <- input$trans
     }
 
+    if (input$land_fill_colour == "") {
+      land_fill_colour <- NULL
+    } else {
+      land_fill_colour <- input$land_fill_colour
+    }
+
+    if (input$panel_bg == "" || is.null(input$panel_bg)) {
+      panel_bg <- NULL
+    } else {
+      panel_bg <- input$panel_bg
+    }
+
     params <- list(
       x = plot_to_render_map(),
       title = title,
       title_wrap_length = input$wrap_length,
-      # xlims = xlims,
-      # ylims = ylims,
-      # trans = trans,
-      # breaks = breaks,
-      # labels = labels,
+      xlims = xlims,
+      ylims = ylims,
+      trans = trans,
+      breaks = breaks,
+      labels = labels,
       Europe_crop_EEA = input$europe_crop_eea,
       crop_to_grid = input$crop_to_grid,
-      panel_bg = input$panel_bg,
-      land_fill_colour = input$land_fill_colour,
-      # legend_title = legend_title,
-      # legend_limits = legend_limits,
+      panel_bg = panel_bg,
+      land_fill_colour = land_fill_colour,
+      legend_title = legend_title,
+      legend_limits = legend_limits,
       legend_title_wrap_length = input$legend_title_wrap_length
     )
 
     map_plot <- do.call(plot, params)
+
+    map_plot
   })
 
   plot_to_print_map <- reactive({
