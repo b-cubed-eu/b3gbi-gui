@@ -122,6 +122,18 @@
       ],
       "Hash": "ae6cbbe1492f4de79c45fce06f967ce8"
     },
+    "abind": {
+      "Package": "abind",
+      "Version": "1.4-8",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Requirements": [
+        "R",
+        "methods",
+        "utils"
+      ],
+      "Hash": "2288423bb0f20a457800d7fc47f6aa54"
+    },
     "askpass": {
       "Package": "askpass",
       "Version": "1.2.0",
@@ -134,21 +146,19 @@
     },
     "b3gbi": {
       "Package": "b3gbi",
-      "Version": "0.4.2",
+      "Version": "0.4.3",
       "Source": "GitHub",
       "Remotes": "github::hrbrmstr/mgrs, github::ropensci/bold, github::ropensci/taxize",
       "RemoteType": "github",
       "RemoteHost": "api.github.com",
       "RemoteRepo": "b3gbi",
       "RemoteUsername": "b-cubed-eu",
-      "RemoteRef": "v0.4.2",
-      "RemoteSha": "bb3e83543d122157060ebeed56eef3b24a58ebc4",
+      "RemoteRef": "v0.4.3",
+      "RemoteSha": "b50c2042b74c3fd5fea1dbfd342c78eb5a6198ce",
       "Requirements": [
         "R",
         "boot",
         "dplyr",
-        "furrr",
-        "future",
         "ggplot2",
         "iNEXT",
         "labeling",
@@ -160,13 +170,14 @@
         "readr",
         "rlang",
         "rnaturalearth",
+        "scales",
         "sf",
         "stringr",
         "tibble",
         "tidyr",
         "units"
       ],
-      "Hash": "562ff9fc64d3e9e6a7b9b5a1df2b5d98"
+      "Hash": "3b1e5077c6db26032196057eb6ffb3e2"
     },
     "base64enc": {
       "Package": "base64enc",
@@ -297,16 +308,6 @@
       ],
       "Hash": "3f038e5ac7f41d4ac41ce658c85e3042"
     },
-    "codetools": {
-      "Package": "codetools",
-      "Version": "0.2-19",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R"
-      ],
-      "Hash": "c089a619a7fae175d149d89164f8c7d8"
-    },
     "colorspace": {
       "Package": "colorspace",
       "Version": "2.1-0",
@@ -320,6 +321,24 @@
         "stats"
       ],
       "Hash": "f20c47fd52fae58b4e377c37bb8c335b"
+    },
+    "colourpicker": {
+      "Package": "colourpicker",
+      "Version": "1.3.0",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Requirements": [
+        "R",
+        "ggplot2",
+        "htmltools",
+        "htmlwidgets",
+        "jsonlite",
+        "miniUI",
+        "shiny",
+        "shinyjs",
+        "utils"
+      ],
+      "Hash": "daec8f7d4ba89df06fe2c0802c3a9dac"
     },
     "commonmark": {
       "Package": "commonmark",
@@ -505,37 +524,6 @@
       ],
       "Hash": "47b5f30c720c23999b913a1a635cf0bb"
     },
-    "furrr": {
-      "Package": "furrr",
-      "Version": "0.3.1",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R",
-        "future",
-        "globals",
-        "lifecycle",
-        "purrr",
-        "rlang",
-        "vctrs"
-      ],
-      "Hash": "da7a4c32196cb2262a41dd5a25d486ff"
-    },
-    "future": {
-      "Package": "future",
-      "Version": "1.33.2",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "digest",
-        "globals",
-        "listenv",
-        "parallel",
-        "parallelly",
-        "utils"
-      ],
-      "Hash": "fd7b1d69d16d0d114e4fa82db68f184c"
-    },
     "generics": {
       "Package": "generics",
       "Version": "0.1.3",
@@ -572,16 +560,26 @@
       ],
       "Hash": "44c6a2f8202d5b7e878ea274b1092426"
     },
-    "globals": {
-      "Package": "globals",
-      "Version": "0.16.3",
+    "ggspatial": {
+      "Package": "ggspatial",
+      "Version": "1.1.9",
       "Source": "Repository",
-      "Repository": "CRAN",
+      "Repository": "RSPM",
       "Requirements": [
         "R",
-        "codetools"
+        "abind",
+        "ggplot2",
+        "glue",
+        "grid",
+        "methods",
+        "rlang",
+        "rosm",
+        "scales",
+        "sf",
+        "tibble",
+        "tidyr"
       ],
-      "Hash": "2580567908cafd4f187c1e5a91e98b7f"
+      "Hash": "0a4e5ed181eb823957df790ec11a28fc"
     },
     "glue": {
       "Package": "glue",
@@ -721,6 +719,16 @@
       ],
       "Hash": "0080607b4a1a7b28979aecef976d8bc2"
     },
+    "jpeg": {
+      "Package": "jpeg",
+      "Version": "0.1-10",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Requirements": [
+        "R"
+      ],
+      "Hash": "031a0b683d001a7519202f0628fc0358"
+    },
     "jquerylib": {
       "Package": "jquerylib",
       "Version": "0.1.4",
@@ -817,16 +825,6 @@
       ],
       "Hash": "b8552d117e1b808b09a832f589b79035"
     },
-    "listenv": {
-      "Package": "listenv",
-      "Version": "0.9.1",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R"
-      ],
-      "Hash": "e2fca3e12e4db979dccc6e519b10a7ee"
-    },
     "lubridate": {
       "Package": "lubridate",
       "Version": "1.9.2",
@@ -904,6 +902,18 @@
       ],
       "Hash": "18e9c28c1d3ca1560ce30658b22ce104"
     },
+    "miniUI": {
+      "Package": "miniUI",
+      "Version": "0.1.1.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "htmltools",
+        "shiny",
+        "utils"
+      ],
+      "Hash": "fec5f52652d60615fdb3957b3d74324a"
+    },
     "munsell": {
       "Package": "munsell",
       "Version": "0.5.1",
@@ -950,18 +960,6 @@
         "utils"
       ],
       "Hash": "55ddd2d4a1959535f18393478b0c14a6"
-    },
-    "parallelly": {
-      "Package": "parallelly",
-      "Version": "1.37.1",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "parallel",
-        "tools",
-        "utils"
-      ],
-      "Hash": "5410df8d22bd36e616f2a2343dbb328c"
     },
     "patchwork": {
       "Package": "patchwork",
@@ -1066,6 +1064,16 @@
         "Rcpp"
       ],
       "Hash": "6b8177fd19982f0020743fadbfdbd933"
+    },
+    "png": {
+      "Package": "png",
+      "Version": "0.1-8",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Requirements": [
+        "R"
+      ],
+      "Hash": "bd54ba8a0a5faded999a7aab6e46b374"
     },
     "prettyunits": {
       "Package": "prettyunits",
@@ -1249,6 +1257,22 @@
         "sp"
       ],
       "Hash": "0d34b89b43e900467e60f5449226f3e3"
+    },
+    "rosm": {
+      "Package": "rosm",
+      "Version": "0.3.0",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Requirements": [
+        "curl",
+        "glue",
+        "jpeg",
+        "png",
+        "progress",
+        "rlang",
+        "wk"
+      ],
+      "Hash": "fcd529f183c4163a91430d7b7bbaece5"
     },
     "rsconnect": {
       "Package": "rsconnect",
