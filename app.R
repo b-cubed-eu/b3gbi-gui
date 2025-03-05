@@ -9,6 +9,7 @@ library(lubridate)
 library(shinyjs)
 library(jsonlite)
 library(colourpicker)
+library(ggspatial)
 
 # Check for a specific package version
 if (packageVersion("b3gbi") < "0.4.3") {
@@ -102,11 +103,7 @@ ui <- fluidPage(
           "the left-hand panel. You can also use this panel to choose the ",
           "biodiversity indicator(s), taxa, geographical area, and temporal ",
           "window of interest for your data. Use the tabs to visualize the ",
-          "outputs.<br><br>In the Explore Your Data tab, you will find the ",
-          "metadata summarising your data cube. The Plot tab visualizes the ",
-          "biodiversity indicators on a map, the Table tab prints the data cube ",
-          "data, and in the Report tab, you can view the raw code used to ",
-          "produce outputs.<br></p>"
+          "outputs.<br></p>"
         )
       ),
       style = "font-size: 16px; color: #555;"
@@ -232,13 +229,38 @@ ui <- fluidPage(
           )
         ),
 
+
+      ############# General visualization options
+
         tabPanel(
           title = "Visualization Options",
           HTML("<br>"),
-
+          numericInput(
+            "plot_width",
+            label = "Plot Width (in pixels)",
+            min = 100,
+            max = 2000,
+            step = 10,
+            value = 600
+          ),
+          numericInput(
+            "plot_height",
+            label = "Plot Height (in pixels)",
+            min = 100,
+            max = 2000,
+            value = 400
+          ),
           textInput(
             "title",
-            label = "Custom Plot Title"
+            label = "Plot Title"
+          ),
+          numericInput(
+            "title_size",
+            label = "Title Font Size",
+            min = 10,
+            max = 30,
+            step = 1,
+            value = 20
           ),
           numericInput(
             "wrap_length",
@@ -248,10 +270,53 @@ ui <- fluidPage(
             step = 5,
             value = 60
           ),
+          textInput(
+            "subtitle",
+            label = "Plot Subtitle"
+          ),
+          numericInput(
+            "subtitle_size",
+            label = "Subtitle Font Size",
+            min = 10,
+            max = 30,
+            step = 1,
+            value = 16
+          ),
+          numericInput(
+            "subtitle_wrap_length",
+            label = "Subtitle Wrap Length (max. characters on a single line)",
+            min = 20,
+            max = 200,
+            step = 5,
+            value = 60
+          ),
+          textInput(
+            "caption",
+            label = "Plot Caption"
+          ),
+          numericInput(
+            "caption_size",
+            label = "Caption Font Size",
+            min = 6,
+            max = 24,
+            step = 1,
+            value = 12
+          ),
+          numericInput(
+            "caption_wrap_length",
+            label = "Caption Wrap Length (max. characters on a single line)",
+            min = 20,
+            max = 200,
+            step = 5,
+            value = 60
+          ),
           checkboxInput(
             "ts_options",
             "Show Time Series Visualization Options"
           ),
+
+     ############# Time series visualization options
+
           conditionalPanel(
             condition = "input.ts_options == true",
             tags$hr(),
@@ -273,7 +338,6 @@ ui <- fluidPage(
                 value = ""
               )
             ),
-
             checkboxInput(
               "ts_expand",
               label = "Expand Axes"
@@ -515,6 +579,8 @@ ui <- fluidPage(
             tags$hr()
           ),
 
+     ############# Map visualization options
+
           checkboxInput(
             "map_options",
             "Show Map Visualization Options"
@@ -523,6 +589,23 @@ ui <- fluidPage(
           conditionalPanel(
             condition = "input.map_options == true",
             tags$hr(),
+            checkboxInput(
+              "custom_output_crs",
+              "Manually Define Output CRS (Coordinate Reference System)",
+              value = FALSE
+            ),
+            conditionalPanel(
+              condition = "input.custom_output_crs == true",
+              div(class = "checkbox-container"),
+              div(class = "custom-inline",
+                  textInput(
+                    "output_crs",
+                    "EPSG code",
+                    value = "",
+                    placeholder = "e.g. 4326"
+                  )
+              )
+            ),
             checkboxInput(
               "custom_map_axes",
               "Custom X and Y Axis Limits"
@@ -562,7 +645,7 @@ ui <- fluidPage(
             checkboxInput(
               "crop_to_grid",
               "Crop map to edges of grid",
-              value = TRUE
+              value = FALSE
             ),
               div(class = "checkbox-container",
                   checkboxInput(
@@ -633,9 +716,12 @@ ui <- fluidPage(
                   )
                 )
             ),
+            tags$hr(),
+            HTML("<span style='font-size: 16px;'><b><u>Legend Customization ",
+                 "Options</b></u></span><br><br>"),
             textInput(
               "breaks",
-              "Custom Break Points for Legend",
+              "Custom Break Points for Legend (comma separated)",
               value = ""
             ),
             textInput(
@@ -678,8 +764,191 @@ ui <- fluidPage(
               max = 100,
               step = 2,
               value = 20
+            ),
+            tags$hr(),
+            HTML("<span style='font-size: 16px;'><b><u>Axis Customization ",
+                 "Options</b></u></span><br><br>"),
+            numericInput(
+              "xaxis_fontsize",
+              "X-Axis Label Font Size",
+              min = 1,
+              max = 30,
+              step = 0.5,
+              value = 12
+            ),
+            numericInput(
+              "yaxis_fontsize",
+              "Y-Axis Label Font Size",
+              min = 1,
+              max = 30,
+              step = 0.5,
+              value = 12
+            ),
+            textInput(
+              "xaxis_ticks",
+              "Custom X-Axis Break Points (comma separated)",
+              value = ""
+            ),
+            textInput(
+              "yaxis_ticks",
+              "Custom Y-Axis Break Points (comma separated)",
+              value = ""
+            ),
+            checkboxInput(
+              "major_gridlines",
+              "Major Grid Lines",
+              value = TRUE
+            ),
+            checkboxInput(
+              "minor_gridlines",
+              "Minor Grid Lines",
+              value = FALSE
+            ),
+            tags$hr(),
+            checkboxInput(
+              "add_scalebar",
+              "Add a Scale Bar to the Map"
+            ),
+            conditionalPanel(
+              condition = "input.add_scalebar == true",
+              div(class = "checkbox-container"),
+              div(class = "custom-inline",
+                  selectInput(
+                    "scalebar_location",
+                    "Scale Bar Location (on map)",
+                    choices = c(
+                      "bottomleft",
+                      "bottomright",
+                      "topleft",
+                      "topright"
+                    ),
+                    selected = "topright"
+                  ),
+                  numericInput(
+                    "scalebar_height",
+                    "Scale Bar Height (in pixels)",
+                    min = 0,
+                    max = 100,
+                    step = 1,
+                    value = 10
+                  ),
+                  numericInput(
+                    "scalebar_size",
+                    "Size of Scale Bar (proportional to plot area, in %)",
+                    min = 0,
+                    max = 100,
+                    step = 1,
+                    value = 10
+                  ),
+                  numericInput(
+                    "scalebar_fontsize",
+                    "Scale Bar Font Size",
+                    min = 1,
+                    max = 30,
+                    step = 0.5,
+                    value = 12
+                  ),
+                  colourInput(
+                    "scalebar_colour1",
+                    "Scale Bar Colour 1",
+                    value = "black"
+                  ),
+                  colourInput(
+                    "scalebar_colour2",
+                    "Scale Bar Colour 2",
+                    value = "white"
+                  )
+              )
+            ),
+            checkboxInput(
+              "add_northarrow",
+              "Add a North Arrow to the Map"
+            ),
+            conditionalPanel(
+              condition = "input.add_northarrow == true",
+              div(class = "checkbox-container"),
+              div(class = "custom-inline",
+                  selectInput(
+                    "northarrow_location",
+                    "North Arrow Location (on map)",
+                    choices = c(
+                      "bottomleft",
+                      "bottomright",
+                      "topleft",
+                      "topright"
+                    ),
+                    selected = "topright"
+                  ),
+                  selectInput(
+                    "northarrow_style",
+                    "North Arrow Style",
+                    choices = c(
+                      "orienteering",
+                      "fancy_orienteering",
+                      "minimal",
+                      "nautical"
+                    ),
+                    selected = "fancy_orienteering"
+                  ),
+                  numericInput(
+                    "northarrow_height",
+                    "North Arrow Height (in pixels)",
+                    min = 0,
+                    max = 100,
+                    step = 1,
+                    value = 20
+                  ),
+                  numericInput(
+                    "northarrow_width",
+                    "North Arrow Width (in pixels)",
+                    min = 0,
+                    max = 100,
+                    step = 1,
+                    value = 20
+                  ),
+                  colourInput(
+                    "northarrow_fillcolour1",
+                    "North Arrow Fill Colour 1",
+                    value = "black"
+                  ),
+                  colourInput(
+                    "northarrow_fillcolour2",
+                    "North Arrow Fill Colour 2",
+                    value = "white"
+                  ),
+                  colourInput(
+                    "northarrow_linecolour",
+                    "North Arrow Line Colour",
+                    value = "black"
+                  ),
+                  colourInput(
+                    "northarrow_textcolour",
+                    "North Arrow Text Colour",
+                    value = "black"
+                  ),
+                  numericInput(
+                    "northarrow_textsize",
+                    "North Arrow Text Size",
+                    min = 0,
+                    max = 30,
+                    step = 0.5,
+                    value = 10
+                  )
+              )
             )
-          )
+            # # Create a box for custom ggplot2 code
+            # # This is commented out due to potential security concerns
+            # tags$hr(),
+            # textAreaInput(
+            #   "ggplot_code",
+            #   "Customize plot using ggplot2 code",
+            #   value = "",
+            #   rows = 5,
+            #   placeholder = "Enter custom code here... e.g. theme(panel.border = element_blank())"
+            # ),
+            # em("*Please note that your code will only be evaluated when you",
+            # "manually click the 'Plot Map' button")
+          )#,
         )
       )
     ),
@@ -694,11 +963,10 @@ ui <- fluidPage(
       tabsetPanel(
 
         tabPanel(
-          title = "Explore Your Data",
+          title = "Summary",
           HTML("<br>"), # Adding line break for spacing
-          em(
-            "In this tab you can view the metadata summarising ",
-            "your data cube."
+          HTML(
+            "Here you can view the metadata summarising your data cube."
           ),
           HTML("<br>"),
           HTML("<br>"),
@@ -710,9 +978,9 @@ ui <- fluidPage(
         tabPanel(
           title = "Background",
           HTML("<br>"),
-          em(
-            "In this tab you can view information on available biodiversity ",
-            "indicators."
+          HTML(
+            "Here you can view technical information on the available ",
+            "biodiversity indicators."
           ),
           h3("Biodiversity Indicators"),
           HTML("<br>"),
@@ -826,28 +1094,30 @@ ui <- fluidPage(
         tabPanel(
           title = "Map",
           HTML("<br>"),  # Adding line break for spacing
-          em(
-            "In this tab you can view your selected biodiversity indicator ",
-            "projected onto a map. Use the left-hand panel to select the ",
+          HTML(
+            "Here you can view your selected biodiversity indicator ",
+            "projected onto a map. Use the input filters to select the ",
             "indicator, taxa, geographical area, and temporal window of ",
-            "interest."
+            "interest, and the visualization options to change how the map ",
+            "looks."
           ),
           HTML("<br>"),  # Adding line break for spacing
           HTML("<br>"),  # Adding line break for spacing
           em(
-            "Loading the plots could take a few minutes, depending on the ",
-            "options you have selected."
+            "(Loading the plot could take a few minutes, depending on the ",
+            "options you have selected.)"
           ),
           HTML("<br>"),  # Adding line break for spacing
           HTML("<br>"),
           actionButton("plot_map_bt", "Plot Map"),
           HTML("<br>"), # Adding line break for spacing
           HTML("<br>"), # Adding line break for spacing
-          plotOutput("plot_map"),
+          plotOutput("plot_map", height = "80%", width = "80%"),
           HTML("<br>"), # Adding line break for spacing
           p(strong("What am I looking at?")),
           textOutput("figure_legend_map_text"),
-          HTML("<br>"), # Adding line break for spacing
+          HTML("<br>"),
+          # Adding line break for spacing
           p(strong("But what does this indicator mean?")),
           p("Please consult the background tab for now"),
           ########### placer
@@ -856,15 +1126,13 @@ ui <- fluidPage(
               selectizeInput(
                 inputId = "downloadOptions_map",
                 label = "Download Formats",
-                choices = c(
-                  "EPS",
-                  "JPEG",
-                  "PDF",
-                  "PNG",
-                  "SVG",
-                  "TEX",
-                  "TIFF"
-                )
+                choices = c("EPS",
+                            "JPEG",
+                            "PDF",
+                            "PNG",
+                            "SVG",
+                            "TEX",
+                            "TIFF")
               ),
               width = 6
             ),
@@ -874,31 +1142,71 @@ ui <- fluidPage(
               style = "padding:18px;"
             )
           ),
-          HTML("<br>")  # Adding line break for spacing
+          fluidRow(
+            column(
+              numericInput(
+                "dlmap_width",
+                "Map Width (in pixels)",
+                min = 100,
+                max = 10000,
+                step = 100,
+                value = 2000
+              ),
+              width = 3
+            ),
+            column(
+              numericInput(
+                "dlmap_height",
+                "Map Height (in pixels)",
+                min = 100,
+                max = 10000,
+                step = 100,
+                value = 2000
+              ),
+              width = 3
+            ),
+            column(
+              numericInput(
+                "dlmap_scaling",
+                "Scaling Factor",
+                min = 0.1,
+                max = 5,
+                step = 0.1,
+                value = 1
+              ),
+              width = 2
+            )
+          ),
+          em(
+            "Note: if there is extra white space in the downloaded image, try ",
+            "adjusting the width or height. If the text and legend are too ",
+            "large or too small, try adjusting the scaling factor."
+          )
         ),
 
         ############################# Time Series tab
         tabPanel(
           title = "Time-series",
           HTML("<br>"), # Adding line break for spacing
-          em(
-            "In this tab you can view the time-series plot of your selected ",
-            "biodiversity indicator. Use the left-hand panel to select the ",
+          HTML(
+            "Here you can view a time-series plot of your selected ",
+            "biodiversity indicator. Use the input filters to select the ",
             "indicator, taxa, geographical area, and temporal window of ",
-            "interest."
+            "interest, and the visualization options to control how the plot ",
+            "looks."
           ),
           HTML("<br>"), # Adding line break for spacing
           HTML("<br>"), # Adding line break for spacing
           em(
-            "Loading the plot could take a few minutes, depending on the ",
-            "options you have selected."
+            "(Loading the plot could take a few minutes, depending on the ",
+            "options you have selected.)"
           ),
           HTML("<br>"),  # Adding line break for spacing
           HTML("<br>"),
           actionButton("plot_ts_bt", "Plot Time Series"),
           HTML("<br>"), # Adding line break for spacing
           HTML("<br>"), # Adding line break for spacing
-          plotlyOutput("plot_ts"),
+          plotlyOutput("plot_ts", height = "80%", width = "80%"),
           HTML("<br>"),
           p(strong("What am I looking at?")),
           textOutput("figure_legend_ts_text"),
@@ -933,15 +1241,25 @@ ui <- fluidPage(
         tabPanel(
           title = "Table",
           HTML("<br>"),  # Adding line break for spacing
-          textOutput("table_text"),
+          HTML("Here you can view your processed data cube as a table."),
+          HTML("<br>"),  # Adding line break for spacing
+          HTML("<br>"),  # Adding line break for spacing
+          em(
+            "(Note that the various export options will only copy the ",
+            "data from the current page of the table. To export ",
+            "everything, first select 'all' in the 'Show' dropdown menu.)"
+          ),
           HTML("<br>"), # Adding line break for spacing
           HTML("<br>"), # Adding line break for spacing
+          div(
+            style = "overflow-x: auto;",
           dataTableOutput("table")
+          ),
         ),
         tabPanel(
           title = "Export",
           HTML("<br>"),  # Adding line break for spacing
-          HTML("<div>Download the processed data cube here.</div>"),
+          HTML("<div>Download your processed data in .csv format.</div>"),
           HTML("<br>"), # Adding line break for spacing
           downloadButton("downloadProcessedCube",
                          label = "Processed Cube"
@@ -999,7 +1317,7 @@ ui <- fluidPage(
               "style='color: blue; text-decoration: none;'>B-Cubed ",
               "website</a>.</div>",
               "<br>",
-              "B-Cubed (Biodiversity Building Blocks for policy) receives ",
+              "B-Cubed (Biodiversity Building Blocks for Policy) receives ",
               "funding from the European Union’s Horizon Europe Research ",
               "and Innovation Programme (ID No 101059592).",
               "<br><br>",
@@ -1023,6 +1341,7 @@ ui <- fluidPage(
 
 
 server <- function(input, output, session) {
+
   options(shiny.maxRequestSize = 500 * 1024^2)
 
   ################################ GENERAL reactives and observers
@@ -1489,15 +1808,22 @@ server <- function(input, output, session) {
 
   ############################ table tab outputs
 
-  # output message for table tab
-  output$table_text <- renderText(
-    paste("In this tab you can view your data cube as a table.", input$table_text)
-  )
-
   # output interactive table from imported cube
   output$table <- renderDataTable({
     req(r$dataCube1)
-    print(r$dataCube1$data, n = 0)
+    datatable(r$dataCube1$data,
+              # n = 0,
+              extensions = "Buttons",
+              options = list(
+                dom = "Blfrtip",
+                buttons = c("colvis", "copy", "csv", "excel", "pdf"),
+                lengthMenu = list(c(10, 25, 100, 1000, -1),
+                                  c('10', '25', '100', '1000', 'All')),
+                pageLength = 10,
+                scrollX = TRUE,
+                scrollY = "500px"
+              )
+    )
   })
 
 
@@ -1579,9 +1905,10 @@ server <- function(input, output, session) {
   })
 
   # output plot from imported cube
-  output$plot_map <- renderPlot({
+  plot_to_print_map <- reactive({
     req(plot_to_render_map())
 
+    # Check if custom coordinates are provided and format appropriately
     if (input$xcoord_min == "" && input$xcoord_max == "") {
       xlims <- NULL
     } else if (input$xcoord_min == "" || input$xcoord_max == "") {
@@ -1597,19 +1924,23 @@ server <- function(input, output, session) {
       ylims <- c(as.numeric(input$ycoord_min), as.numeric(input$ycoord_max))
     }
 
+    # Get parsed breaks and labels
     breaks <- parsed_breaks()
     labels <- parsed_labels()
 
+    # Check if breaks are valid
     if (is.null(breaks) || input$breaks == "" || any(is.na(breaks))) {
       breaks <- NULL
     }
 
+    # Check if labels are valid
     if (is.null(labels) ||
         input$labels == "" ||
         length(labels) != length(breaks)) {
       labels <- NULL
     }
 
+    # Check if custom legend limits are provided and format appropriately
     if (input$legend_min == "" && input$legend_max == "") {
       legend_limits <- NULL
     } else if (input$legend_min == "" || input$legend_max == "") {
@@ -1619,18 +1950,21 @@ server <- function(input, output, session) {
                          as.numeric(input$legend_max))
     }
 
+    # Check if title is provided
     if (input$title == "") {
       title <- NULL
     } else {
       title <- input$title
     }
 
+    # Check if legend title is provided
     if (input$legend_title == "") {
       legend_title <- NULL
     } else {
       legend_title <- input$legend_title
     }
 
+    # Check if transformation is provided
     if (input$trans_yesno == FALSE ||
         is.null(input$trans_yesno) ||
         is.null(input$trans)) {
@@ -1639,24 +1973,28 @@ server <- function(input, output, session) {
       trans <- input$trans
     }
 
+    # Check if bcpower is provided
     if (is.null(input$bcpower) || input$bcpower == "") {
       bcpower <- NULL
     } else {
       bcpower <- input$bcpower
     }
 
+    # Check if land fill colour is provided
     if (input$land_fill_colour == "") {
       land_fill_colour <- NULL
     } else {
       land_fill_colour <- input$land_fill_colour
     }
 
+    # Check if panel background colour is provided
     if (input$panel_bg == "" || is.null(input$panel_bg)) {
       panel_bg <- NULL
     } else {
       panel_bg <- input$panel_bg
     }
 
+    # Prepare parameters for plot
     params <- list(
       x = plot_to_render_map(),
       title = title,
@@ -1676,15 +2014,58 @@ server <- function(input, output, session) {
       legend_title_wrap_length = input$legend_title_wrap_length
     )
 
+    # Create plot
     map_plot <- do.call(plot, params)
 
+    # # Add user-defined custom code block
+    # # Commented out for security reasons
+    # ext_plot <- plot_extension()
+    # map_plot <- map_plot + ext_plot
+
+    # Return the plot object
     map_plot
+
   })
 
-  plot_to_print_map <- reactive({
-    plot(plot_to_render_map())
-  })
+  # # Evaluate user-defined custom code block
+  # # This is commented out due to potential security concerns
+  # plot_extension <- eventReactive(c(input$plot_map_bt), {
+  #
+  #   if (input$ggplot_code == "" ||
+  #       is.null(input$ggplot_code)) {
+  #     return(geom_blank())
+  #    } else {
+  #     plot_ext <- input$ggplot_code
+  #     plot_ext <- tryCatch(
+  #       {
+  #         eval(parse(text = ggplot_code))
+  #       },
+  #       error = function(e) {
+  #         showNotification(paste("Error in ggplot code:", e$message), type = "error")
+  #         geom_blank()
+  #       }
+  #     )
+  #     return(plot_ext)
+  #   }
+  # })
 
+  # plot_to_print_map <- reactive({
+  #   plot(plot_to_render_map())
+  # })
+
+  output$plot_map <- renderPlot({
+    req(plot_to_print_map())
+    plot_to_print_map()
+  },
+  width = reactive({
+    input$plot_width
+  }),
+  height = reactive({
+    input$plot_height
+  })
+  )
+
+  # Download map
   output$downloadGo_map <- downloadHandler(
     filename = function() {
       input$dataCube$name %>%
@@ -1696,9 +2077,60 @@ server <- function(input, output, session) {
         )
     },
     content = function(filename) {
+      if (is.null(input$dlmap_width) || input$dlmap_width == "") {
+        dlmap_width <- 800
+      } else {
+        dlmap_width <- input$dlmap_width
+      }
+      if (is.null(input$dlmap_height) || input$dlmap_height == "") {
+        dlmap_height <- 600
+      } else {
+        dlmap_height <- input$dlmap_height
+      }
+      if (is.null(input$dlmap_scaling) || input$dlmap_scaling == "") {
+        dlmap_scaling <- 1
+      } else {
+        dlmap_scaling <- input$dlmap_scaling
+      }
+      if (dlmap_width > 10000) {
+        warning("Map width is too large, setting to 10000.")
+        dlmap_width <- 10000
+      } else if (dlmap_width < 100) {
+        warning("Map width is too small, setting to 100.")
+        dlmap_width <- 100
+      }
+      if (dlmap_height > 10000) {
+        warning("Map height is too large, setting to 10000.")
+        dlmap_height <- 10000
+      } else if (dlmap_height < 100) {
+        warning("Map height is too small, setting to 100.")
+        dlmap_height <- 100
+      }
+      if (
+        ((dlmap_height / dlmap_scaling) < 800) ||
+        ((dlmap_height / dlmap_scaling) > 5000) ||
+        ((dlmap_width / dlmap_scaling) < 800) ||
+        ((dlmap_width / dlmap_scaling) > 5000)
+      ) {
+        showNotification(
+          paste0(
+            "Warning: scaling factor may be inappropriate. Please double ",
+            "check that your scaling factor makes sense for your chosen width ",
+            "and height and that the downloaded image looks as expected. ",
+            "If the text and legend are too small comparative to the map, ",
+            "try increasing the scaling factor. If they are too large, ",
+            "try decreasing the scaling factor."
+          )
+        )
+      }
+
       ggsave(filename,
         plot = plot_to_print_map(),
-        device = tolower(input$downloadOptions_map)
+        device = tolower(input$downloadOptions_map),
+        width = dlmap_width,
+        height = dlmap_height,
+        units = "px",
+        scaling = dlmap_scaling
       )
     }
   )
