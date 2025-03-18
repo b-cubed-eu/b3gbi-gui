@@ -42,7 +42,7 @@ ui <- fluidPage(
   # Style
   tags$head(
     tags$title(
-      "B³ Indicators"
+      "B-Cubed Indicators"
     ),
     tags$link(
       rel = "icon", type = "image/png", size = "32x32", href = "B3_logomark.png"
@@ -54,12 +54,15 @@ ui <- fluidPage(
       rel = "stylesheet", type = "text/css", href = "style.css"
     ),
     tags$link(
-      href = "https://fonts.googleapis.com/css2?family=PT+Sans+Narrow:wght@400",
-      ";700&display=swap",
+      href = paste("https://fonts.googleapis.com/css2?family=PT+Sans+Narrow:wght@400",
+      ";700&display=swap"),
       rel = "stylesheet"
     ),
     tags$style(
       HTML("
+        body, html {
+        overflow: hidden;
+        }
         .custom-inline {
         display: inline-block;
         align-items: right;
@@ -70,7 +73,17 @@ ui <- fluidPage(
         align-items: left;
         width: 8%;
         }
-        ")
+        .scrollable-tab {
+        overflow-y: auto;
+        overflow-x: hidden;
+        height: 60vh;
+        padding: 10px;
+        }
+        /* Adjust tab content to avoid overlap with tab headers */
+        .tab-content {
+        height: 100%; /* Adjust based on tab header height */
+        }
+      ")
     )
   ),
 
@@ -116,840 +129,959 @@ ui <- fluidPage(
     ####################### Inputs ########################
     #######################################################
     sidebarPanel(
-      tabsetPanel(
-        tabPanel(
-          "Data cube",
+      div(class = "scrollable-tab",
+          tabsetPanel(
+            tabPanel(
+              "Data cube",
 
-          # input$dataCube
-          fileInput(
-            inputId = "dataCube",
-            label = HTML("Upload the data cube")
-          )
-        ),
-
-        tabPanel(
-          "Input filters",
-
-          # the indicators
-          selectInput(
-            inputId = "indicatorsToAnalyse",
-            label = "Biodiversity Indicator", multiple = FALSE,
-            choices = as.character(sapply(b3gbi::available_indicators, "[[", 2))
-          ),
-
-          # Spatial level
-          selectInput(
-            inputId = "spatiallevel",
-            label = "Spatial level",
-            choices = c(
-              "cube",
-              "world",
-              "continent",
-              "country",
-              "sovereignty",
-              "geounit"
-            ),
-            selected = "cube"
-          ),
-
-          # Country type
-          selectInput(
-            inputId = "countrytype",
-            label = "Country type",
-            choices = c(
-              "countries",
-              "map_units",
-              "sovereignty",
-              "tiny_countries"
-            ),
-            selected = "countries"
-          ),
-
-          # Map resolution
-          selectInput(
-            inputId = "mapres",
-            label = "Map resolution",
-            choices = c(
-              "110",
-              "50",
-              "10"
-            ),
-            selected = "50"
-          ),
-
-          # Spatial region
-          selectizeInput(
-            inputId = "region",
-            label = "Subset by region",
-            choices = NULL,
-            multiple = T,
-            options = list(
-              create = T,
-              delimiter = " ",
-              persist = F,
-              plugins = list("remove_button"),
-              createOnBlur = T
-            )
-          ),
-
-          # Spatial resolution
-          numericInput(
-            "cellsize",
-            paste0("Spatial resolution in kilometers or degrees (depending on ",
-                   "grid type)"),
-            min = 0,
-            max = 100,
-            step = 1,
-            value = 10
-          ),
-
-          # Date range
-          sliderInput("daterange",
-                      "Date range:",
-                      min = 1100,
-                      max = year(Sys.Date()),
-                      value = c(1100, year(Sys.Date())),
-                      sep = ""
-          ),
-
-          # Select by family name
-          selectInput( ## select taxa from the database
-            inputId = "family",
-            label = "Subset by family",
-            choices = NULL,
-            multiple = T
-          ),
-
-          # Select by species scientific name
-          selectInput( ## select taxa from the database
-            inputId = "species",
-            label = "Subset by species",
-            choices = NULL,
-            multiple = T
-          )
-        ),
-
-
-      ############# General visualization options
-
-        tabPanel(
-          title = "Visualization Options",
-          HTML("<br>"),
-          numericInput(
-            "plot_width",
-            label = "Plot Width (in pixels)",
-            min = 100,
-            max = 2000,
-            step = 10,
-            value = 600
-          ),
-          numericInput(
-            "plot_height",
-            label = "Plot Height (in pixels)",
-            min = 100,
-            max = 2000,
-            value = 400
-          ),
-          textInput(
-            "title",
-            label = "Plot Title"
-          ),
-          numericInput(
-            "title_size",
-            label = "Title Font Size",
-            min = 10,
-            max = 30,
-            step = 1,
-            value = 20
-          ),
-          numericInput(
-            "wrap_length",
-            label = "Title Wrap Length (max. characters on a single line)",
-            min = 20,
-            max = 200,
-            step = 5,
-            value = 60
-          ),
-          textInput(
-            "subtitle",
-            label = "Plot Subtitle"
-          ),
-          numericInput(
-            "subtitle_size",
-            label = "Subtitle Font Size",
-            min = 10,
-            max = 30,
-            step = 1,
-            value = 16
-          ),
-          numericInput(
-            "subtitle_wrap_length",
-            label = "Subtitle Wrap Length (max. characters on a single line)",
-            min = 20,
-            max = 200,
-            step = 5,
-            value = 60
-          ),
-          textInput(
-            "caption",
-            label = "Plot Caption"
-          ),
-          numericInput(
-            "caption_size",
-            label = "Caption Font Size",
-            min = 6,
-            max = 24,
-            step = 1,
-            value = 12
-          ),
-          numericInput(
-            "caption_wrap_length",
-            label = "Caption Wrap Length (max. characters on a single line)",
-            min = 20,
-            max = 200,
-            step = 5,
-            value = 60
-          ),
-          checkboxInput(
-            "ts_options",
-            "Show Time Series Visualization Options"
-          ),
-
-     ############# Time series visualization options
-
-          conditionalPanel(
-            condition = "input.ts_options == true",
-            tags$hr(),
-            textInput(
-              "ts_x_label",
-              label = "Custom X-Axis Label",
-              value = ""
-            ),
-            checkboxInput(
-              "suppress_y",
-              label = "Suppress Y-Axis Values",
-              value = FALSE
-            ),
-            conditionalPanel(
-              condition = "input.suppress_y == false",
-              textInput(
-                "ts_y_label",
-                label = "Custom Y-Axis Label",
-                value = ""
+              # input$dataCube
+              fileInput(
+                inputId = "dataCube",
+                label = HTML("Upload a data cube")
               )
             ),
-            checkboxInput(
-              "ts_expand",
-              label = "Expand Axes"
-            ),
-            conditionalPanel(
-              condition = "input.ts_expand == true",
-              tags$hr(),
-              numericInput(
-                "ts_x_expand_left",
-                paste0("Expand X Axis: Left"),
-                min = 0,
-                max = 1,
-                step = 0.01,
-                value = 0
-              ),
-              numericInput(
-                "ts_x_expand_right",
-                paste0("Expand X Axis: Right"),
-                min = 0,
-                max = 1,
-                step = 0.01,
-                value = 0
-              ),
-              numericInput(
-                "ts_y_expand_top",
-                paste0("Expand Y Axis: Top"),
-                min = 0,
-                max = 1,
-                step = 0.01,
-                value = 0
-              ),
-              numericInput(
-                "ts_y_expand_bottom",
-                paste0("Expand Y Axis: Bottom"),
-                min = 0,
-                max = 1,
-                step = 0.01,
-                value = 0
-              ),
-              tags$hr()
-            ),
-            numericInput(
-              "ts_x_breaks",
-              paste0("Number of X Axis Breaks (approximate)"),
-              min = 0,
-              max = 100,
-              step = 1,
-              value = 10
-            ),
-            numericInput(
-              "ts_y_breaks",
-              paste0("Number of Y Axis Breaks (approximate)"),
-              min = 0,
-              max = 100,
-              step = 1,
-              value = 6
-            ),
-            checkboxInput(
-              "ts_gridlines",
-              label = "Plot grid lines",
-              value = TRUE
-            ),
 
-            selectInput(
-              "point_line",
-              label = "Plot Indicator Values as Points or Line",
-              choices = c(
-                "point",
-                "line"
-              ),
-              selected = "Points"
-            ),
-            conditionalPanel(
-              condition = "input.point_line === 'Points'",
-              numericInput(
-                "pointsize",
-                paste0("Size of Indicator Points"),
-                min = 0,
-                max = 1,
-                step = 0.1,
-                value = 2
-              )
-            ),
-            conditionalPanel(
-              condition = "input.point_line === 'Line'",
-              numericInput(
-                "linewidth",
-                paste0("Width of Indicator Line"),
-                min = 0,
-                max = 1,
-                step = 0.1,
-                value = 1
-              )
-            ),
-            colourInput(
-              "linecolour",
-              label = "Colour of Indicator Line or Points",
-              value = "darkorange"
-            ),
-            numericInput(
-              "linealpha",
-              paste0("Transparency of Indicator Line or Points"),
-              min = 0,
-              max = 1,
-              step = 0.05,
-              value = 1
-            ),
+            tabPanel(
+              "Input filters",
 
-            selectInput(
-              "ci_vis_type",
-              label = "Confidence Interval Type",
-              choices = c(
-                "Error Bars",
-                "Ribbon",
-                "None"
-              ),
-              selected = "None"
-            ),
-            conditionalPanel(
-              condition = "input.ci_vis_type === 'Error Bars'",
-              tags$hr(),
-              numericInput(
-                "error_width",
-                paste0("Width of Error Bars"),
-                min = 0,
-                max = 10,
-                step = 0.1,
-                value = 1
-              ),
-              numericInput(
-                "error_thickness",
-                paste0("Thickness of Error Bars"),
-                min = 0,
-                max = 10,
-                step = 0.1,
-                value = 1
-              ),
-              numericInput(
-                "error_alpha",
-                paste0("Error Bar Transparency"),
-                min = 0,
-                max = 1,
-                step = 0.05,
-                value = 1
-              ),
-              tags$hr()
-            ),
-            conditionalPanel(
-              condition = "input.ci_vis_type === 'Ribbon'",
-              tags$hr(),
-              colourInput(
-                "ribboncolour",
-                label = "Confidence Interval Ribbon Colour",
-                value = "goldenrod1"
-              ),
-              numericInput(
-                "ribbonalpha",
-                paste0("Confidence Interval Ribbon Transparency"),
-                min = 0,
-                max = 1,
-                step = 0.05,
-                value = 0.2
-              ),
-              tags$hr()
-            ),
-
-            checkboxInput(
-              "smoothed_trend",
-              label = "Plot Smoothed Trend Line"
-            ),
-            conditionalPanel(
-              condition = "input.smoothed_trend == true",
-              tags$hr(),
+              # the indicators
               selectInput(
-                "smooth_linetype",
-                label = "Smoothed Trend Line Type",
+                inputId = "indicatorsToAnalyse",
+                label = "Biodiversity Indicator", multiple = FALSE,
+                choices = as.character(sapply(b3gbi::available_indicators, "[[", 2))
+              ),
+
+              # Spatial level
+              selectInput(
+                inputId = "spatiallevel",
+                label = "Spatial level",
                 choices = c(
-                  "solid",
-                  "dashed",
-                  "dotted",
-                  "dotdash",
-                  "longdash",
-                  "twodash"
+                  "cube",
+                  "world",
+                  "continent",
+                  "country",
+                  "sovereignty",
+                  "geounit"
                 ),
-                selected = "solid"
+                selected = "cube"
               ),
-              numericInput(
-                "smooth_linewidth",
-                paste0("Trend Line Width"),
-                min = 0,
-                max = 1,
-                step = 0.1,
-                value = 1
-              ),
-              colourInput(
-                "trendlinecolour",
-                paste0("Trend Line Colour"),
-                value = "blue"
-              ),
-              numericInput(
-                "trendlinealpha",
-                paste0("Trend Line Transparency"),
-                min = 0,
-                max = 1,
-                step = 0.05,
-                value = 0.5
-              ),
-              numericInput(
-                "smooth_cilinewidth",
-                paste0("Trend Envelope Edge Width"),
-                min = 0,
-                max = 1,
-                step = 0.1,
-                value = 1
-              ),
-              colourInput(
-                "envelopecolour",
-                paste0("Trend Envelope Colour"),
-                value = "lightsteelblue"
-              ),
-              numericInput(
-                "envelopealpha",
-                paste0("Trend Envelope Transparency"),
-                min = 0,
-                max = 1,
-                step = 0.05,
-                value = 0.2
-              ),
-              numericInput(
-                "smooth_cialpha",
-                paste0("Trend Envelope Edge Transparency"),
-                min = 0,
-                max = 1,
-                step = 0.05,
-                value = 1
-              ),
-              tags$hr()
-            ),
-            tags$hr()
-          ),
 
-     ############# Map visualization options
+              # Country type
+              selectInput(
+                inputId = "countrytype",
+                label = "Country type",
+                choices = c(
+                  "countries",
+                  "map_units",
+                  "sovereignty",
+                  "tiny_countries"
+                ),
+                selected = "countries"
+              ),
 
-          checkboxInput(
-            "map_options",
-            "Show Map Visualization Options"
-          ),
+              # Map resolution
+              selectInput(
+                inputId = "mapres",
+                label = "Map resolution",
+                choices = c(
+                  "110",
+                  "50",
+                  "10"
+                ),
+                selected = "50"
+              ),
 
-          conditionalPanel(
-            condition = "input.map_options == true",
-            tags$hr(),
-            checkboxInput(
-              "custom_output_crs",
-              "Manually Define Output CRS (Coordinate Reference System)",
-              value = FALSE
-            ),
-            conditionalPanel(
-              condition = "input.custom_output_crs == true",
-              div(class = "checkbox-container"),
-              div(class = "custom-inline",
-                  textInput(
-                    "output_crs",
-                    "EPSG code",
-                    value = "",
-                    placeholder = "e.g. 4326"
-                  )
+              # Spatial region
+              selectizeInput(
+                inputId = "region",
+                label = "Subset by region",
+                choices = NULL,
+                multiple = T,
+                options = list(
+                  create = T,
+                  delimiter = " ",
+                  persist = F,
+                  plugins = list("remove_button"),
+                  createOnBlur = T
+                )
+              ),
+
+              # Spatial resolution
+              numericInput(
+                "cellsize",
+                paste0("Spatial resolution in kilometers or degrees (depending on ",
+                       "grid type)"),
+                min = 0,
+                max = 100,
+                step = 1,
+                value = 10
+              ),
+
+              # Date range
+              sliderInput("daterange",
+                          "Date range:",
+                          min = 1100,
+                          max = year(Sys.Date()),
+                          value = c(1100, year(Sys.Date())),
+                          sep = ""
+              ),
+
+              # Select by family name
+              selectInput( ## select taxa from the database
+                inputId = "family",
+                label = "Subset by family",
+                choices = NULL,
+                multiple = T
+              ),
+
+              # Select by species scientific name
+              selectInput( ## select taxa from the database
+                inputId = "species",
+                label = "Subset by species",
+                choices = NULL,
+                multiple = T
               )
             ),
-            checkboxInput(
-              "custom_map_axes",
-              "Custom X and Y Axis Limits"
-            ),
-            conditionalPanel(
-              condition = "input.custom_map_axes == true",
-              div(class = "checkbox-container"),
-              div(class = "custom-inline",
-                  textInput(
-                    "xcoord_min",
-                    "Minimum X Coordinate Value",
-                    value = ""
-                  ),
-                  textInput(
-                    "xcoord_max",
-                    "Maximum X Coordinate Value",
-                    value = ""
-                  ),
-                  textInput(
-                    "ycoord_min",
-                    "Minimum Y Coordinate Value",
-                    value = ""
-                  ),
-                  textInput(
-                    "ycoord_max",
-                    "Maximum Y Coordinate Value",
-                    value = ""
-                  )
-              )
-            ),
-            checkboxInput(
-              "europe_crop_eea",
-              paste0("Crop to mainland Europe (only applies to continental ",
-              "Europe and EEA grid"),
-              value = FALSE
-            ),
-            checkboxInput(
-              "crop_to_grid",
-              "Crop map to edges of grid",
-              value = FALSE
-            ),
-              div(class = "checkbox-container",
-                  checkboxInput(
-                    "custom_bg",
-                    ""
-                  )
+
+
+            ############# Visualization options
+
+            tabPanel(
+              title = "Visualization Options",
+              HTML("<br>"),
+
+              ############# General visualization options
+
+              checkboxInput(
+                "gen_options",
+                "Show General Visualization Options"
               ),
-              div(class = "custom-inline",
-                  colourInput(
-                    "panel_bg",
-                    "Customize Background (Ocean) Colour",
-                    allowTransparent = TRUE,
-                    value = ""
-                  )
-              ),
-            div(class = "checkbox-container",
-                checkboxInput(
-                  "custom_land_fill",
-                  ""
-                )
-            ),
-              div(class = "custom-inline",
-                  colourInput(
-                    "land_fill_colour",
-                    "Customize Colour for Land Areas Outside of Grid",
-                    allowTransparent = TRUE,
-                    value = ""
-                  )
-            ),
-            div(class = "checkbox-container",
-                style = "vertical-align: top;",
-                checkboxInput(
-                  "trans_yesno",
-                  ""
-                )
-            ),
-            div(class = "custom-inline",
-                selectInput(
-                  "trans",
-                  "Apply Scale Transformation to Indicator Values",
-                  choices = c(
-                    'Exponential Transformation' = "exp",
-                    'Square-root Transformation' = "sqrt",
-                    'Log Transformation' = "log",
-                    'Log10 Transformation' = "log10",
-                    'Log1p Transformation' = "log1p",
-                    'Log2 Transformation' = "log2",
-                    'Pseudo-log Transformation' = "psseudo_log",
-                    'Reciprocal Transformation' = "reciprocal",
-                    'Reverse Transformation' = "reverse",
-                    'Box-Cox Transformation' = "boxcox",
-                    'Modulus Transformation' = "modulus",
-                    'Yeo-Johnson Transformation' = "yj"
+              conditionalPanel(
+                condition = "input.gen_options == true",
+                tags$hr(),
+                fluidRow(
+                  column(width = 6,
+                         numericInput(
+                           "plot_width",
+                           label = "Plot Width (in pixels)",
+                           min = 100,
+                           max = 2000,
+                           step = 10,
+                           value = 600
+                         )
                   ),
-                  selected = "exp"
+                  column(width = 6,
+                         numericInput(
+                           "plot_height",
+                           label = "Plot Height (in pixels)",
+                           min = 100,
+                           max = 2000,
+                           step = 10,
+                           value = 400
+                         )
+                  )
+                ),
+                textInput(
+                  "title",
+                  label = "Plot Title"
+                ),
+                textInput(
+                  "subtitle",
+                  label = "Plot Subtitle"
+                ),
+                fluidRow(
+                  column(width = 6,
+                         numericInput(
+                           "title_size",
+                           label = "Title Font Size",
+                           min = 8,
+                           max = 40,
+                           step = 1,
+                           value = 13
+                         )
+                  ),
+                  column(width = 6,
+                         numericInput(
+                           "subtitle_size",
+                           label = "Subtitle Font Size",
+                           min = 6,
+                           max = 30,
+                           step = 1,
+                           value = 11
+                         )
+                  )
+                ),
+                fluidRow(
+                  column(width = 6,
+                         numericInput(
+                           "wrap_length",
+                           label = paste("Title Wrap Length (max. characters ",
+                                         "on a single line)"),
+                           min = 20,
+                           max = 200,
+                           step = 5,
+                           value = 60
+                         )
+                  ),
+                  column(width = 6,
+                         numericInput(
+                           "subtitle_wrap_length",
+                           label = paste("Subtitle Wrap Length (max. ",
+                                         "characters on a single line)"),
+                           min = 20,
+                           max = 200,
+                           step = 5,
+                           value = 60
+                         )
+                  )
+                ),
+                fluidRow(
+                  column(width = 6,
+                         colourInput(
+                           "title_color",
+                           label = "Title Colour",
+                           value = "black"
+                         )
+                  ),
+                  column(width = 6,
+                         colourInput(
+                           "subtitle_color",
+                           label = "Subtitle Colour",
+                           value = "black"
+                         )
+                  )
+                ),
+                textInput(
+                  "caption",
+                  label = "Plot Caption"
+                ),
+                fluidRow(
+                  column(width = 6,
+                         numericInput(
+                           "caption_size",
+                           label = "Caption Font Size",
+                           min = 6,
+                           max = 20,
+                           step = 1,
+                           value = 9
+                         )
+                  ),
+                  column(width = 6,
+                         numericInput(
+                           "caption_wrap_length",
+                           label = "Caption Wrap Length",
+                           min = 20,
+                           max = 200,
+                           step = 5,
+                           value = 60
+                         )
+                  )
+                ),
+                colourInput(
+                  "caption_color",
+                  label = "Caption Colour",
+                  value = "black"
+                ),
+                tags$hr(),
+              ),
+              checkboxInput(
+                "ts_options",
+                "Show Time Series Visualization Options"
+              ),
+
+              ############# Time series visualization options
+
+              conditionalPanel(
+                condition = "input.ts_options == true",
+                tags$hr(),
+                textInput(
+                  "ts_x_label",
+                  label = "Custom X-Axis Title",
+                  value = ""
+                ),
+                checkboxInput(
+                  "suppress_y",
+                  label = "Suppress Y-Axis Labels",
+                  value = FALSE
                 ),
                 conditionalPanel(
-                  condition = "input.trans == 'boxcox' ||
-                      input.trans == 'yj' ||
-                      input.trans == 'modulus'",
+                  condition = "input.suppress_y == false",
+                  textInput(
+                    "ts_y_label",
+                    label = "Custom Y-Axis Title",
+                    value = ""
+                  )
+                ),
+                checkboxInput(
+                  "ts_expand",
+                  label = "Expand Axes"
+                ),
+                conditionalPanel(
+                  condition = "input.ts_expand == true",
+                  div(class = "checkbox-container"),
+                  div(class = "custom-inline",
+                      fluidRow(
+                        column(width = 6,
+                               numericInput(
+                                 "ts_x_expand_left",
+                                 paste0("Left"),
+                                 min = 0,
+                                 max = 1,
+                                 step = 0.01,
+                                 value = 0
+                               )
+                        ),
+                        column(width = 6,
+                               numericInput(
+                                 "ts_x_expand_right",
+                                 paste0("Right"),
+                                 min = 0,
+                                 max = 1,
+                                 step = 0.01,
+                                 value = 0
+                               )
+                        )
+                      ),
+                      fluidRow(
+                        column(width = 6,
+                               numericInput(
+                                 "ts_y_expand_top",
+                                 paste0("Top"),
+                                 min = 0,
+                                 max = 1,
+                                 step = 0.01,
+                                 value = 0
+                               )
+                        ),
+                        column(width = 6,
+                               numericInput(
+                                 "ts_y_expand_bottom",
+                                 paste0("Bottom"),
+                                 min = 0,
+                                 max = 1,
+                                 step = 0.01,
+                                 value = 0
+                               )
+                        )
+                      )
+                  )
+                ),
+                fluidRow(
+                  column(width = 6,
+                         numericInput(
+                           "ts_x_breaks",
+                           paste0("Number of X Axis Breaks (approximate)"),
+                           min = 0,
+                           max = 100,
+                           step = 1,
+                           value = 10
+                         )
+                  ),
+                  column(width = 6,
+                         numericInput(
+                           "ts_y_breaks",
+                           paste0("Number of Y Axis Breaks (approximate)"),
+                           min = 0,
+                           max = 100,
+                           step = 1,
+                           value = 6
+                         )
+                  )
+                ),
+                checkboxInput(
+                  "ts_gridlines",
+                  label = "Plot grid lines",
+                  value = TRUE
+                ),
+
+                selectInput(
+                  "point_line",
+                  label = "Plot Indicator Values as Points or Line",
+                  choices = c(
+                    "point",
+                    "line"
+                  ),
+                  selected = "Points"
+                ),
+                conditionalPanel(
+                  condition = "input.point_line === 'Points'",
                   numericInput(
-                    "bcpower",
-                    "Box-Cox Power",
-                    min = -5,
-                    max = 5,
-                    step = 0.5,
+                    "pointsize",
+                    paste0("Size of Indicator Points"),
+                    min = 0,
+                    max = 1,
+                    step = 0.1,
+                    value = 2
+                  )
+                ),
+                conditionalPanel(
+                  condition = "input.point_line === 'Line'",
+                  numericInput(
+                    "linewidth",
+                    paste0("Width of Indicator Line"),
+                    min = 0,
+                    max = 1,
+                    step = 0.1,
                     value = 1
                   )
-                )
-            ),
-            tags$hr(),
-            HTML("<span style='font-size: 16px;'><b><u>Legend Customization ",
-                 "Options</b></u></span><br><br>"),
-            textInput(
-              "breaks",
-              "Custom Break Points for Legend (comma separated)",
-              value = ""
-            ),
-            textInput(
-              inputId = "labels",
-              label = paste0(
-                "Labels for Custom Legend Break Points (must have same ",
-                "number of labels as breaks)"
+                ),
+                colourInput(
+                  "linecolour",
+                  label = "Colour of Indicator Line or Points",
+                  value = "darkorange"
+                ),
+                numericInput(
+                  "linealpha",
+                  paste0("Transparency of Indicator Line or Points"),
+                  min = 0,
+                  max = 1,
+                  step = 0.05,
+                  value = 1
+                ),
+
+                selectInput(
+                  "ci_vis_type",
+                  label = "Confidence Interval Type",
+                  choices = c(
+                    "Error Bars",
+                    "Ribbon",
+                    "None"
+                  ),
+                  selected = "None"
+                ),
+                conditionalPanel(
+                  condition = "input.ci_vis_type === 'Error Bars'",
+                  tags$hr(),
+                  numericInput(
+                    "error_width",
+                    paste0("Width of Error Bars"),
+                    min = 0,
+                    max = 10,
+                    step = 0.1,
+                    value = 1
+                  ),
+                  numericInput(
+                    "error_thickness",
+                    paste0("Thickness of Error Bars"),
+                    min = 0,
+                    max = 10,
+                    step = 0.1,
+                    value = 1
+                  ),
+                  numericInput(
+                    "error_alpha",
+                    paste0("Error Bar Transparency"),
+                    min = 0,
+                    max = 1,
+                    step = 0.05,
+                    value = 1
+                  ),
+                  tags$hr()
+                ),
+                conditionalPanel(
+                  condition = "input.ci_vis_type === 'Ribbon'",
+                  tags$hr(),
+                  colourInput(
+                    "ribboncolour",
+                    label = "Confidence Interval Ribbon Colour",
+                    value = "goldenrod1"
+                  ),
+                  numericInput(
+                    "ribbonalpha",
+                    paste0("Confidence Interval Ribbon Transparency"),
+                    min = 0,
+                    max = 1,
+                    step = 0.05,
+                    value = 0.2
+                  ),
+                  tags$hr()
+                ),
+
+                checkboxInput(
+                  "smoothed_trend",
+                  label = "Plot Smoothed Trend Line",
+                  value = TRUE
+                ),
+                conditionalPanel(
+                  condition = "input.smoothed_trend == true",
+                  div(class = "checkbox-container"),
+                  div(class = "custom-inline",
+                      selectInput(
+                        "smooth_linetype",
+                        label = "Smoothed Trend Line Type",
+                        choices = c(
+                          "solid",
+                          "dashed",
+                          "dotted",
+                          "dotdash",
+                          "longdash",
+                          "twodash"
+                        ),
+                        selected = "solid"
+                      ),
+                      numericInput(
+                        "smooth_linewidth",
+                        paste0("Trend Line Width"),
+                        min = 0,
+                        max = 1,
+                        step = 0.1,
+                        value = 1
+                      ),
+                      colourInput(
+                        "trendlinecolour",
+                        paste0("Trend Line Colour"),
+                        value = "blue"
+                      ),
+                      numericInput(
+                        "trendlinealpha",
+                        paste0("Trend Line Transparency"),
+                        min = 0,
+                        max = 1,
+                        step = 0.05,
+                        value = 0.5
+                      ),
+                      numericInput(
+                        "smooth_cilinewidth",
+                        paste0("Trend Envelope Edge Width"),
+                        min = 0,
+                        max = 1,
+                        step = 0.1,
+                        value = 1
+                      ),
+                      colourInput(
+                        "envelopecolour",
+                        paste0("Trend Envelope Colour"),
+                        value = "lightsteelblue"
+                      ),
+                      numericInput(
+                        "envelopealpha",
+                        paste0("Trend Envelope Transparency"),
+                        min = 0,
+                        max = 1,
+                        step = 0.05,
+                        value = 0.2
+                      ),
+                      numericInput(
+                        "smooth_cialpha",
+                        paste0("Trend Envelope Edge Transparency"),
+                        min = 0,
+                        max = 1,
+                        step = 0.05,
+                        value = 1
+                      )
+                  )
+                ),
+                tags$hr()
               ),
-              value = ""
-            ),
-            textInput(
-              "legend_title",
-              "Custom Legend Title",
-              value = ""
-            ),
-            checkboxInput(
-              "legend_limits",
-              "Custom Legend Scale Limits"
-            ),
-            conditionalPanel(
-              condition = "input.legend_limits == true",
-              div(class = "checkbox-container"),
-              div(class = "custom-inline",
-                  textInput(
-                    "legend_min",
-                    "Minimum Legend Value",
-                    value = ""
-                  ),
-                  textInput(
-                    "legend_max",
-                    "Maximum Legend Value",
-                    value = ""
+
+              ############# Map visualization options
+
+              checkboxInput(
+                "map_options",
+                "Show Map Visualization Options"
+              ),
+
+              conditionalPanel(
+                condition = "input.map_options == true",
+                tags$hr(),
+                checkboxInput(
+                  "custom_output_crs",
+                  "Manually Define Output CRS (Coordinate Reference System)",
+                  value = FALSE
+                ),
+                conditionalPanel(
+                  condition = "input.custom_output_crs == true",
+                  div(class = "checkbox-container"),
+                  div(class = "custom-inline",
+                      textInput(
+                        "output_crs",
+                        "EPSG code",
+                        value = "",
+                        placeholder = "e.g. 4326"
+                      ),
+                      checkboxInput(
+                        "crs_unit_convert",
+                        paste("Force conversion even if input and output units ",
+                              "do not match (e.g. degrees to km; can lead to invalid ",
+                              "output)")
+                      )
                   )
-              )
-            ),
-            numericInput(
-              "legend_title_wrap_length",
-              "Legend Title Wrap Length (max characters on one line)",
-              min = 10,
-              max = 100,
-              step = 2,
-              value = 20
-            ),
-            tags$hr(),
-            HTML("<span style='font-size: 16px;'><b><u>Axis Customization ",
-                 "Options</b></u></span><br><br>"),
-            numericInput(
-              "xaxis_fontsize",
-              "X-Axis Label Font Size",
-              min = 1,
-              max = 30,
-              step = 0.5,
-              value = 12
-            ),
-            numericInput(
-              "yaxis_fontsize",
-              "Y-Axis Label Font Size",
-              min = 1,
-              max = 30,
-              step = 0.5,
-              value = 12
-            ),
-            textInput(
-              "xaxis_ticks",
-              "Custom X-Axis Break Points (comma separated)",
-              value = ""
-            ),
-            textInput(
-              "yaxis_ticks",
-              "Custom Y-Axis Break Points (comma separated)",
-              value = ""
-            ),
-            checkboxInput(
-              "major_gridlines",
-              "Major Grid Lines",
-              value = TRUE
-            ),
-            checkboxInput(
-              "minor_gridlines",
-              "Minor Grid Lines",
-              value = FALSE
-            ),
-            tags$hr(),
-            checkboxInput(
-              "add_scalebar",
-              "Add a Scale Bar to the Map"
-            ),
-            conditionalPanel(
-              condition = "input.add_scalebar == true",
-              div(class = "checkbox-container"),
-              div(class = "custom-inline",
-                  selectInput(
-                    "scalebar_location",
-                    "Scale Bar Location (on map)",
-                    choices = c(
-                      "bottomleft",
-                      "bottomright",
-                      "topleft",
-                      "topright"
-                    ),
-                    selected = "topright"
-                  ),
-                  numericInput(
-                    "scalebar_height",
-                    "Scale Bar Height (in pixels)",
-                    min = 0,
-                    max = 100,
-                    step = 1,
-                    value = 10
-                  ),
-                  numericInput(
-                    "scalebar_size",
-                    "Size of Scale Bar (proportional to plot area, in %)",
-                    min = 0,
-                    max = 100,
-                    step = 1,
-                    value = 10
-                  ),
-                  numericInput(
-                    "scalebar_fontsize",
-                    "Scale Bar Font Size",
-                    min = 1,
-                    max = 30,
-                    step = 0.5,
-                    value = 12
-                  ),
-                  colourInput(
-                    "scalebar_colour1",
-                    "Scale Bar Colour 1",
-                    value = "black"
-                  ),
-                  colourInput(
-                    "scalebar_colour2",
-                    "Scale Bar Colour 2",
-                    value = "white"
+                ),
+                checkboxInput(
+                  "custom_map_axes",
+                  "Custom X and Y Axis Limits"
+                ),
+                conditionalPanel(
+                  condition = "input.custom_map_axes == true",
+                  div(class = "checkbox-container"),
+                  div(class = "custom-inline",
+                      fluidRow(
+                        column(width = 6,
+                               textInput(
+                                 "xcoord_min",
+                                 "Min X",
+                                 value = ""
+                               )
+                        ),
+                        column(width = 6,
+                               textInput(
+                                 "xcoord_max",
+                                 "Max X",
+                                 value = ""
+                               )
+                        )
+                      ),
+                      fluidRow(
+                        column(width = 6,
+                               textInput(
+                                 "ycoord_min",
+                                 "Min Y",
+                                 value = ""
+                               )
+                        ),
+                        column(width = 6,
+                               textInput(
+                                 "ycoord_max",
+                                 "Max Y",
+                                 value = ""
+                               )
+                        )
+                      )
                   )
-              )
-            ),
-            checkboxInput(
-              "add_northarrow",
-              "Add a North Arrow to the Map"
-            ),
-            conditionalPanel(
-              condition = "input.add_northarrow == true",
-              div(class = "checkbox-container"),
-              div(class = "custom-inline",
-                  selectInput(
-                    "northarrow_location",
-                    "North Arrow Location (on map)",
-                    choices = c(
-                      "bottomleft",
-                      "bottomright",
-                      "topleft",
-                      "topright"
+                ),
+                checkboxInput(
+                  "europe_crop_eea",
+                  paste0("Crop to mainland Europe (only applies to continental ",
+                         "Europe and EEA grid"),
+                  value = FALSE
+                ),
+                checkboxInput(
+                  "crop_to_grid",
+                  "Crop map to edges of grid",
+                  value = FALSE
+                ),
+                div(class = "checkbox-container",
+                    checkboxInput(
+                      "custom_bg",
+                      ""
+                    )
+                ),
+                div(class = "custom-inline",
+                    colourInput(
+                      "panel_bg",
+                      "Customize Background (Ocean) Colour",
+                      allowTransparent = TRUE,
+                      value = ""
+                    )
+                ),
+                div(class = "checkbox-container",
+                    checkboxInput(
+                      "custom_land_fill",
+                      ""
+                    )
+                ),
+                div(class = "custom-inline",
+                    colourInput(
+                      "land_fill_colour",
+                      "Customize Colour for Land Areas Outside of Grid",
+                      allowTransparent = TRUE,
+                      value = ""
+                    )
+                ),
+                div(class = "checkbox-container",
+                    style = "vertical-align: top;",
+                    checkboxInput(
+                      "trans_yesno",
+                      ""
+                    )
+                ),
+                div(class = "custom-inline",
+                    selectInput(
+                      "trans",
+                      "Apply Scale Transformation to Indicator Values",
+                      choices = c(
+                        'Exponential Transformation' = "exp",
+                        'Square-root Transformation' = "sqrt",
+                        'Log Transformation' = "log",
+                        'Log10 Transformation' = "log10",
+                        'Log1p Transformation' = "log1p",
+                        'Log2 Transformation' = "log2",
+                        'Pseudo-log Transformation' = "psseudo_log",
+                        'Reciprocal Transformation' = "reciprocal",
+                        'Reverse Transformation' = "reverse",
+                        'Box-Cox Transformation' = "boxcox",
+                        'Modulus Transformation' = "modulus",
+                        'Yeo-Johnson Transformation' = "yj"
+                      ),
+                      selected = "exp"
                     ),
-                    selected = "topright"
+                    conditionalPanel(
+                      condition = "input.trans == 'boxcox' ||
+                      input.trans == 'yj' ||
+                      input.trans == 'modulus'",
+                      numericInput(
+                        "bcpower",
+                        "Box-Cox Power",
+                        min = -5,
+                        max = 5,
+                        step = 0.5,
+                        value = 1
+                      )
+                    )
+                ),
+                tags$hr(),
+                HTML("<span style='font-size: 16px;'><b><u>Legend Customization ",
+                     "Options</b></u></span><br><br>"),
+                textInput(
+                  "breaks",
+                  "Custom Break Points for Legend (comma separated)",
+                  value = ""
+                ),
+                textInput(
+                  inputId = "labels",
+                  label = paste0(
+                    "Labels for Custom Legend Break Points (must have same ",
+                    "number of labels as breaks)"
                   ),
-                  selectInput(
-                    "northarrow_style",
-                    "North Arrow Style",
-                    choices = c(
-                      "orienteering",
-                      "fancy_orienteering",
-                      "minimal",
-                      "nautical"
-                    ),
-                    selected = "fancy_orienteering"
-                  ),
-                  numericInput(
-                    "northarrow_height",
-                    "North Arrow Height (in pixels)",
-                    min = 0,
-                    max = 100,
-                    step = 1,
-                    value = 20
-                  ),
-                  numericInput(
-                    "northarrow_width",
-                    "North Arrow Width (in pixels)",
-                    min = 0,
-                    max = 100,
-                    step = 1,
-                    value = 20
-                  ),
-                  colourInput(
-                    "northarrow_fillcolour1",
-                    "North Arrow Fill Colour 1",
-                    value = "black"
-                  ),
-                  colourInput(
-                    "northarrow_fillcolour2",
-                    "North Arrow Fill Colour 2",
-                    value = "white"
-                  ),
-                  colourInput(
-                    "northarrow_linecolour",
-                    "North Arrow Line Colour",
-                    value = "black"
-                  ),
-                  colourInput(
-                    "northarrow_textcolour",
-                    "North Arrow Text Colour",
-                    value = "black"
-                  ),
-                  numericInput(
-                    "northarrow_textsize",
-                    "North Arrow Text Size",
-                    min = 0,
-                    max = 30,
-                    step = 0.5,
-                    value = 10
+                  value = ""
+                ),
+                textInput(
+                  "legend_title",
+                  "Custom Legend Title",
+                  value = ""
+                ),
+                checkboxInput(
+                  "legend_limits",
+                  "Custom Legend Scale Limits"
+                ),
+                conditionalPanel(
+                  condition = "input.legend_limits == true",
+                  div(class = "checkbox-container"),
+                  div(class = "custom-inline",
+                      fluidRow(
+                        column(width = 6,
+                               textInput(
+                                 "legend_min",
+                                 "Min",
+                                 value = ""
+                               )
+                        ),
+                        column(width = 6,
+                               textInput(
+                                 "legend_max",
+                                 "Max",
+                                 value = ""
+                               )
+                        )
+                      )
                   )
-              )
+                ),
+                numericInput(
+                  "legend_title_wrap_length",
+                  "Legend Title Wrap Length (max characters on one line)",
+                  min = 10,
+                  max = 100,
+                  step = 2,
+                  value = 20
+                ),
+                tags$hr(),
+                HTML("<span style='font-size: 16px;'><b><u>Axis Customization ",
+                     "Options</b></u></span><br><br>"),
+                fluidRow(
+                  column(width = 6,
+                         numericInput(
+                           "xaxis_fontsize",
+                           "X-Axis Label Font Size",
+                           min = 1,
+                           max = 30,
+                           step = 0.5,
+                           value = 12
+                         )
+                  ),
+                  column(width = 6,
+                         numericInput(
+                           "yaxis_fontsize",
+                           "Y-Axis Label Font Size",
+                           min = 1,
+                           max = 30,
+                           step = 0.5,
+                           value = 12
+                         )
+                  )
+                ),
+                textInput(
+                  "xaxis_ticks",
+                  "Custom X-Axis Break Points (comma separated)",
+                  value = ""
+                ),
+                textInput(
+                  "yaxis_ticks",
+                  "Custom Y-Axis Break Points (comma separated)",
+                  value = ""
+                ),
+                fluidRow(
+                  column(width = 6,
+                         checkboxInput(
+                           "major_gridlines",
+                           "Major Grid Lines",
+                           value = TRUE
+                         )
+                  ),
+                  column(width = 6,
+                         checkboxInput(
+                           "minor_gridlines",
+                           "Minor Grid Lines",
+                           value = FALSE
+                         )
+                  )
+                ),
+                tags$hr(),
+                checkboxInput(
+                  "add_scalebar",
+                  "Add a Scale Bar to the Map"
+                ),
+                conditionalPanel(
+                  condition = "input.add_scalebar == true",
+                  div(class = "checkbox-container"),
+                  div(class = "custom-inline",
+                      selectInput(
+                        "scalebar_location",
+                        "Scale Bar Location (on map)",
+                        choices = c(
+                          "bottomleft",
+                          "bottomright",
+                          "topleft",
+                          "topright"
+                        ),
+                        selected = "topright"
+                      ),
+                      numericInput(
+                        "scalebar_height",
+                        "Scale Bar Height (in pixels)",
+                        min = 0,
+                        max = 100,
+                        step = 1,
+                        value = 10
+                      ),
+                      numericInput(
+                        "scalebar_size",
+                        "Size of Scale Bar (proportional to plot area, in %)",
+                        min = 0,
+                        max = 100,
+                        step = 1,
+                        value = 10
+                      ),
+                      numericInput(
+                        "scalebar_fontsize",
+                        "Scale Bar Font Size",
+                        min = 1,
+                        max = 30,
+                        step = 0.5,
+                        value = 12
+                      ),
+                      colourInput(
+                        "scalebar_colour1",
+                        "Scale Bar Colour 1",
+                        value = "black"
+                      ),
+                      colourInput(
+                        "scalebar_colour2",
+                        "Scale Bar Colour 2",
+                        value = "white"
+                      )
+                  )
+                ),
+                checkboxInput(
+                  "add_northarrow",
+                  "Add a North Arrow to the Map"
+                ),
+                conditionalPanel(
+                  condition = "input.add_northarrow == true",
+                  div(class = "checkbox-container"),
+                  div(class = "custom-inline",
+                      selectInput(
+                        "northarrow_location",
+                        "North Arrow Location (on map)",
+                        choices = c(
+                          "bottomleft",
+                          "bottomright",
+                          "topleft",
+                          "topright"
+                        ),
+                        selected = "topright"
+                      ),
+                      selectInput(
+                        "northarrow_style",
+                        "North Arrow Style",
+                        choices = c(
+                          "orienteering",
+                          "fancy_orienteering",
+                          "minimal",
+                          "nautical"
+                        ),
+                        selected = "fancy_orienteering"
+                      ),
+                      numericInput(
+                        "northarrow_height",
+                        "North Arrow Height (in pixels)",
+                        min = 0,
+                        max = 100,
+                        step = 1,
+                        value = 20
+                      ),
+                      numericInput(
+                        "northarrow_width",
+                        "North Arrow Width (in pixels)",
+                        min = 0,
+                        max = 100,
+                        step = 1,
+                        value = 20
+                      ),
+                      colourInput(
+                        "northarrow_fillcolour1",
+                        "North Arrow Fill Colour 1",
+                        value = "black"
+                      ),
+                      colourInput(
+                        "northarrow_fillcolour2",
+                        "North Arrow Fill Colour 2",
+                        value = "white"
+                      ),
+                      colourInput(
+                        "northarrow_linecolour",
+                        "North Arrow Line Colour",
+                        value = "black"
+                      ),
+                      colourInput(
+                        "northarrow_textcolour",
+                        "North Arrow Text Colour",
+                        value = "black"
+                      ),
+                      numericInput(
+                        "northarrow_textsize",
+                        "North Arrow Text Size",
+                        min = 0,
+                        max = 30,
+                        step = 0.5,
+                        value = 10
+                      )
+                  )
+                )
+                # # Create a box for custom ggplot2 code
+                # # This is commented out due to potential security concerns
+                # tags$hr(),
+                # textAreaInput(
+                #   "ggplot_code",
+                #   "Customize plot using ggplot2 code",
+                #   value = "",
+                #   rows = 5,
+                #   placeholder = "Enter custom code here... e.g. theme(panel.border = element_blank())"
+                # ),
+                # em("*Please note that your code will only be evaluated when you",
+                # "manually click the 'Plot Map' button")
+              )#,
             )
-            # # Create a box for custom ggplot2 code
-            # # This is commented out due to potential security concerns
-            # tags$hr(),
-            # textAreaInput(
-            #   "ggplot_code",
-            #   "Customize plot using ggplot2 code",
-            #   value = "",
-            #   rows = 5,
-            #   placeholder = "Enter custom code here... e.g. theme(panel.border = element_blank())"
-            # ),
-            # em("*Please note that your code will only be evaluated when you",
-            # "manually click the 'Plot Map' button")
-          )#,
-        )
+          )
       )
     ),
 
@@ -961,314 +1093,252 @@ ui <- fluidPage(
     # output = tables, plots, texts
     mainPanel(
       tabsetPanel(
-
         tabPanel(
           title = "Summary",
-          HTML("<br>"), # Adding line break for spacing
-          HTML(
-            "Here you can view the metadata summarising your data cube."
-          ),
-          HTML("<br>"),
-          HTML("<br>"),
-          verbatimTextOutput("metadata"),
-          HTML("<br>"),
-          HTML("<br>")
-        ),
-
-        tabPanel(
-          title = "Background",
-          HTML("<br>"),
-          HTML(
-            "Here you can view technical information on the available ",
-            "biodiversity indicators."
-          ),
-          h3("Biodiversity Indicators"),
-          HTML("<br>"),
-          em("Occurrences"),
-          p(strong("Total Occurrences")),
-          p(
-            "The total number of occurrences is calculated by summing the ",
-            "occurrences of all species observed for each cell or year. This ",
-            "variable provides an overview of the comprehensiveness and ",
-            "distribution of data in the cube being analyzed, and may be ",
-            "helpful, or even vital, for interpreting the results of ",
-            "calculated indicators."
-          ),
-          p(strong("Density of Occurrences")),
-          p(
-            "Density is calculated by summing the total number of occurrences ",
-            "per square km for each cell or year. This provides similar ",
-            "information to total occurrences, but is adjusted for cell area."
-          ),
-          HTML("<br>"),
-          em("Richness"),
-          p(
-            "Species richness is the total number of species present in a ",
-            "sample (Magurran, 1988). It is a fundamental and commonly used ",
-            "measure of biodiversity, providing a simple and intuitive ",
-            "overview of the status of biodiversity. However, richness is not ",
-            "well suited to measuring biodiversity change over time, as it ",
-            "only decreases when local extinctions occur and thus lags behind ",
-            "abundance for negative trends. While it may act as a leading ",
-            "indicator of alien species invasions, it will not indicate ",
-            "establishment because it ignores abundance. Nor will it ",
-            "necessarily indicate changes in local species composition, which ",
-            "can occur without any change in richness. Although richness is ",
-            "conceptually simple, it can be measured in different ways."
-          ),
-          p(strong("Cumulative Species Richness")),
-          p(
-            "Cumulative richness is calculated by adding the newly observed ",
-            "unique species each year to a cumulative sum. This indicator ",
-            "provides an estimation of whether and how many new species are ",
-            "still being discovered in a region. While an influx of alien ",
-            "species could cause an increase in cumulative richness, a fast-",
-            "rising trend as shown in Fig. 2 is likely an indication that the ",
-            "dataset is not comprehensive and therefore observed richness ",
-            "will provide an underestimate of species richness."
-          ),
-          HTML("<br>"),
-          em("Evenness"),
-          p(
-            "Species evenness is a commonly used indicator that measures how ",
-            "uniformly individuals are distributed across species in a region ",
-            "or over time. It provides a complement to richness by taking ",
-            "relative abundance into account. Although GBIF provides ",
-            "information about abundances as individual counts, the majority ",
-            "of entries lack this information. Hence, evenness can only be ",
-            "calculated using the proportions of observations rather than ",
-            "proportions of individuals. Strictly speaking, the evenness ",
-            "measures therefore indicate how uniformly species are ",
-            "represented in the respective data set rather than the true ",
-            "evenness of the ecological community."
-          ),
-          p(strong("Pielou's Evenness")),
-          p("Pielou (1966)"),
-          p(strong("Williams' Evenness")),
-          p("Kvålseth (2015)"),
-          HTML("<br>"),
-          em("Rarity"),
-          p(
-            "Rarity is the scarcity or infrequency of a particular species in ",
-            "an area. A rare species might have a small population size, a ",
-            "limited distribution, or a unique ecological niche (Maciel, ",
-            "2021; Rabinowitz, 1981). Rarity can also be a biodiversity ",
-            "indicator when summed over multiple species in an area, and may ",
-            "provide important insight for determining conservation ",
-            "priorities. It can be measured in different ways, but we will ",
-            "provide workflows to calculate rarity by abundance (using the ",
-            "number of occurrences as a proxy) and by area. When measured ",
-            "over time, rarity may indicate potential threats or changes in ",
-            "the environment."
-          ),
-          p(strong("Abundance-Based Rarity")),
-          p(
-            "Abundance-based rarity is the inverse of the proportion of total ",
-            "occurrences represented by a particular species. The total ",
-            "summed rarity for each grid cell or year is calculated (sum the ",
-            "rarity values of each species present there)."
-          ),
-          p(strong("Area-Based Rarity")),
-          p(
-            "Area-based rarity is the inverse of occupancy frequency ",
-            "(proportion of grid cells occupied) for a particular species. ",
-            "The total summed rarity for each grid cell or year is calculated ",
-            "(sum the rarity values of each species present there)."
-          ),
-          HTML("<br>"),
-          p(strong("Mean Year of Occurrence")),
-          p(
-            "The mean year of occurrence is calculated per cell, giving an ",
-            "indication of how recent the data is for each cell. A recent ",
-            "mean year is not necessarily an indication of quality, as some ",
-            "countries or regions have been conducting comprehensive ",
-            "biodiversity monitoring for many years and will therefore ",
-            "reflect an older mean year of occurrence, while others may show ",
-            "a recent mean year due to e.g., the sudden availability of large ",
-            "amounts of citizen science data."
-          ),
-          HTML("<br>")  # Adding line break for spacing
+          div(class = "scrollable-tab",
+              HTML("<br>"), # Adding line break for spacing
+              HTML(
+                "Here you can view the metadata summarising your data cube."
+              ),
+              HTML("<br>"),
+              HTML("<br>"),
+              verbatimTextOutput("metadata"),
+              HTML("<br>"),
+              HTML("<br>")
+          )
         ),
 
         ############################# Map tab
         tabPanel(
           title = "Map",
-          HTML("<br>"),  # Adding line break for spacing
-          HTML(
-            "Here you can view your selected biodiversity indicator ",
-            "projected onto a map. Use the input filters to select the ",
-            "indicator, taxa, geographical area, and temporal window of ",
-            "interest, and the visualization options to change how the map ",
-            "looks."
-          ),
-          HTML("<br>"),  # Adding line break for spacing
-          HTML("<br>"),  # Adding line break for spacing
-          em(
-            "(Loading the plot could take a few minutes, depending on the ",
-            "options you have selected.)"
-          ),
-          HTML("<br>"),  # Adding line break for spacing
-          HTML("<br>"),
-          actionButton("plot_map_bt", "Plot Map"),
-          HTML("<br>"), # Adding line break for spacing
-          HTML("<br>"), # Adding line break for spacing
-          plotOutput("plot_map", height = "80%", width = "80%"),
-          HTML("<br>"), # Adding line break for spacing
-          p(strong("What am I looking at?")),
-          textOutput("figure_legend_map_text"),
-          HTML("<br>"),
-          # Adding line break for spacing
-          p(strong("But what does this indicator mean?")),
-          p("Please consult the background tab for now"),
-          ########### placer
-          fluidRow(
-            column(
-              selectizeInput(
-                inputId = "downloadOptions_map",
-                label = "Download Formats",
-                choices = c("EPS",
-                            "JPEG",
-                            "PDF",
-                            "PNG",
-                            "SVG",
-                            "TEX",
-                            "TIFF")
+          div(class = "scrollable-tab",
+              HTML("<br>"),  # Adding line break for spacing
+              HTML(
+                "Here you can view your selected biodiversity indicator ",
+                "projected onto a map. Use the input filters to select the ",
+                "indicator, taxa, geographical area, and temporal window of ",
+                "interest, and the visualization options to change how the map ",
+                "looks."
               ),
-              width = 6
-            ),
-            column(
-              downloadButton("downloadGo_map"),
-              width = 4,
-              style = "padding:18px;"
-            )
-          ),
-          fluidRow(
-            column(
-              numericInput(
-                "dlmap_width",
-                "Map Width (in pixels)",
-                min = 100,
-                max = 10000,
-                step = 100,
-                value = 2000
+              HTML("<br>"),  # Adding line break for spacing
+              HTML("<br>"),  # Adding line break for spacing
+              em(
+                "(Loading the plot could take a few minutes, depending on the ",
+                "options you have selected.)"
               ),
-              width = 3
-            ),
-            column(
-              numericInput(
-                "dlmap_height",
-                "Map Height (in pixels)",
-                min = 100,
-                max = 10000,
-                step = 100,
-                value = 2000
+              HTML("<br>"),  # Adding line break for spacing
+              HTML("<br>"),
+              actionButton("plot_map_bt", "Plot Map"),
+              HTML("<br>"), # Adding line break for spacing
+              HTML("<br>"), # Adding line break for spacing
+              uiOutput("plot_map_container"),
+              HTML("<br>"), # Adding line break for spacing
+              p(strong("What am I looking at?")),
+              textOutput("figure_legend_map_text"),
+              HTML("<br>"),
+              # Adding line break for spacing
+              p(strong("Background information on this indicator:")),
+              uiOutput("indicator_background_text_map"),
+              HTML("<br>"),
+              ########### placer
+              fluidRow(
+                column(
+                  selectInput(
+                    inputId = "downloadOptions_map",
+                    label = "Download Formats",
+                    choices = c(
+                      "JPEG",
+                      "PDF",
+                      "PNG",
+                      "SVG",
+                      "TIFF"
+                    )
+                  ),
+                  width = 6
+                ),
+                column(
+                  downloadButton("downloadGo_map"),
+                  width = 4,
+                  style = "padding:18px;"
+                )
               ),
-              width = 3
-            ),
-            column(
-              numericInput(
-                "dlmap_scaling",
-                "Scaling Factor",
-                min = 0.1,
-                max = 5,
-                step = 0.1,
-                value = 1
+              fluidRow(
+                column(
+                  numericInput(
+                    "dlmap_width",
+                    "Map Width (in pixels)",
+                    min = 100,
+                    max = 10000,
+                    step = 100,
+                    value = 2000
+                  ),
+                  width = 3
+                ),
+                column(
+                  numericInput(
+                    "dlmap_height",
+                    "Map Height (in pixels)",
+                    min = 100,
+                    max = 10000,
+                    step = 100,
+                    value = 2000
+                  ),
+                  width = 3
+                ),
+                column(
+                  numericInput(
+                    "dlmap_scaling",
+                    "Scaling Factor",
+                    min = 0.1,
+                    max = 5,
+                    step = 0.1,
+                    value = 1
+                  ),
+                  width = 2
+                )
               ),
-              width = 2
-            )
-          ),
-          em(
-            "Note: if there is extra white space in the downloaded image, try ",
-            "adjusting the width or height. If the text and legend are too ",
-            "large or too small, try adjusting the scaling factor."
+              em(
+                "Note: if there is extra white space in the downloaded image, try ",
+                "adjusting the width or height. If the text and legend are too ",
+                "large or too small, try adjusting the scaling factor (only ",
+                "valid for JPG, PNG and TIFF, as other formats do not use the ",
+                "scaling parameter)."
+              )
           )
         ),
 
         ############################# Time Series tab
         tabPanel(
           title = "Time-series",
-          HTML("<br>"), # Adding line break for spacing
-          HTML(
-            "Here you can view a time-series plot of your selected ",
-            "biodiversity indicator. Use the input filters to select the ",
-            "indicator, taxa, geographical area, and temporal window of ",
-            "interest, and the visualization options to control how the plot ",
-            "looks."
-          ),
-          HTML("<br>"), # Adding line break for spacing
-          HTML("<br>"), # Adding line break for spacing
-          em(
-            "(Loading the plot could take a few minutes, depending on the ",
-            "options you have selected.)"
-          ),
-          HTML("<br>"),  # Adding line break for spacing
-          HTML("<br>"),
-          actionButton("plot_ts_bt", "Plot Time Series"),
-          HTML("<br>"), # Adding line break for spacing
-          HTML("<br>"), # Adding line break for spacing
-          plotlyOutput("plot_ts", height = "80%", width = "80%"),
-          HTML("<br>"),
-          p(strong("What am I looking at?")),
-          textOutput("figure_legend_ts_text"),
-          HTML("<br>"),
-          p(strong("But what does this indicator mean?")),
-          p("Please consult the background tab for now"),
-          fluidRow(
-            column(
-              selectizeInput("downloadOptions_ts",
-                             "Download Formats",
-                             choices = c(
-                               "EPS",
-                               "JPEG",
-                               "PDF",
-                               "PNG",
-                               "SVG",
-                               "TEX",
-                               "TIFF"
-                             )
+          div(class = "scrollable-tab",
+              HTML("<br>"), # Adding line break for spacing
+              HTML(
+                "Here you can view a time-series plot of your selected ",
+                "biodiversity indicator. Use the input filters to select the ",
+                "indicator, taxa, geographical area, and temporal window of ",
+                "interest, and the visualization options to control how the plot ",
+                "looks."
               ),
-              width = 6
-            ),
-            column(
-              downloadButton("downloadGo_ts"),
-              width = 4,
-              style = "padding:18px;"
-            )
-          ),
-          HTML("<br>")  # Adding line break for spacing
+              HTML("<br>"), # Adding line break for spacing
+              HTML("<br>"), # Adding line break for spacing
+              em(
+                "(Loading the plot could take a few minutes, depending on the ",
+                "options you have selected.)"
+              ),
+              HTML("<br>"),  # Adding line break for spacing
+              HTML("<br>"),
+              actionButton("plot_ts_bt", "Plot Time Series"),
+              HTML("<br>"), # Adding line break for spacing
+              HTML("<br>"), # Adding line break for spacing
+              uiOutput("plot_ts_container"),
+              HTML("<br>"),
+              p(strong("What am I looking at?")),
+              textOutput("figure_legend_ts_text"),
+              HTML("<br>"),
+              p(strong("Background information on this indicator:")),
+              uiOutput("indicator_background_text_ts"),
+              HTML("<br>"),
+              fluidRow(
+                column(
+                  selectInput("downloadOptions_ts",
+                              "Download Formats",
+                              choices = c(
+                                "JPEG",
+                                "PDF",
+                                "PNG",
+                                "SVG",
+                                "TIFF"
+                              )
+                  ),
+                  width = 6
+                ),
+                column(
+                  downloadButton("downloadGo_ts"),
+                  width = 4,
+                  style = "padding:18px;"
+                )
+              ),
+              fluidRow(
+                column(
+                  numericInput(
+                    "dlts_width",
+                    "Plot Width (in pixels)",
+                    min = 100,
+                    max = 10000,
+                    step = 100,
+                    value = 2000
+                  ),
+                  width = 3
+                ),
+                column(
+                  numericInput(
+                    "dlts_height",
+                    "Plot Height (in pixels)",
+                    min = 100,
+                    max = 10000,
+                    step = 100,
+                    value = 2000
+                  ),
+                  width = 3
+                ),
+                column(
+                  numericInput(
+                    "dlts_scaling",
+                    "Scaling Factor",
+                    min = 0.1,
+                    max = 5,
+                    step = 0.1,
+                    value = 1
+                  ),
+                  width = 2
+                )
+              ),
+              em(
+                "Note: If the text and legend are too large or too small, try ",
+                "adjusting the scaling factor (only valid for JPG, PNG and TIFF, ",
+                "as other formats do not use the scaling parameter)."
+              )
+          )
         ),
-        #####################
+
+        ########################## Table tab
         tabPanel(
           title = "Table",
-          HTML("<br>"),  # Adding line break for spacing
-          HTML("Here you can view your processed data cube as a table."),
-          HTML("<br>"),  # Adding line break for spacing
-          HTML("<br>"),  # Adding line break for spacing
-          em(
-            "(Note that the various export options will only copy the ",
-            "data from the current page of the table. To export ",
-            "everything, first select 'all' in the 'Show' dropdown menu.)"
-          ),
-          HTML("<br>"), # Adding line break for spacing
-          HTML("<br>"), # Adding line break for spacing
-          div(
-            style = "overflow-x: auto;",
-          dataTableOutput("table")
-          ),
+          div(class = "scrollable-tab",
+              HTML("<br>"),  # Adding line break for spacing
+              HTML("Here you can view your processed data cube as a table."),
+              HTML("<br>"),  # Adding line break for spacing
+              HTML("<br>"),  # Adding line break for spacing
+              em(
+                "(Note that the various export options will only copy the ",
+                "data from the current page of the table. To export ",
+                "everything, first select 'all' in the 'Show' dropdown menu.)"
+              ),
+              HTML("<br>"), # Adding line break for spacing
+              HTML("<br>"), # Adding line break for spacing
+              div(
+                style = "overflow-x: auto;",
+                dataTableOutput("table")
+              )
+          )
         ),
+
+        ########################## Export tab
         tabPanel(
           title = "Export",
-          HTML("<br>"),  # Adding line break for spacing
-          HTML("<div>Download your processed data in .csv format.</div>"),
-          HTML("<br>"), # Adding line break for spacing
-          downloadButton("downloadProcessedCube",
-                         label = "Processed Cube"
-          ),
-          downloadButton("downloadMappedCube",
-                         label = "Mapped Cube"
-          ),
-          downloadButton("downloadTimeSeriesData",
-                         label = "Time Series Data"
+          div(class = "scrollable-tab",
+              HTML("<br>"),  # Adding line break for spacing
+              HTML("<div>Download your processed data in .csv format.</div>"),
+              HTML("<br>"), # Adding line break for spacing
+              downloadButton("downloadProcessedCube",
+                             label = "Processed Cube"
+              ),
+              downloadButton("downloadMappedCube",
+                             label = "Mapped Cube"
+              ),
+              downloadButton("downloadTimeSeriesData",
+                             label = "Time Series Data"
+              )
           )
         ),
         # tabPanel(
@@ -1281,50 +1351,172 @@ ui <- fluidPage(
         #   textOutput("report_text"),
         #   HTML("<br>")  # Adding line break for spacing
         # ),
+
+        ########################### Background tab
+        tabPanel(
+          title = "Background",
+          div(class = "scrollable-tab",
+              HTML("<br>"),
+              HTML(
+                "Here you can view technical information on the available ",
+                "biodiversity indicators."
+              ),
+              h3("Biodiversity Indicators"),
+              HTML("<br>"),
+              em("Occurrences"),
+              p(strong("Total Occurrences")),
+              p(
+                "The total number of occurrences is calculated by summing the ",
+                "occurrences of all species observed for each cell or year. This ",
+                "variable provides an overview of the comprehensiveness and ",
+                "distribution of data in the cube being analyzed, and may be ",
+                "helpful, or even vital, for interpreting the results of ",
+                "calculated indicators."
+              ),
+              p(strong("Density of Occurrences")),
+              p(
+                "Density is calculated by summing the total number of occurrences ",
+                "per square km for each cell or year. This provides similar ",
+                "information to total occurrences, but is adjusted for cell area."
+              ),
+              HTML("<br>"),
+              em("Richness"),
+              p(
+                "Species richness is the total number of species present in a ",
+                "sample (Magurran, 1988). It is a fundamental and commonly used ",
+                "measure of biodiversity, providing a simple and intuitive ",
+                "overview of the status of biodiversity. However, richness is not ",
+                "well suited to measuring biodiversity change over time, as it ",
+                "only decreases when local extinctions occur and thus lags behind ",
+                "abundance for negative trends. While it may act as a leading ",
+                "indicator of alien species invasions, it will not indicate ",
+                "establishment because it ignores abundance. Nor will it ",
+                "necessarily indicate changes in local species composition, which ",
+                "can occur without any change in richness. Although richness is ",
+                "conceptually simple, it can be measured in different ways."
+              ),
+              p(strong("Cumulative Species Richness")),
+              p(
+                "Cumulative richness is calculated by adding the newly observed ",
+                "unique species each year to a cumulative sum. This indicator ",
+                "provides an estimation of whether and how many new species are ",
+                "still being discovered in a region. While an influx of alien ",
+                "species could cause an increase in cumulative richness, a fast-",
+                "rising trend as shown in Fig. 2 is likely an indication that the ",
+                "dataset is not comprehensive and therefore observed richness ",
+                "will provide an underestimate of species richness."
+              ),
+              HTML("<br>"),
+              em("Evenness"),
+              p(
+                "Species evenness is a commonly used indicator that measures how ",
+                "uniformly individuals are distributed across species in a region ",
+                "or over time. It provides a complement to richness by taking ",
+                "relative abundance into account. Although GBIF provides ",
+                "information about abundances as individual counts, the majority ",
+                "of entries lack this information. Hence, evenness can only be ",
+                "calculated using the proportions of observations rather than ",
+                "proportions of individuals. Strictly speaking, the evenness ",
+                "measures therefore indicate how uniformly species are ",
+                "represented in the respective data set rather than the true ",
+                "evenness of the ecological community."
+              ),
+              p(strong("Pielou's Evenness")),
+              p("Pielou (1966)"),
+              p(strong("Williams' Evenness")),
+              p("Kvålseth (2015)"),
+              HTML("<br>"),
+              em("Rarity"),
+              p(
+                "Rarity is the scarcity or infrequency of a particular species in ",
+                "an area. A rare species might have a small population size, a ",
+                "limited distribution, or a unique ecological niche (Maciel, ",
+                "2021; Rabinowitz, 1981). Rarity can also be a biodiversity ",
+                "indicator when summed over multiple species in an area, and may ",
+                "provide important insight for determining conservation ",
+                "priorities. It can be measured in different ways, but we will ",
+                "provide workflows to calculate rarity by abundance (using the ",
+                "number of occurrences as a proxy) and by area. When measured ",
+                "over time, rarity may indicate potential threats or changes in ",
+                "the environment."
+              ),
+              p(strong("Abundance-Based Rarity")),
+              p(
+                "Abundance-based rarity is the inverse of the proportion of total ",
+                "occurrences represented by a particular species. The total ",
+                "summed rarity for each grid cell or year is calculated (sum the ",
+                "rarity values of each species present there)."
+              ),
+              p(strong("Area-Based Rarity")),
+              p(
+                "Area-based rarity is the inverse of occupancy frequency ",
+                "(proportion of grid cells occupied) for a particular species. ",
+                "The total summed rarity for each grid cell or year is calculated ",
+                "(sum the rarity values of each species present there)."
+              ),
+              HTML("<br>"),
+              p(strong("Mean Year of Occurrence")),
+              p(
+                "The mean year of occurrence is calculated per cell, giving an ",
+                "indication of how recent the data is for each cell. A recent ",
+                "mean year is not necessarily an indication of quality, as some ",
+                "countries or regions have been conducting comprehensive ",
+                "biodiversity monitoring for many years and will therefore ",
+                "reflect an older mean year of occurrence, while others may show ",
+                "a recent mean year due to e.g., the sudden availability of large ",
+                "amounts of citizen science data."
+              ),
+              HTML("<br>")  # Adding line break for spacing
+          )
+        ),
+
+        ########################### About tab
         tabPanel(
           title = "About",
-          HTML("<br>"),  # Adding line break for spacing
-          HTML(
-            paste0(
-              "This Shiny app was developed by: <br><br>",
-              "Shawn Dove <br>",
-              "Yanina Sica <br>",
-              "Lissa Breugelmans <br>",
-              "Melanie De Nolf <br>",
-              "Arvin C. Diesmos <br>",
-              "Mathias Dillen <br>",
-              "Fábio Matos <br>",
-              "Arman Pili <br>",
-              "<br>",
-              "The app is a graphical front end for the b3gbi R package, ",
-              "an output of the B-cubed project.",
-              "<br><br>",
-              "<div>For more information about the b3gbi R package ",
-              "please visit the ",
-              "<a href='https://github.com/b-cubed-eu/b3gbi/' ",
-              "style='color: blue; text-decoration: none;'> ",
-              "GitHub page</a> or the ",
-              "<a href='https://b-cubed-eu.r-universe.dev/b3gbi' ",
-              "style='color: blue; text-decoration: none;'> ",
-              "R Universe page </a>",
-              "or the <a href='https://ec.europa.eu/info/funding-tenders/",
-              "opportunities/portal/screen/opportunities/horizon-results-",
-              "platform/83298' style='color: blue; text-decoration: ",
-              "none;'> EU Horizon Results Platform page</a>.",
-              "<br><br>",
-              "For more information about the B-Cubed project ",
-              "please visit the <a href='https://b-cubed.eu/' ",
-              "style='color: blue; text-decoration: none;'>B-Cubed ",
-              "website</a>.</div>",
-              "<br>",
-              "B-Cubed (Biodiversity Building Blocks for Policy) receives ",
-              "funding from the European Union’s Horizon Europe Research ",
-              "and Innovation Programme (ID No 101059592).",
-              "<br><br>",
-              "This app is licensed under the MIT License.</div>"
-            )
-          ),
-          HTML("<br>")  # Adding line break for spacing
+          div(class = "scrollable-tab",
+              HTML("<br>"),  # Adding line break for spacing
+              HTML(
+                paste0(
+                  "This Shiny app was developed by: <br><br>",
+                  "Shawn Dove <br>",
+                  "Yanina Sica <br>",
+                  "Lissa Breugelmans <br>",
+                  "Melanie De Nolf <br>",
+                  "Arvin C. Diesmos <br>",
+                  "Mathias Dillen <br>",
+                  "Fábio Matos <br>",
+                  "Arman Pili <br>",
+                  "<br>",
+                  "The app is a graphical front end for the b3gbi R package, ",
+                  "an output of the B-cubed project.",
+                  "<br><br>",
+                  "<div>For more information about the b3gbi R package ",
+                  "please visit the ",
+                  "<a href='https://github.com/b-cubed-eu/b3gbi/' ",
+                  "style='color: blue; text-decoration: none;'> ",
+                  "GitHub page</a> or the ",
+                  "<a href='https://b-cubed-eu.r-universe.dev/b3gbi' ",
+                  "style='color: blue; text-decoration: none;'> ",
+                  "R Universe page </a>",
+                  "or the <a href='https://ec.europa.eu/info/funding-tenders/",
+                  "opportunities/portal/screen/opportunities/horizon-results-",
+                  "platform/83298' style='color: blue; text-decoration: ",
+                  "none;'> EU Horizon Results Platform page</a>.",
+                  "<br><br>",
+                  "For more information about the B-Cubed project ",
+                  "please visit the <a href='https://b-cubed.eu/' ",
+                  "style='color: blue; text-decoration: none;'>B-Cubed ",
+                  "website</a>.</div>",
+                  "<br>",
+                  "B-Cubed (Biodiversity Building Blocks for Policy) receives ",
+                  "funding from the European Union’s Horizon Europe Research ",
+                  "and Innovation Programme (ID No 101059592).",
+                  "<br><br>",
+                  "This app is licensed under the MIT License.</div>"
+                )
+              ),
+              HTML("<br>")  # Adding line break for spacing
+          )
         )
       )
     )
@@ -1872,8 +2064,6 @@ server <- function(input, output, session) {
               region = region_param
             )
 
-            # Example of utilizing an action if input is missing or NULL leads to avoiding
-            # ifelse usage like that
             map <- do.call(
               switch(input$indicatorsToAnalyse,
                 "Observed Species Richness" = obs_richness_map,
@@ -1892,13 +2082,15 @@ server <- function(input, output, session) {
             map # Return the map object
           },
           warning = function(w) {
-            showNotification(paste("Warning:", conditionMessage(w)), type = "warning")
+            showNotification(paste("Warning:", conditionMessage(w)),
+                             type = "warning")
             invokeRestart("muffleWarning")
           }
         )
       },
       error = function(e) {
-        showNotification(paste("Error:", conditionMessage(e)), type = "error", duration = NULL)
+        showNotification(paste("Error:", conditionMessage(e)),
+                         type = "error", duration = NULL)
         return(NULL)
       }
     )
@@ -1994,6 +2186,49 @@ server <- function(input, output, session) {
       panel_bg <- input$panel_bg
     }
 
+    # Check if subtitle is provided
+    if (input$subtitle == "") {
+      subtitle <- NULL
+    } else {
+      subtitle <- input$subtitle
+    }
+
+    # Check if caption is provided
+    if (input$caption == "") {
+      caption <- NULL
+    } else {
+      caption <- input$caption
+    }
+
+    # Check that title, subtitle and caption font size inputs are ok
+    if (input$title_size < 8 || input$title_size > 40) {
+      showNotification(
+        paste0("Title font size is outside reasonable boundaries.",
+               "Resetting to default."),
+        type = "error")
+      title_size <- NULL
+    } else {
+      title_size <- input$title_size
+    }
+    if (input$subtitle_size < 6 || input$subtitle_size > 30) {
+      showNotification(
+        paste0("Subtitle font size is outside reasonable boundaries.",
+               "Resetting to default."),
+        type = "error")
+      subtitle_size <- NULL
+    } else {
+      subtitle_size <- input$subtitle_size
+    }
+    if (input$caption_size < 4 || input$caption_size > 20) {
+      showNotification(
+        paste0("Caption font size is outside reasonable boundaries. ",
+               "Resetting to default."),
+        type = "error")
+      caption_size <- NULL
+    } else {
+      caption_size <- input$caption_size
+    }
+
     # Prepare parameters for plot
     params <- list(
       x = plot_to_render_map(),
@@ -2016,6 +2251,22 @@ server <- function(input, output, session) {
 
     # Create plot
     map_plot <- do.call(plot, params)
+
+    # Add other options to plot
+    map_plot <- map_plot +
+      labs(subtitle = subtitle,
+           caption = caption) +
+      theme(
+        plot.title = element_text(color = input$title_color,
+                                  size = title_size,
+                                  face = "bold"),
+        plot.subtitle = element_text(color = input$subtitle_color,
+                                     size = subtitle_size),
+        plot.caption = element_text(color = input$caption_color,
+                                    size = caption_size,
+                                    face = "italic")
+      )
+
 
     # # Add user-defined custom code block
     # # Commented out for security reasons
@@ -2053,17 +2304,40 @@ server <- function(input, output, session) {
   #   plot(plot_to_render_map())
   # })
 
-  output$plot_map <- renderPlot({
-    req(plot_to_print_map())
-    plot_to_print_map()
-  },
-  width = reactive({
-    input$plot_width
-  }),
-  height = reactive({
-    input$plot_height
+  observeEvent(input$plot_map_bt, {
+    output$plot_map_container <- renderUI({
+      plotOutput("plot_map",
+                 width = paste0(reactive({
+                   width_val <- input$plot_width
+                   if (is.na(width_val) || width_val <= 100 || width_val > 2000) {
+                     showNotification(
+                       "Warning: width is not valid. Setting to default value of 600."
+                     )
+                     600
+                   } else {
+                     width_val
+                   }
+                 })(), "px"),
+                 height = paste0(reactive({
+                   height_val <- input$plot_height
+                   if (is.na(height_val) || height_val <= 100 || height_val > 2000) {
+                     showNotification(
+                       "Warning: height is not valid. Setting to default value of 600."
+                     )
+                     400
+                   } else {
+                     height_val
+                   }
+                 })(), "px")
+      )
+    })
+
+    output$plot_map <- renderPlot({
+      req(plot_to_print_map())
+      plot_to_print_map()
+    })
   })
-  )
+
 
   # Download map
   output$downloadGo_map <- downloadHandler(
@@ -2093,18 +2367,25 @@ server <- function(input, output, session) {
         dlmap_scaling <- input$dlmap_scaling
       }
       if (dlmap_width > 10000) {
-        warning("Map width is too large, setting to 10000.")
+        showNotification("Map width is too large, setting to 10000.")
         dlmap_width <- 10000
       } else if (dlmap_width < 100) {
-        warning("Map width is too small, setting to 100.")
+        showNotification("Map width is too small, setting to 100.")
         dlmap_width <- 100
       }
       if (dlmap_height > 10000) {
-        warning("Map height is too large, setting to 10000.")
+        showNotification("Map height is too large, setting to 10000.")
         dlmap_height <- 10000
       } else if (dlmap_height < 100) {
-        warning("Map height is too small, setting to 100.")
+        showNotification("Map height is too small, setting to 100.")
         dlmap_height <- 100
+      }
+      if (dlmap_scaling > 10) {
+        showNotification("Scaling factor is too large, setting to 10.")
+        dlmap_scaling <- 10
+      } else if (dlmap_scaling <= 0.1) {
+        showNotification("Scaling factor is too small, setting to 0.1.")
+        dlmap_scaling <- 0.1
       }
       if (
         ((dlmap_height / dlmap_scaling) < 800) ||
@@ -2124,14 +2405,26 @@ server <- function(input, output, session) {
         )
       }
 
-      ggsave(filename,
-        plot = plot_to_print_map(),
-        device = tolower(input$downloadOptions_map),
-        width = dlmap_width,
-        height = dlmap_height,
-        units = "px",
-        scaling = dlmap_scaling
-      )
+      if (input$downloadOptions_map == "JPG" ||
+          input$downloadOptions_map == "PNG" ||
+          input$downloadOptions_map == "TIFF" ) {
+        ggsave(filename,
+          plot = plot_to_print_map(),
+          device = tolower(input$downloadOptions_map),
+          width = dlmap_width,
+          height = dlmap_height,
+          units = "px",
+          scaling = dlmap_scaling
+        )
+      } else {
+        ggsave(filename,
+          plot = plot_to_print_map(),
+          device = tolower(input$downloadOptions_map),
+          width = dlmap_width,
+          height = dlmap_height,
+          units = "px"
+        )
+      }
     }
   )
 
@@ -2167,6 +2460,204 @@ server <- function(input, output, session) {
     renderText({
       fig_legend()
     })
+
+  observeEvent(input$plot_ts_bt, {
+    req(input$dataCube)
+     output$indicator_background_text_ts <-
+      renderUI({
+        chosen_ind <- switch(
+          input$indicatorsToAnalyse,
+          "Observed Species Richness" = obs_richness_bg,
+          "Total Occurrences" = total_occ_bg,
+          "Pielou's Evenness" = pielou_evenness_bg,
+          "Williams' Evenness" = williams_evenness_bg,
+          "Cumulative Species Richness" = cum_richness_bg,
+          "Density of Occurrences" = occ_density_bg,
+          "Abundance-Based Rarity" = ab_rarity_bg,
+          "Area-Based Rarity" = area_rarity_bg,
+          "Mean Year of Occurrence" = newness_bg
+        )
+        HTML(chosen_ind)
+      })
+  })
+
+  observeEvent(input$plot_map_bt, {
+    req(input$dataCube)
+    output$indicator_background_text_map <-
+      renderUI({
+        chosen_ind <- switch(
+          input$indicatorsToAnalyse,
+          "Observed Species Richness" = obs_richness_bg,
+          "Total Occurrences" = total_occ_bg,
+          "Pielou's Evenness" = pielou_evenness_bg,
+          "Williams' Evenness" = williams_evenness_bg,
+          "Cumulative Species Richness" = cum_richness_bg,
+          "Density of Occurrences" = occ_density_bg,
+          "Abundance-Based Rarity" = ab_rarity_bg,
+          "Area-Based Rarity" = area_rarity_bg,
+          "Mean Year of Occurrence" = newness_bg
+        )
+        HTML(chosen_ind)
+      })
+  })
+
+  obs_richness_bg <- paste(
+    em("Species Richness"),
+    p(
+      "Species richness is the total number of species present in a ",
+      "sample (Magurran, 1988). It is a fundamental and commonly used ",
+      "measure of biodiversity, providing a simple and intuitive ",
+      "overview of the status of biodiversity. However, richness is not ",
+      "well suited to measuring biodiversity change over time, as it ",
+      "only decreases when local extinctions occur and thus lags behind ",
+      "abundance for negative trends. While it may act as a leading ",
+      "indicator of alien species invasions, it will not indicate ",
+      "establishment because it ignores abundance. Nor will it ",
+      "necessarily indicate changes in local species composition, which ",
+      "can occur without any change in richness. Although richness is ",
+      "conceptually simple, it can be measured in different ways."
+    )
+  )
+  total_occ_bg <- paste(
+    p(strong("Total Occurrences")),
+    p(
+      "The total number of occurrences is calculated by summing the ",
+      "occurrences of all species observed for each cell or year. This ",
+      "variable provides an overview of the comprehensiveness and ",
+      "distribution of data in the cube being analyzed, and may be ",
+      "helpful, or even vital, for interpreting the results of ",
+      "calculated indicators."
+    )
+  )
+  pielou_evenness_bg <- paste(
+    p(strong("Pielou's Evenness")),
+    p(
+      "Species evenness is a commonly used indicator that measures how ",
+      "uniformly individuals are distributed across species in a region ",
+      "or over time. It provides a complement to richness by taking ",
+      "relative abundance into account. Although GBIF provides ",
+      "information about abundances as individual counts, the majority ",
+      "of entries lack this information. Hence, evenness can only be ",
+      "calculated using the proportions of observations rather than ",
+      "proportions of individuals. Strictly speaking, the evenness ",
+      "measures therefore indicate how uniformly species are ",
+      "represented in the respective data set rather than the true ",
+      "evenness of the ecological community."
+    ),
+    p("Pielou (1966)")
+  )
+  williams_evenness_bg <- paste(
+    p(strong("Williams' Evenness")),
+    p(
+      "Species evenness is a commonly used indicator that measures how ",
+      "uniformly individuals are distributed across species in a region ",
+      "or over time. It provides a complement to richness by taking ",
+      "relative abundance into account. Although GBIF provides ",
+      "information about abundances as individual counts, the majority ",
+      "of entries lack this information. Hence, evenness can only be ",
+      "calculated using the proportions of observations rather than ",
+      "proportions of individuals. Strictly speaking, the evenness ",
+      "measures therefore indicate how uniformly species are ",
+      "represented in the respective data set rather than the true ",
+      "evenness of the ecological community."
+    ),
+    p("Kvålseth (2015)")
+  )
+  cum_richness_bg <- paste(
+    em("Species Richness"),
+    p(
+      "Species richness is the total number of species present in a ",
+      "sample (Magurran, 1988). It is a fundamental and commonly used ",
+      "measure of biodiversity, providing a simple and intuitive ",
+      "overview of the status of biodiversity. However, richness is not ",
+      "well suited to measuring biodiversity change over time, as it ",
+      "only decreases when local extinctions occur and thus lags behind ",
+      "abundance for negative trends. While it may act as a leading ",
+      "indicator of alien species invasions, it will not indicate ",
+      "establishment because it ignores abundance. Nor will it ",
+      "necessarily indicate changes in local species composition, which ",
+      "can occur without any change in richness. Although richness is ",
+      "conceptually simple, it can be measured in different ways."
+    ),
+    p(strong("Cumulative Species Richness")),
+    p(
+      "Cumulative richness is calculated by adding the newly observed ",
+      "unique species each year to a cumulative sum. This indicator ",
+      "provides an estimation of whether and how many new species are ",
+      "still being discovered in a region. While an influx of alien ",
+      "species could cause an increase in cumulative richness, a fast-",
+      "rising trend as shown in Fig. 2 is likely an indication that the ",
+      "dataset is not comprehensive and therefore observed richness ",
+      "will provide an underestimate of species richness."
+    )
+  )
+  occ_density_bg <- paste(
+    p(strong("Density of Occurrences")),
+    p(
+      "Density is calculated by summing the total number of occurrences ",
+      "per square km for each cell or year. This provides similar ",
+      "information to total occurrences, but is adjusted for cell area."
+    )
+  )
+  ab_rarity_bg <- paste(
+    em("Rarity"),
+    p(
+      "Rarity is the scarcity or infrequency of a particular species in ",
+      "an area. A rare species might have a small population size, a ",
+      "limited distribution, or a unique ecological niche (Maciel, ",
+      "2021; Rabinowitz, 1981). Rarity can also be a biodiversity ",
+      "indicator when summed over multiple species in an area, and may ",
+      "provide important insight for determining conservation ",
+      "priorities. It can be measured in different ways, but we will ",
+      "provide workflows to calculate rarity by abundance (using the ",
+      "number of occurrences as a proxy) and by area. When measured ",
+      "over time, rarity may indicate potential threats or changes in ",
+      "the environment."
+    ),
+    p(strong("Abundance-Based Rarity")),
+    p(
+      "Abundance-based rarity is the inverse of the proportion of total ",
+      "occurrences represented by a particular species. The total ",
+      "summed rarity for each grid cell or year is calculated (sum the ",
+      "rarity values of each species present there)."
+    )
+  )
+  area_rarity_bg <- paste(
+    em("Rarity"),
+    p(
+      "Rarity is the scarcity or infrequency of a particular species in ",
+      "an area. A rare species might have a small population size, a ",
+      "limited distribution, or a unique ecological niche (Maciel, ",
+      "2021; Rabinowitz, 1981). Rarity can also be a biodiversity ",
+      "indicator when summed over multiple species in an area, and may ",
+      "provide important insight for determining conservation ",
+      "priorities. It can be measured in different ways, but we will ",
+      "provide workflows to calculate rarity by abundance (using the ",
+      "number of occurrences as a proxy) and by area. When measured ",
+      "over time, rarity may indicate potential threats or changes in ",
+      "the environment."
+    ),
+    p(strong("Area-Based Rarity")),
+    p(
+      "Area-based rarity is the inverse of occupancy frequency ",
+      "(proportion of grid cells occupied) for a particular species. ",
+      "The total summed rarity for each grid cell or year is calculated ",
+      "(sum the rarity values of each species present there)."
+    )
+  )
+  newness_bg <- paste(
+    p(strong("Mean Year of Occurrence")),
+    p(
+      "The mean year of occurrence is calculated per cell, giving an ",
+      "indication of how recent the data is for each cell. A recent ",
+      "mean year is not necessarily an indication of quality, as some ",
+      "countries or regions have been conducting comprehensive ",
+      "biodiversity monitoring for many years and will therefore ",
+      "reflect an older mean year of occurrence, while others may show ",
+      "a recent mean year due to e.g., the sudden availability of large ",
+      "amounts of citizen science data."
+    )
+  )
 
   ############################ time series tab outputs
 
@@ -2216,79 +2707,165 @@ server <- function(input, output, session) {
     )
   })
 
-  # output time series from imported cube
-  output$plot_ts <- renderPlotly({
-    req(plot_to_render_ts())
+  observeEvent(input$plot_ts_bt, {
+    output$plot_ts_container <- renderUI({
+      plotOutput("plot_ts",
+                 width = paste0(reactive({
+                   width_val <- input$plot_width
+                   if (is.na(width_val) || width_val <= 100 || width_val > 2000) {
+                     showNotification(
+                       "Warning: width is not valid. Setting to default value of 600."
+                     )
+                     600
+                   } else {
+                     width_val
+                   }
+                 })(), "px"),
+                 height = paste0(reactive({
+                   height_val <- input$plot_height
+                   if (is.na(height_val) || height_val <= 100 || height_val > 2000) {
+                     showNotification(
+                       "Warning: height is not valid. Setting to default value of 600."
+                     )
+                     400
+                   } else {
+                     height_val
+                   }
+                 })(), "px"))
+    })
+    # output time series from imported cube
+    output$plot_ts <- renderPlot({
+      req(plot_to_render_ts())
 
-    ribboncolour <- if (input$ci_vis_type == "None") NA else input$ribboncolour
-    vistype <- if (input$ci_vis_type == "None") "ribbon" else input$ci_vis_type
-    gridlines <- if (input$ts_gridlines == "TRUE") FALSE else TRUE
-    if (
-      is.null(input$title) ||
-      length(input$title) == 0 ||
-      input$title == ""
-    ) {
-      title <- "auto"
-    } else {
-      title <- input$title
-    }
-    if (
-      is.null(input$ts_x_label) ||
-      length(input$ts_x_label) == 0 ||
-      input$ts_x_label == ""
-    ) {
-      xlabel <- NULL
-    } else {
-      xlabel <- input$ts_x_label
-    }
-    if (
-      is.null(input$ts_y_label) ||
-      length(input$ts_y_label) == 0 ||
-      input$ts_y_label == ""
-    ) {
-      ylabel <- NULL
-    } else {
-      ylabel <- input$ts_y_label
-    }
+      ribboncolour <- if (input$ci_vis_type == "None") NA else input$ribboncolour
+      vistype <- if (input$ci_vis_type == "None") "ribbon" else input$ci_vis_type
+      gridlines <- if (input$ts_gridlines == "TRUE") FALSE else TRUE
+      if (
+        input$title == ""
+      ) {
+        title <- NULL
+      } else {
+        title <- input$title
+      }
+      if (
+        is.null(input$ts_x_label) ||
+        length(input$ts_x_label) == 0 ||
+        input$ts_x_label == ""
+      ) {
+        xlabel <- NULL
+      } else {
+        xlabel <- input$ts_x_label
+      }
+      if (
+        is.null(input$ts_y_label) ||
+        length(input$ts_y_label) == 0 ||
+        input$ts_y_label == ""
+      ) {
+        ylabel <- NULL
+      } else {
+        ylabel <- input$ts_y_label
+      }
 
-    params <- list(
-      x = plot_to_render_ts(),
-      title = title,
-      suppress_y = input$suppress_y,
-      smoothed_trend = input$smoothed_trend,
-      x_label = xlabel,
-      y_label = ylabel,
-      x_expand = c(input$ts_x_expand_left, input$ts_x_expand_right),
-      y_expand = c(input$ts_y_expand_bottom, input$ts_y_expand_top),
-      x_breaks = input$ts_x_breaks,
-      y_breaks = input$ts_y_breaks,
-      gridoff = gridlines,
-      ci_type = input$vistype,
-      point_line = input$point_line,
-      pointsize = input$pointsize,
-      linewidth = input$linewidth,
-      linecolour = input$linecolour,
-      linealpha = input$linealpha,
-      error_width = input$error_width,
-      error_thickness = input$error_thickness,
-      error_alpha = input$error_alpha,
-      ribboncolour = ribboncolour,
-      ribbonalpha = input$ribbonalpha,
-      smooth_linetype = input$smooth_linetype,
-      smooth_linewidth = input$smooth_linewidth,
-      trendlinecolour = input$trendlinecolour,
-      trendlinealpha = input$trendlinealpha,
-      smooth_cilinewidth = input$smooth_cilinewidth,
-      envelopecolour = input$envelopecolour,
-      envelopealpha = input$envelopealpha,
-      smooth_cialpha = input$smooth_cialpha,
-      wrap_length = input$wrap_length
-    )
+      # Check if subtitle is provided
+      if (input$subtitle == "") {
+        subtitle <- NULL
+      } else {
+        subtitle <- input$subtitle
+      }
 
-    # Plot diversity metric
-    ts_plot <- do.call(plot, params)
+      # Check if caption is provided
+      if (input$caption == "") {
+        caption <- NULL
+      } else {
+        caption <- input$caption
+      }
 
-    ts_plot
+      # Check that title, subtitle and caption font size inputs are ok
+      if (input$title_size < 8 || input$title_size > 40) {
+        showNotification(
+          paste0("Title font size is outside reasonable boundaries.",
+                 "Resetting to default."),
+          type = "error")
+        title_size <- NULL
+      } else {
+        title_size <- input$title_size
+      }
+      if (input$subtitle_size < 6 || input$subtitle_size > 30) {
+        showNotification(
+          paste0("Subtitle font size is outside reasonable boundaries.",
+                 "Resetting to default."),
+          type = "error")
+        subtitle_size <- NULL
+      } else {
+        subtitle_size <- input$subtitle_size
+      }
+      if (input$caption_size < 4 || input$caption_size > 20) {
+        showNotification(
+          paste0("Caption font size is outside reasonable boundaries. ",
+                 "Resetting to default."),
+          type = "error")
+        caption_size <- NULL
+      } else {
+        caption_size <- input$caption_size
+      }
+
+
+      params <- list(
+        x = plot_to_render_ts(),
+        title = title,
+        suppress_y = input$suppress_y,
+        smoothed_trend = input$smoothed_trend,
+        x_label = xlabel,
+        y_label = ylabel,
+        x_expand = c(input$ts_x_expand_left, input$ts_x_expand_right),
+        y_expand = c(input$ts_y_expand_bottom, input$ts_y_expand_top),
+        x_breaks = input$ts_x_breaks,
+        y_breaks = input$ts_y_breaks,
+        gridoff = gridlines,
+        ci_type = input$vistype,
+        point_line = input$point_line,
+        pointsize = input$pointsize,
+        linewidth = input$linewidth,
+        linecolour = input$linecolour,
+        linealpha = input$linealpha,
+        error_width = input$error_width,
+        error_thickness = input$error_thickness,
+        error_alpha = input$error_alpha,
+        ribboncolour = ribboncolour,
+        ribbonalpha = input$ribbonalpha,
+        smooth_linetype = input$smooth_linetype,
+        smooth_linewidth = input$smooth_linewidth,
+        trendlinecolour = input$trendlinecolour,
+        trendlinealpha = input$trendlinealpha,
+        smooth_cilinewidth = input$smooth_cilinewidth,
+        envelopecolour = input$envelopecolour,
+        envelopealpha = input$envelopealpha,
+        smooth_cialpha = input$smooth_cialpha,
+        wrap_length = input$wrap_length
+      )
+
+      # Plot diversity metric
+      ts_plot <- do.call(plot, params)
+
+      # Add other options to plot
+      ts_plot <- ts_plot +
+        labs(title = title,
+             subtitle = subtitle,
+             caption = caption) +
+        theme(
+          plot.title = element_text(color = input$title_color,
+                                    size = title_size,
+                                    face = "bold",
+                                    hjust = 0),
+          plot.subtitle = element_text(color = input$subtitle_color,
+                                       size = subtitle_size),
+          plot.caption = element_text(color = input$caption_color,
+                                      size = caption_size,
+                                      face = "italic")
+        )
+
+      ts_plot
+    })
   })
 
   plot_to_print_ts <- reactive({
@@ -2306,7 +2883,80 @@ server <- function(input, output, session) {
         )
     },
     content = function(filename) {
-      ggsave(filename, plot = plot_to_print_ts(), device = tolower(input$downloadOptions_ts))
+            if (is.null(input$dlts_width) || input$dlts_width == "") {
+        dlts_width <- 800
+      } else {
+        dlts_width <- input$dlts_width
+      }
+      if (is.null(input$dlts_height) || input$dlts_height == "") {
+        dlts_height <- 600
+      } else {
+        dlts_height <- input$dlts_height
+      }
+      if (is.null(input$dlts_scaling) || input$dlts_scaling == "") {
+        dlts_scaling <- 1
+      } else {
+        dlts_scaling <- input$dlts_scaling
+      }
+      if (dlts_width > 10000) {
+        showNotification("Map width is too large, setting to 10000.")
+        dlts_width <- 10000
+      } else if (dlts_width < 100) {
+        showNotification("Map width is too small, setting to 100.")
+        dlts_width <- 100
+      }
+      if (dlts_height > 10000) {
+        showNotification("Map height is too large, setting to 10000.")
+        dlts_height <- 10000
+      } else if (dlts_height < 100) {
+        showNotification("Map height is too small, setting to 100.")
+        dlts_height <- 100
+      }
+      if (dlts_scaling > 10) {
+        showNotification("Scaling factor is too large, setting to 10.")
+        dlts_scaling <- 10
+      } else if (dlts_scaling <= 0.1) {
+        showNotification("Scaling factor is too small, setting to 0.1.")
+        dlts_scaling <- 0.1
+      }
+      if (
+        ((dlts_height / dlts_scaling) < 800) ||
+        ((dlts_height / dlts_scaling) > 5000) ||
+        ((dlts_width / dlts_scaling) < 800) ||
+        ((dlts_width / dlts_scaling) > 5000)
+      ) {
+        showNotification(
+          paste0(
+            "Warning: scaling factor may be inappropriate. Please double ",
+            "check that your scaling factor makes sense for your chosen width ",
+            "and height and that the downloaded image looks as expected. ",
+            "If the text and legend are too small comparative to the map, ",
+            "try increasing the scaling factor. If they are too large, ",
+            "try decreasing the scaling factor."
+          )
+        )
+      }
+
+      if (input$downloadOptions_ts == "JPG" ||
+          input$downloadOptions_ts == "PNG" ||
+          input$downloadOptions_ts == "TIFF" ) {
+        ggsave(filename,
+          plot = plot_to_print_ts(),
+          device = tolower(input$downloadOptions_ts),
+          width = dlts_width,
+          height = dlts_height,
+          units = "px",
+          scaling = dlts_scaling
+        )
+      } else {
+        ggsave(filename,
+          plot = plot_to_print_ts(),
+          device = tolower(input$downloadOptions_ts),
+          width = dlts_width,
+          height = dlts_height,
+          units = "px"
+        )
+      }
     }
   )
 
