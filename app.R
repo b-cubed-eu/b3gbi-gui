@@ -129,54 +129,80 @@ ui <- fluidPage(
     ####################### Inputs ########################
     #######################################################
     sidebarPanel(
-      div(class = "scrollable-tab",
-          tabsetPanel(
-            tabPanel(
-              "Data cube",
+      tabsetPanel(
+        tabPanel(
+          "Data cube",
+          fileInput(
+            inputId = "dataCube",
+            label = HTML("Upload a data cube")
+          )
+        ),
 
-              # input$dataCube
-              fileInput(
-                inputId = "dataCube",
-                label = HTML("Upload a data cube")
-              )
-            ),
-
-            tabPanel(
-              "Input filters",
-
-              # the indicators
+        tabPanel(
+          "Input filters",
+          div(class = "scrollable-tab",
+              # Indicator
               selectInput(
                 inputId = "indicatorsToAnalyse",
                 label = "Biodiversity Indicator", multiple = FALSE,
                 choices = as.character(sapply(b3gbi::available_indicators, "[[", 2))
               ),
-
-              # Spatial level
-              selectInput(
-                inputId = "spatiallevel",
-                label = "Spatial level",
-                choices = c(
-                  "cube",
-                  "world",
-                  "continent",
-                  "country",
-                  "sovereignty",
-                  "geounit"
-                ),
-                selected = "cube"
+              checkboxInput(
+                inputId = "customregion",
+                label = "Customize Region",
+                value = FALSE
               ),
-
-              # Country type
-              selectInput(
-                inputId = "countrytype",
-                label = "Country type",
-                choices = c(
-                  "countries",
-                  "map_units",
-                  "sovereignty",
-                  "tiny_countries"
-                ),
-                selected = "countries"
+              conditionalPanel(
+                condition = "input.customregion === true",
+                div(class = "checkbox-container"),
+                div(class = "custom-inline",
+                    fluidRow(
+                      column(width = 6,
+                             # Spatial level
+                             selectInput(
+                               inputId = "spatiallevel",
+                               label = "Spatial level",
+                               choices = c(
+                                 "cube",
+                                 "world",
+                                 "continent",
+                                 "country",
+                                 "sovereignty",
+                                 "geounit"
+                               ),
+                               selected = "cube"
+                             )
+                      ),
+                      column(width = 6,
+                             # Country type
+                             selectInput(
+                               inputId = "countrytype",
+                               label = "Country type",
+                               choices = c(
+                                 "countries",
+                                 "map_units",
+                                 "sovereignty",
+                                 "tiny_countries"
+                               ),
+                               selected = "countries"
+                             )
+                      )
+                    ),
+                    # Spatial region
+                    selectizeInput(
+                      inputId = "region",
+                      label = "Subset by region",
+                      choices = NULL,
+                      multiple = T,
+                      options = list(
+                        create = T,
+                        delimiter = " ",
+                        persist = F,
+                        plugins = list("remove_button"),
+                        createOnBlur = T
+                      )
+                    )
+                )
               ),
 
               # Map resolution
@@ -189,21 +215,6 @@ ui <- fluidPage(
                   "10"
                 ),
                 selected = "50"
-              ),
-
-              # Spatial region
-              selectizeInput(
-                inputId = "region",
-                label = "Subset by region",
-                choices = NULL,
-                multiple = T,
-                options = list(
-                  create = T,
-                  delimiter = " ",
-                  persist = F,
-                  plugins = list("remove_button"),
-                  createOnBlur = T
-                )
               ),
 
               # Spatial resolution
@@ -241,13 +252,15 @@ ui <- fluidPage(
                 choices = NULL,
                 multiple = T
               )
-            ),
+          )
+        ),
 
 
-            ############# Visualization options
+        ############# Visualization options
 
-            tabPanel(
-              title = "Visualization Options",
+        tabPanel(
+          title = "Visualization Options",
+          div(class = "scrollable-tab",
               HTML("<br>"),
 
               ############# General visualization options
@@ -382,7 +395,7 @@ ui <- fluidPage(
                   label = "Caption Colour",
                   value = "black"
                 ),
-                tags$hr(),
+                tags$hr()
               ),
               checkboxInput(
                 "ts_options",
@@ -399,17 +412,35 @@ ui <- fluidPage(
                   label = "Custom X-Axis Title",
                   value = ""
                 ),
-                checkboxInput(
-                  "suppress_y",
-                  label = "Suppress Y-Axis Labels",
-                  value = FALSE
+                textInput(
+                  "ts_y_label",
+                  label = "Custom Y-Axis Title",
+                  value = ""
                 ),
-                conditionalPanel(
-                  condition = "input.suppress_y == false",
-                  textInput(
-                    "ts_y_label",
-                    label = "Custom Y-Axis Title",
-                    value = ""
+                fluidRow(
+                  column(width = 6,
+                         checkboxInput(
+                           "suppress_x",
+                           label = "Suppress X-Axis Labels",
+                           value = FALSE
+                         ),
+                         checkboxInput(
+                           "suppress_xt",
+                           label = "Suppress X-Axis Title",
+                           value = FALSE
+                         )
+                  ),
+                  column(width = 6,
+                         checkboxInput(
+                           "suppress_y",
+                           label = "Suppress Y-Axis Labels",
+                           value = FALSE
+                         ),
+                         checkboxInput(
+                           "suppress_yt",
+                           label = "Suppress Y-Axis Title",
+                           value = FALSE
+                         )
                   )
                 ),
                 checkboxInput(
@@ -471,7 +502,7 @@ ui <- fluidPage(
                          numericInput(
                            "ts_x_breaks",
                            paste0("Number of X Axis Breaks (approximate)"),
-                           min = 0,
+                           min = 2,
                            max = 100,
                            step = 1,
                            value = 10
@@ -481,7 +512,7 @@ ui <- fluidPage(
                          numericInput(
                            "ts_y_breaks",
                            paste0("Number of Y Axis Breaks (approximate)"),
-                           min = 0,
+                           min = 2,
                            max = 100,
                            step = 1,
                            value = 6
@@ -504,23 +535,23 @@ ui <- fluidPage(
                   selected = "Points"
                 ),
                 conditionalPanel(
-                  condition = "input.point_line === 'Points'",
+                  condition = "input.point_line === 'point'",
                   numericInput(
                     "pointsize",
-                    paste0("Size of Indicator Points"),
-                    min = 0,
-                    max = 1,
+                    label = "Size of Indicator Points",
+                    min = 0.1,
+                    max = 10,
                     step = 0.1,
                     value = 2
                   )
                 ),
                 conditionalPanel(
-                  condition = "input.point_line === 'Line'",
+                  condition = "input.point_line === 'line'",
                   numericInput(
                     "linewidth",
-                    paste0("Width of Indicator Line"),
-                    min = 0,
-                    max = 1,
+                    label = "Width of Indicator Line",
+                    min = 0.1,
+                    max = 10,
                     step = 0.1,
                     value = 1
                   )
@@ -551,50 +582,52 @@ ui <- fluidPage(
                 ),
                 conditionalPanel(
                   condition = "input.ci_vis_type === 'Error Bars'",
-                  tags$hr(),
-                  numericInput(
-                    "error_width",
-                    paste0("Width of Error Bars"),
-                    min = 0,
-                    max = 10,
-                    step = 0.1,
-                    value = 1
-                  ),
-                  numericInput(
-                    "error_thickness",
-                    paste0("Thickness of Error Bars"),
-                    min = 0,
-                    max = 10,
-                    step = 0.1,
-                    value = 1
-                  ),
-                  numericInput(
-                    "error_alpha",
-                    paste0("Error Bar Transparency"),
-                    min = 0,
-                    max = 1,
-                    step = 0.05,
-                    value = 1
-                  ),
-                  tags$hr()
+                  div(class = "checkbox-container"),
+                  div(class = "custom-inline",
+                      numericInput(
+                        "error_width",
+                        paste0("Width of Error Bars"),
+                        min = 0.1,
+                        max = 10,
+                        step = 0.1,
+                        value = 1
+                      ),
+                      numericInput(
+                        "error_thickness",
+                        paste0("Thickness of Error Bars"),
+                        min = 0.1,
+                        max = 10,
+                        step = 0.1,
+                        value = 1
+                      ),
+                      numericInput(
+                        "error_alpha",
+                        paste0("Error Bar Transparency"),
+                        min = 0,
+                        max = 1,
+                        step = 0.05,
+                        value = 1
+                      )
+                  )
                 ),
                 conditionalPanel(
                   condition = "input.ci_vis_type === 'Ribbon'",
-                  tags$hr(),
-                  colourInput(
-                    "ribboncolour",
-                    label = "Confidence Interval Ribbon Colour",
-                    value = "goldenrod1"
-                  ),
-                  numericInput(
-                    "ribbonalpha",
-                    paste0("Confidence Interval Ribbon Transparency"),
-                    min = 0,
-                    max = 1,
-                    step = 0.05,
-                    value = 0.2
-                  ),
-                  tags$hr()
+                  div(class = "checkbox-container"),
+                  div(class = "custom-inline",
+                      colourInput(
+                        "ribboncolour",
+                        label = "Confidence Interval Ribbon Colour",
+                        value = "goldenrod1"
+                      ),
+                      numericInput(
+                        "ribbonalpha",
+                        paste0("Confidence Interval Ribbon Transparency"),
+                        min = 0,
+                        max = 1,
+                        step = 0.05,
+                        value = 0.2
+                      )
+                  )
                 ),
 
                 checkboxInput(
@@ -622,8 +655,8 @@ ui <- fluidPage(
                       numericInput(
                         "smooth_linewidth",
                         paste0("Trend Line Width"),
-                        min = 0,
-                        max = 1,
+                        min = 0.1,
+                        max = 10,
                         step = 0.1,
                         value = 1
                       ),
@@ -643,8 +676,8 @@ ui <- fluidPage(
                       numericInput(
                         "smooth_cilinewidth",
                         paste0("Trend Envelope Edge Width"),
-                        min = 0,
-                        max = 1,
+                        min = 0.1,
+                        max = 10,
                         step = 0.1,
                         value = 1
                       ),
@@ -892,7 +925,7 @@ ui <- fluidPage(
                          numericInput(
                            "xaxis_fontsize",
                            "X-Axis Label Font Size",
-                           min = 1,
+                           min = 2,
                            max = 30,
                            step = 0.5,
                            value = 12
@@ -902,7 +935,7 @@ ui <- fluidPage(
                          numericInput(
                            "yaxis_fontsize",
                            "Y-Axis Label Font Size",
-                           min = 1,
+                           min = 2,
                            max = 30,
                            step = 0.5,
                            value = 12
@@ -910,30 +943,19 @@ ui <- fluidPage(
                   )
                 ),
                 textInput(
-                  "xaxis_ticks",
+                  "xbreaks",
                   "Custom X-Axis Break Points (comma separated)",
                   value = ""
                 ),
                 textInput(
-                  "yaxis_ticks",
+                  "ybreaks",
                   "Custom Y-Axis Break Points (comma separated)",
                   value = ""
                 ),
-                fluidRow(
-                  column(width = 6,
-                         checkboxInput(
-                           "major_gridlines",
-                           "Major Grid Lines",
-                           value = TRUE
-                         )
-                  ),
-                  column(width = 6,
-                         checkboxInput(
-                           "minor_gridlines",
-                           "Minor Grid Lines",
-                           value = FALSE
-                         )
-                  )
+                checkboxInput(
+                  "gridlines",
+                  "Grid Lines",
+                  value = TRUE
                 ),
                 tags$hr(),
                 checkboxInput(
@@ -941,43 +963,59 @@ ui <- fluidPage(
                   "Add a Scale Bar to the Map"
                 ),
                 conditionalPanel(
-                  condition = "input.add_scalebar == true",
+                  condition = "input.add_scalebar === true",
                   div(class = "checkbox-container"),
                   div(class = "custom-inline",
                       selectInput(
                         "scalebar_location",
                         "Scale Bar Location (on map)",
                         choices = c(
-                          "bottomleft",
-                          "bottomright",
-                          "topleft",
-                          "topright"
+                          "bottom left" = "bl",
+                          "bottom right" = "br",
+                          "top left" = "tl",
+                          "top right" = "tr"
                         ),
-                        selected = "topright"
+                        selected = "tr"
+                      ),
+                      numericInput(
+                        "scalebar_padx",
+                        "Scale Bar X-Axis Padding",
+                        min = 0.01,
+                        max = 0.5,
+                        step = 0.01,
+                        value = 0.01
+                      ),
+                      numericInput(
+                        "scalebar_pady",
+                        "Scale Bar Y-Axis Padding",
+                        min = 0,
+                        max = 0.5,
+                        step = 0.01,
+                        value = 0.02
                       ),
                       numericInput(
                         "scalebar_height",
                         "Scale Bar Height (in pixels)",
-                        min = 0,
-                        max = 100,
-                        step = 1,
-                        value = 10
+                        min = 0.01,
+                        max = 0.1,
+                        step = 0.01,
+                        value = 0.02
                       ),
                       numericInput(
                         "scalebar_size",
                         "Size of Scale Bar (proportional to plot area, in %)",
-                        min = 0,
-                        max = 100,
-                        step = 1,
-                        value = 10
+                        min = 0.1,
+                        max = 1,
+                        step = 0.01,
+                        value = 0.2
                       ),
                       numericInput(
                         "scalebar_fontsize",
                         "Scale Bar Font Size",
-                        min = 1,
-                        max = 30,
-                        step = 0.5,
-                        value = 12
+                        min = 0,
+                        max = 10,
+                        step = 0.1,
+                        value = 0.8
                       ),
                       colourInput(
                         "scalebar_colour1",
@@ -988,27 +1026,49 @@ ui <- fluidPage(
                         "scalebar_colour2",
                         "Scale Bar Colour 2",
                         value = "white"
+                      ),
+                      colourInput(
+                        "scalebar_fontcolour",
+                        "Scale Bar Font Colour",
+                        value = "black"
                       )
                   )
                 ),
                 checkboxInput(
                   "add_northarrow",
-                  "Add a North Arrow to the Map"
+                  "Add a North Arrow to the Map",
+                  value = FALSE
                 ),
                 conditionalPanel(
-                  condition = "input.add_northarrow == true",
+                  condition = "input.add_northarrow === true",
                   div(class = "checkbox-container"),
                   div(class = "custom-inline",
                       selectInput(
                         "northarrow_location",
                         "North Arrow Location (on map)",
                         choices = c(
-                          "bottomleft",
-                          "bottomright",
-                          "topleft",
-                          "topright"
+                          "bottom left" = "bl",
+                          "bottom right" = "br",
+                          "top left" = "tl",
+                          "top right" = "tr"
                         ),
-                        selected = "topright"
+                        selected = "tr"
+                      ),
+                      numericInput(
+                        "northarrow_padx",
+                        "North Arrow X-Axis Padding",
+                        min = 0,
+                        max = 0.5,
+                        step = 0.01,
+                        value = 0
+                      ),
+                      numericInput(
+                        "northarrow_pady",
+                        "North Arrow Y-Axis Padding",
+                        min = 0,
+                        max = 0.5,
+                        step = 0.01,
+                        value = 0.02
                       ),
                       selectInput(
                         "northarrow_style",
@@ -1024,18 +1084,18 @@ ui <- fluidPage(
                       numericInput(
                         "northarrow_height",
                         "North Arrow Height (in pixels)",
-                        min = 0,
-                        max = 100,
-                        step = 1,
-                        value = 20
+                        min = 0.01,
+                        max = 1,
+                        step = 0.01,
+                        value = 0.1
                       ),
                       numericInput(
                         "northarrow_width",
                         "North Arrow Width (in pixels)",
-                        min = 0,
-                        max = 100,
-                        step = 1,
-                        value = 20
+                        min = 0.01,
+                        max = 1,
+                        step = 0.01,
+                        value = 0.1
                       ),
                       colourInput(
                         "northarrow_fillcolour1",
@@ -1061,7 +1121,7 @@ ui <- fluidPage(
                         "northarrow_textsize",
                         "North Arrow Text Size",
                         min = 0,
-                        max = 30,
+                        max = 100,
                         step = 0.5,
                         value = 10
                       )
@@ -1080,8 +1140,8 @@ ui <- fluidPage(
                 # em("*Please note that your code will only be evaluated when you",
                 # "manually click the 'Plot Map' button")
               )#,
-            )
           )
+        )
       )
     ),
 
@@ -1990,6 +2050,24 @@ server <- function(input, output, session) {
     labelVector
   })
 
+  # Convert text input for x-axis breaks into a numeric vector
+  parsed_xbreaks <- reactive({
+    inputText <- input$xbreaks
+    # Remove spaces and split by comma
+    breakpointVector <- unlist(strsplit(inputText, ",\\s*"))
+    # Convert to numeric, suppress any conversion warnings of invalid entries
+    as.numeric(breakpointVector)
+  })
+
+  # Convert text input for y-axis breaks into a numeric vector
+  parsed_ybreaks <- reactive({
+    inputText <- input$ybreaks
+    # Remove spaces and split by comma
+    breakpointVector <- unlist(strsplit(inputText, ",\\s*"))
+    # Convert to numeric, suppress any conversion warnings of invalid entries
+    as.numeric(breakpointVector)
+  })
+
   ############################ metadata tab outputs
 
   # output metadata from imported cube
@@ -2031,6 +2109,16 @@ server <- function(input, output, session) {
     parsed_labels()
   })
 
+  # output custom legend breaks
+  output$parsed_xbreaks <- renderPrint({
+    parsed_xbreaks()
+  })
+
+  # output custom legend break labels
+  output$parsed_ybreaks <- renderPrint({
+    parsed_ybreaks()
+  })
+
   # create map from imported cube
   plot_to_render_map <- eventReactive(input$plot_map_bt, {
     req(r$dataCube1)
@@ -2053,6 +2141,12 @@ server <- function(input, output, session) {
             # When region is empty, ensure parameter is handled
             region_param <- if (length(input$region) > 0) input$region else NULL
 
+            if (input$custom_output_crs == FALSE || input$output_crs == "") {
+              output_crs <- NULL
+            } else {
+              output_crs <- paste0("EPSG: ", input$output_crs)
+            }
+
             params <- list(
               data = r$dataCube1,
               cell_size = input$cellsize,
@@ -2061,7 +2155,8 @@ server <- function(input, output, session) {
               last_year = input$daterange[2],
               ne_type = input$countrytype,
               ne_scale = mapres,
-              region = region_param
+              region = region_param,
+              output_crs = output_crs
             )
 
             map <- do.call(
@@ -2119,9 +2214,13 @@ server <- function(input, output, session) {
     # Get parsed breaks and labels
     breaks <- parsed_breaks()
     labels <- parsed_labels()
+    xbreaks <- parsed_xbreaks()
+    ybreaks <- parsed_ybreaks()
 
     # Check if breaks are valid
-    if (is.null(breaks) || input$breaks == "" || any(is.na(breaks))) {
+    if (is.null(breaks) ||
+        input$breaks == "" ||
+        any(is.na(breaks))) {
       breaks <- NULL
     }
 
@@ -2130,6 +2229,20 @@ server <- function(input, output, session) {
         input$labels == "" ||
         length(labels) != length(breaks)) {
       labels <- NULL
+    }
+
+    # Check if x-axis breaks are valid
+    if (is.null(xbreaks) ||
+        input$xbreaks == "" ||
+        any(is.na(xbreaks))) {
+      xbreaks <- NULL
+    }
+
+    # Check if y-axis breaks are valid
+    if (is.null(ybreaks) ||
+        input$ybreaks == "" ||
+        any(is.na(ybreaks))) {
+      ybreaks <- NULL
     }
 
     # Check if custom legend limits are provided and format appropriately
@@ -2201,7 +2314,10 @@ server <- function(input, output, session) {
     }
 
     # Check that title, subtitle and caption font size inputs are ok
-    if (input$title_size < 8 || input$title_size > 40) {
+    if (input$title_size < 8 ||
+        input$title_size > 40 ||
+        is.na(input$title_size)
+    ) {
       showNotification(
         paste0("Title font size is outside reasonable boundaries.",
                "Resetting to default."),
@@ -2210,7 +2326,11 @@ server <- function(input, output, session) {
     } else {
       title_size <- input$title_size
     }
-    if (input$subtitle_size < 6 || input$subtitle_size > 30) {
+
+    if (input$subtitle_size < 6 ||
+        input$subtitle_size > 30 ||
+        is.na(input$subtitle_size)
+    ) {
       showNotification(
         paste0("Subtitle font size is outside reasonable boundaries.",
                "Resetting to default."),
@@ -2219,7 +2339,11 @@ server <- function(input, output, session) {
     } else {
       subtitle_size <- input$subtitle_size
     }
-    if (input$caption_size < 4 || input$caption_size > 20) {
+
+    if (input$caption_size < 4 ||
+        input$caption_size > 20 ||
+        is.na(input$caption_size)
+    ) {
       showNotification(
         paste0("Caption font size is outside reasonable boundaries. ",
                "Resetting to default."),
@@ -2229,11 +2353,69 @@ server <- function(input, output, session) {
       caption_size <- input$caption_size
     }
 
+    if (input$wrap_length < 20 ||
+        input$wrap_length > 200 ||
+        is.na(input$wrap_length)
+    ) {
+      showNotification(
+        paste0("Title wrap length is outside reasonable boundaries. ",
+               "Resetting to default."),
+        type = "error")
+      wrap_length <- NULL
+    } else {
+      wrap_length <- input$wrap_length
+    }
+
+    if (input$legend_title_wrap_length < 10 ||
+        input$legend_title_wrap_length > 100 ||
+        is.na(input$legend_title_wrap_length)
+    ) {
+      showNotification(
+        paste0("Title wrap length is outside reasonable boundaries. ",
+               "Resetting to default."),
+        type = "error")
+      legend_title_wrap_length <- NULL
+    } else {
+      legend_title_wrap_length <- input$legend_title_wrap_length
+    }
+
+    if (input$xaxis_fontsize < 0 ||
+        input$xaxis_fontsize > 30 ||
+        is.na(input$xaxis_fontsize)
+    ) {
+      showNotification(
+        paste0("X-Axis label font size is outside reasonable boundaries. ",
+               "Resetting to default."),
+        type = "error")
+      xaxis_fontsize <- NULL
+    } else {
+      xaxis_fontsize <- input$xaxis_fontsize
+    }
+
+    if (input$yaxis_fontsize < 0 ||
+        input$yaxis_fontsize > 30 ||
+        is.na(input$yaxis_fontsize)
+    ) {
+      showNotification(
+        paste0("Y-Axis label font size is outside reasonable boundaries. ",
+               "Resetting to default."),
+        type = "error")
+      yaxis_fontsize <- NULL
+    } else {
+      yaxis_fontsize <- input$yaxis_fontsize
+    }
+
+    if (input$gridlines == TRUE) {
+      gridlines <- element_line()
+    } else {
+      gridlines <- element_blank()
+    }
+
     # Prepare parameters for plot
     params <- list(
       x = plot_to_render_map(),
       title = title,
-      title_wrap_length = input$wrap_length,
+      title_wrap_length = wrap_length,
       xlims = xlims,
       ylims = ylims,
       trans = trans,
@@ -2246,7 +2428,7 @@ server <- function(input, output, session) {
       land_fill_colour = land_fill_colour,
       legend_title = legend_title,
       legend_limits = legend_limits,
-      legend_title_wrap_length = input$legend_title_wrap_length
+      legend_title_wrap_length = legend_title_wrap_length
     )
 
     # Create plot
@@ -2257,6 +2439,9 @@ server <- function(input, output, session) {
       labs(subtitle = subtitle,
            caption = caption) +
       theme(
+        axis.text.x = element_text(size = xaxis_fontsize),
+        axis.text.y = element_text(size = yaxis_fontsize),
+        panel.grid = gridlines,
         plot.title = element_text(color = input$title_color,
                                   size = title_size,
                                   face = "bold"),
@@ -2266,6 +2451,197 @@ server <- function(input, output, session) {
                                     size = caption_size,
                                     face = "italic")
       )
+
+    if (!is.null(xbreaks)) {
+      map_plot <- map_plot + scale_x_continuous(breaks = xbreaks)
+    }
+
+    if (!is.null(ybreaks)) {
+      map_plot <- map_plot + scale_y_continuous(breaks = ybreaks)
+    }
+
+    if (input$add_scalebar == TRUE) {
+
+      if (input$scalebar_height > 0.1 ||
+          input$scalebar_height < 0.01 ||
+          is.na(input$scalebar_height)
+      ) {
+        showNotification(
+          paste0("Scale bar height is outside reasonable boundaries. ",
+                 "Resetting to default."),
+          type = "error")
+        scalebar_height <- NULL
+      } else {
+        scalebar_height <- input$scalebar_height
+      }
+
+      if (input$scalebar_size > 1 ||
+          input$scalebar_size < 0.01 ||
+          is.na(input$scalebar_size)
+      ) {
+        showNotification(
+          paste0("Scale bar size is outside reasonable boundaries. ",
+                 "Resetting to default."),
+          type = "error")
+        scalebar_size <- NULL
+      } else {
+        scalebar_size <- input$scalebar_size
+      }
+
+      if (input$scalebar_padx > 0.5 ||
+          input$scalebar_padx < 0 ||
+          is.na(input$scalebar_padx)
+      ) {
+        showNotification(
+          paste0("Scale bar x-axis padding is outside reasonable boundaries. ",
+                 "Resetting to default."),
+          type = "error")
+        scalebar_padx <- 0.01
+      } else {
+        scalebar_padx <- input$scalebar_padx
+      }
+
+      if (input$scalebar_pady > 0.5 ||
+          input$scalebar_pady < 0 ||
+          is.na(input$scalebar_pady)
+      ) {
+        showNotification(
+          paste0("Scale bar y-axis padding is outside reasonable boundaries. ",
+                 "Resetting to default."),
+          type = "error")
+        scalebar_pady <- 0.02
+      } else {
+        scalebar_pady <- input$scalebar_pady
+      }
+
+      if (input$scalebar_fontsize > 5 ||
+          input$scalebar_fontsize < 0.1 ||
+          is.na(input$scalebar_fontsize)
+      ) {
+        showNotification(
+          paste0("Scale bar font size is outside reasonable boundaries. ",
+                 "Resetting to default."),
+          type = "error")
+        scalebar_fontsize <- NULL
+      } else {
+        scalebar_fontsize <- input$scalebar_fontsize
+      }
+
+      map_plot <- map_plot +
+        ggspatial::annotation_scale(
+          location = input$scalebar_location,
+          width_hint = scalebar_size,
+          height = unit(scalebar_height, "npc"),
+          pad_x = unit(scalebar_padx, "npc"),
+          pad_y = unit(scalebar_pady, "npc"),
+          bar_cols = c(input$scalebar_colour1, input$scalebar_colour2),
+          text_cex = scalebar_fontsize,
+          text_face = "bold",
+          text_col = input$scalebar_fontcolour
+        )
+
+    }
+
+    if (input$add_northarrow == TRUE) {
+
+      # Define north arrow style function
+      north_arrow_style_func <- switch(
+        input$northarrow_style,
+        "nautical" = ggspatial::north_arrow_nautical,
+        "minimal" = ggspatial::north_arrow_minimal,
+        "orienteering" = ggspatial::north_arrow_orienteering,
+        "fancy_orienteering" = ggspatial::north_arrow_fancy_orienteering
+      )
+
+      if (input$northarrow_style == "minimal") {
+        north_arrow_fill <- input$northarrow_fillcolour1
+      } else {
+        north_arrow_fill <- c(input$northarrow_fillcolour1,
+                              input$northarrow_fillcolour2)
+      }
+
+      if (input$northarrow_height > 1 ||
+          input$northarrow_height < 0.01 ||
+          is.na(input$northarrow_height)
+      ) {
+        showNotification(
+          paste0("North arrow height is outside reasonable boundaries. ",
+                 "Resetting to default."),
+          type = "error")
+        northarrow_height <- 0.1
+      } else {
+        northarrow_height <- input$northarrow_height
+      }
+
+      if (input$northarrow_width > 1 ||
+          input$northarrow_width < 0.01 ||
+          is.na(input$northarrow_width)
+      ) {
+        showNotification(
+          paste0("North arrow width is outside reasonable boundaries. ",
+                 "Resetting to default."),
+          type = "error")
+        northarrow_width <- 0.1
+      } else {
+        northarrow_width <- input$northarrow_width
+      }
+
+      if (input$northarrow_textsize > 100 ||
+          input$northarrow_textsize < 0 ||
+          is.na(input$northarrow_textsize)
+      ) {
+        showNotification(
+          paste0("North arrow text size is outside reasonable boundaries. ",
+                 "Resetting to default."),
+          type = "error")
+        northarrow_textsize <- 10
+      } else {
+        northarrow_textsize <- input$northarrow_textsize
+      }
+
+      if (input$northarrow_padx > 0.5 ||
+          input$northarrow_padx < 0 ||
+          is.na(input$northarrow_padx)
+      ) {
+        showNotification(
+          paste0("Scale bar x-axis padding is outside reasonable boundaries. ",
+                 "Resetting to default."),
+          type = "error")
+        northarrow_padx <- 0
+      } else {
+        northarrow_padx <- input$northarrow_padx
+      }
+
+      if (input$northarrow_pady > 0.5 ||
+          input$northarrow_pady < 0 ||
+          is.na(input$northarrow_pady)
+      ) {
+        showNotification(
+          paste0("Scale bar y-axis padding is outside reasonable boundaries. ",
+                 "Resetting to default."),
+          type = "error")
+        northarrow_pady <- 0.02
+      } else {
+        northarrow_pady <- input$northarrow_pady
+      }
+
+      map_plot <- map_plot +
+        ggspatial::annotation_north_arrow(
+          location = input$northarrow_location,
+          which_north = "true",
+          pad_x = unit(northarrow_padx, "npc"),
+          pad_y = unit(northarrow_pady, "npc"),
+          height = unit(northarrow_height, "npc"),
+          width = unit(northarrow_width, "npc"),
+          style = north_arrow_style_func(
+             fill = north_arrow_fill,
+             line_col = input$northarrow_linecolour,
+             text_col = input$northarrow_textcolour,
+             text_size = northarrow_textsize
+          )
+        )
+    }
+
 
 
     # # Add user-defined custom code block
@@ -2309,7 +2685,7 @@ server <- function(input, output, session) {
       plotOutput("plot_map",
                  width = paste0(reactive({
                    width_val <- input$plot_width
-                   if (is.na(width_val) || width_val <= 100 || width_val > 2000) {
+                   if (is.na(width_val) || width_val < 100 || width_val > 2000) {
                      showNotification(
                        "Warning: width is not valid. Setting to default value of 600."
                      )
@@ -2320,9 +2696,9 @@ server <- function(input, output, session) {
                  })(), "px"),
                  height = paste0(reactive({
                    height_val <- input$plot_height
-                   if (is.na(height_val) || height_val <= 100 || height_val > 2000) {
+                   if (is.na(height_val) || height_val < 100 || height_val > 2000) {
                      showNotification(
-                       "Warning: height is not valid. Setting to default value of 600."
+                       "Warning: height is not valid. Setting to default value of 400."
                      )
                      400
                    } else {
@@ -2712,7 +3088,7 @@ server <- function(input, output, session) {
       plotOutput("plot_ts",
                  width = paste0(reactive({
                    width_val <- input$plot_width
-                   if (is.na(width_val) || width_val <= 100 || width_val > 2000) {
+                   if (is.na(width_val) || width_val < 100 || width_val > 2000) {
                      showNotification(
                        "Warning: width is not valid. Setting to default value of 600."
                      )
@@ -2723,9 +3099,9 @@ server <- function(input, output, session) {
                  })(), "px"),
                  height = paste0(reactive({
                    height_val <- input$plot_height
-                   if (is.na(height_val) || height_val <= 100 || height_val > 2000) {
+                   if (is.na(height_val) || height_val < 100 || height_val > 2000) {
                      showNotification(
-                       "Warning: height is not valid. Setting to default value of 600."
+                       "Warning: height is not valid. Setting to default value of 400."
                      )
                      400
                    } else {
@@ -2738,8 +3114,9 @@ server <- function(input, output, session) {
       req(plot_to_render_ts())
 
       ribboncolour <- if (input$ci_vis_type == "None") NA else input$ribboncolour
-      vistype <- if (input$ci_vis_type == "None") "ribbon" else input$ci_vis_type
+
       gridlines <- if (input$ts_gridlines == "TRUE") FALSE else TRUE
+
       if (
         input$title == ""
       ) {
@@ -2747,6 +3124,7 @@ server <- function(input, output, session) {
       } else {
         title <- input$title
       }
+
       if (
         is.null(input$ts_x_label) ||
         length(input$ts_x_label) == 0 ||
@@ -2756,6 +3134,7 @@ server <- function(input, output, session) {
       } else {
         xlabel <- input$ts_x_label
       }
+
       if (
         is.null(input$ts_y_label) ||
         length(input$ts_y_label) == 0 ||
@@ -2781,7 +3160,10 @@ server <- function(input, output, session) {
       }
 
       # Check that title, subtitle and caption font size inputs are ok
-      if (input$title_size < 8 || input$title_size > 40) {
+      if (input$title_size < 8 ||
+          input$title_size > 40 ||
+          is.na(input$title_size)
+          ) {
         showNotification(
           paste0("Title font size is outside reasonable boundaries.",
                  "Resetting to default."),
@@ -2790,7 +3172,11 @@ server <- function(input, output, session) {
       } else {
         title_size <- input$title_size
       }
-      if (input$subtitle_size < 6 || input$subtitle_size > 30) {
+
+      if (input$subtitle_size < 6 ||
+          input$subtitle_size > 30 ||
+          is.na(input$subtitle_size)
+          ) {
         showNotification(
           paste0("Subtitle font size is outside reasonable boundaries.",
                  "Resetting to default."),
@@ -2799,7 +3185,11 @@ server <- function(input, output, session) {
       } else {
         subtitle_size <- input$subtitle_size
       }
-      if (input$caption_size < 4 || input$caption_size > 20) {
+
+      if (input$caption_size < 4 ||
+          input$caption_size > 20 ||
+          is.na(input$caption_size)
+          ) {
         showNotification(
           paste0("Caption font size is outside reasonable boundaries. ",
                  "Resetting to default."),
@@ -2809,39 +3199,183 @@ server <- function(input, output, session) {
         caption_size <- input$caption_size
       }
 
+      if (input$wrap_length < 20 ||
+          input$wrap_length > 200 ||
+          is.na(input$wrap_length)
+      ) {
+        showNotification(
+          paste0("Title wrap length is outside reasonable boundaries. ",
+                 "Resetting to default."),
+          type = "error")
+        wrap_length <- NULL
+      } else {
+        wrap_length <- input$wrap_length
+      }
+
+      if (input$suppress_y == TRUE) {
+        y_axis_text <- element_blank()
+      } else {
+        y_axis_text <- element_text()
+      }
+
+      if (input$suppress_yt == TRUE) {
+        y_axis_title <- element_blank()
+      } else {
+        y_axis_title <- element_text()
+      }
+
+      if (input$suppress_x == TRUE) {
+        x_axis_text <- element_blank()
+      } else {
+        x_axis_text <- element_text()
+      }
+
+      if (input$suppress_xt == TRUE) {
+        x_axis_title <- element_blank()
+      } else {
+        x_axis_title <- element_text()
+      }
+
+      if (input$ts_x_breaks > 100 ||
+          input$ts_x_breaks < 2 ||
+          is.na(input$ts_x_breaks)
+          ) {
+        showNotification(
+          paste0("Number of X axis breaks outside of reasonable range. ",
+                 "Resetting to default."),
+          type = "error"
+        )
+        ts_x_breaks <- 10
+      } else {
+        ts_x_breaks <- input$ts_x_breaks
+      }
+
+      if (input$ts_y_breaks > 100 ||
+          input$ts_y_breaks < 2 ||
+          is.na(input$ts_y_breaks)
+          ) {
+        showNotification(
+          paste0("Number of X axis breaks outside of reasonable range. ",
+                 "Resetting to default."),
+          type = "error"
+        )
+        ts_y_breaks <- 6
+      } else {
+        ts_y_breaks <- input$ts_y_breaks
+      }
+
+      # Confidence intervals for indicator lines or points
+      if (input$ci_vis_type == "Ribbon") {
+        vis_type <- "ribbon"
+      } else if (input$ci_vis_type == "Error Bars") {
+        vis_type <- "error_bars"
+      } else {
+        vis_type <- "error_bars"
+        error_alpha <- 0
+      }
+
+      error_alpha <- input$error_alpha
+
+      if (input$error_thickness <= 0 ||
+          input$error_thickness > 10 ||
+          is.na(input$error_thickness)
+          ) {
+        showNotification(
+          paste0("Error bar thickness outside of reasonable range.",
+                 "Resetting to default."),
+          type = "error"
+        )
+        error_thickness <- 1
+      } else {
+        error_thickness <- input$error_thickness
+      }
+
+      if (input$error_width <= 0 ||
+          input$error_width > 10 ||
+          is.na(input$error_width)) {
+        showNotification(
+          paste0("Error bar width outside of reasonable range.",
+                 "Resetting to default."),
+          type = "error"
+        )
+        error_width <- 1
+      } else {
+        error_width <- input$error_width
+      }
+
+      if (input$linewidth <= 0 ||
+          input$linewidth > 10 ||
+          is.na(input$linewidth)
+          ) {
+        showNotification(
+          paste0("Indicator line width outside of reasonable range.",
+                 "Resetting to default."),
+          type = "error"
+        )
+        linewidth <- 1
+      } else {
+        linewidth <- input$linewidth
+      }
+
+      if (input$smooth_linewidth <= 0 ||
+          input$smooth_linewidth > 10 ||
+          is.na(input$smooth_linewidth)
+          ) {
+        showNotification(
+          paste0("Trend line width outside of reasonable range.",
+                 "Resetting to default."),
+          type = "error"
+        )
+        smooth_linewidth <- 1
+      } else {
+        smooth_linewidth <- input$smooth_linewidth
+      }
+
+      if (input$smooth_cilinewidth <= 0 ||
+          input$smooth_cilinewidth > 10 ||
+          is.na(input$smooth_cilinewidth)) {
+        showNotification(
+          paste0("Trend envelope edge width outside of reasonable range.",
+                 "Resetting to default."),
+          type = "error"
+        )
+        smooth_cilinewidth <- 1
+      } else {
+        smooth_cilinewidth <- input$smooth_cilinewidth
+      }
 
       params <- list(
         x = plot_to_render_ts(),
         title = title,
-        suppress_y = input$suppress_y,
+        suppress_y = FALSE,
         smoothed_trend = input$smoothed_trend,
         x_label = xlabel,
         y_label = ylabel,
         x_expand = c(input$ts_x_expand_left, input$ts_x_expand_right),
         y_expand = c(input$ts_y_expand_bottom, input$ts_y_expand_top),
-        x_breaks = input$ts_x_breaks,
-        y_breaks = input$ts_y_breaks,
+        x_breaks = ts_x_breaks,
+        y_breaks = ts_y_breaks,
         gridoff = gridlines,
-        ci_type = input$vistype,
+        ci_type = vis_type,
         point_line = input$point_line,
         pointsize = input$pointsize,
-        linewidth = input$linewidth,
+        linewidth = linewidth,
         linecolour = input$linecolour,
         linealpha = input$linealpha,
-        error_width = input$error_width,
-        error_thickness = input$error_thickness,
-        error_alpha = input$error_alpha,
+        error_width = error_width,
+        error_thickness = error_thickness,
+        error_alpha = error_alpha,
         ribboncolour = ribboncolour,
         ribbonalpha = input$ribbonalpha,
         smooth_linetype = input$smooth_linetype,
-        smooth_linewidth = input$smooth_linewidth,
+        smooth_linewidth = smooth_linewidth,
         trendlinecolour = input$trendlinecolour,
         trendlinealpha = input$trendlinealpha,
-        smooth_cilinewidth = input$smooth_cilinewidth,
+        smooth_cilinewidth = smooth_cilinewidth,
         envelopecolour = input$envelopecolour,
         envelopealpha = input$envelopealpha,
         smooth_cialpha = input$smooth_cialpha,
-        wrap_length = input$wrap_length
+        wrap_length = wrap_length
       )
 
       # Plot diversity metric
@@ -2853,6 +3387,10 @@ server <- function(input, output, session) {
              subtitle = subtitle,
              caption = caption) +
         theme(
+          axis.title.x = x_axis_title,
+          axis.text.x = x_axis_text,
+          axis.title.y = y_axis_title,
+          axis.text.y = y_axis_text,
           plot.title = element_text(color = input$title_color,
                                     size = title_size,
                                     face = "bold",
