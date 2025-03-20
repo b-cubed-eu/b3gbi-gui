@@ -121,6 +121,7 @@ ui <- fluidPage(
       ),
       style = "font-size: 16px; color: #555;"
     )
+
   ),
 
   sidebarLayout(
@@ -994,20 +995,52 @@ ui <- fluidPage(
                         value = 0.02
                       ),
                       numericInput(
+                        "scalebar_size",
+                        "Scale Bar Width (approximate)",
+                        min = 0.1,
+                        max = 1,
+                        step = 0.01,
+                        value = 0.2
+                      ),
+                      numericInput(
                         "scalebar_height",
-                        "Scale Bar Height (in pixels)",
+                        "Scale Bar Height",
                         min = 0.01,
                         max = 0.1,
                         step = 0.01,
                         value = 0.02
                       ),
-                      numericInput(
-                        "scalebar_size",
-                        "Size of Scale Bar (proportional to plot area, in %)",
-                        min = 0.1,
-                        max = 1,
-                        step = 0.01,
-                        value = 0.2
+                      selectInput(
+                        "scalebar_style",
+                        "Scale Bar Style",
+                        choices = c(
+                          "bar",
+                          "ticks"
+                        )
+                      ),
+                      conditionalPanel(
+                        condition = "input.scalebar_style === 'ticks'",
+                        numericInput(
+                          "scalebar_tickheight",
+                          "Scale Bar Tick Height",
+                          min = 0,
+                          max = 2,
+                          step = 0.05,
+                          value = 0.6
+                        )
+                      ),
+                      conditionalPanel(
+                        condition = "input.scalebar_style === 'bar'",
+                        colourInput(
+                          "scalebar_colour1",
+                          "Scale Bar Colour 1",
+                          value = "black"
+                        ),
+                        colourInput(
+                          "scalebar_colour2",
+                          "Scale Bar Colour 2",
+                          value = "white"
+                        )
                       ),
                       numericInput(
                         "scalebar_fontsize",
@@ -1016,16 +1049,6 @@ ui <- fluidPage(
                         max = 10,
                         step = 0.1,
                         value = 0.8
-                      ),
-                      colourInput(
-                        "scalebar_colour1",
-                        "Scale Bar Colour 1",
-                        value = "black"
-                      ),
-                      colourInput(
-                        "scalebar_colour2",
-                        "Scale Bar Colour 2",
-                        value = "white"
                       ),
                       colourInput(
                         "scalebar_fontcolour",
@@ -1083,7 +1106,7 @@ ui <- fluidPage(
                       ),
                       numericInput(
                         "northarrow_height",
-                        "North Arrow Height (in pixels)",
+                        "North Arrow Height",
                         min = 0.01,
                         max = 1,
                         step = 0.01,
@@ -1091,7 +1114,7 @@ ui <- fluidPage(
                       ),
                       numericInput(
                         "northarrow_width",
-                        "North Arrow Width (in pixels)",
+                        "North Arrow Width",
                         min = 0.01,
                         max = 1,
                         step = 0.01,
@@ -1440,7 +1463,7 @@ ui <- fluidPage(
                 "information to total occurrences, but is adjusted for cell area."
               ),
               HTML("<br>"),
-              em("Richness"),
+              em("Species Richness"),
               p(
                 "Species richness is the total number of species present in a ",
                 "sample (Magurran, 1988). It is a fundamental and commonly used ",
@@ -1455,6 +1478,18 @@ ui <- fluidPage(
                 "can occur without any change in richness. Although richness is ",
                 "conceptually simple, it can be measured in different ways."
               ),
+              p(strong("Observed Richness")),
+              p(
+                "Observed richness is calculated by summing the number of unique ",
+                "species observed for each year or each cell. Observed richness is ",
+                "highly dependent on the comprehensiveness of the dataset it is being ",
+                "applied to. If some regions are more intensively, carefully, or ",
+                "systematically sampled than others, this will likely result in higher ",
+                "observed richness. Observed richness also depends on the relative ",
+                "abundance and spatial aggregation of each species, with less abundant ",
+                "and less aggregated species less likely to be discovered during surveys ",
+                "(Hillebrand et al., 2018), as well as the detectability of each species. ",
+              ),
               p(strong("Cumulative Species Richness")),
               p(
                 "Cumulative richness is calculated by adding the newly observed ",
@@ -1462,7 +1497,7 @@ ui <- fluidPage(
                 "provides an estimation of whether and how many new species are ",
                 "still being discovered in a region. While an influx of alien ",
                 "species could cause an increase in cumulative richness, a fast-",
-                "rising trend as shown in Fig. 2 is likely an indication that the ",
+                "rising trend is likely an indication that the ",
                 "dataset is not comprehensive and therefore observed richness ",
                 "will provide an underestimate of species richness."
               ),
@@ -1482,10 +1517,93 @@ ui <- fluidPage(
                 "evenness of the ecological community."
               ),
               p(strong("Pielou's Evenness")),
-              p("Pielou (1966)"),
+              shiny::withMathJax(
+                p(
+                  "Pielou’s evenness (1966) is a well-known and commonly ",
+                  "used evenness measure. It is calculated as: ",
+                  "$$ E = -\\sum_{i=1}^{S} p_i \\ln(p_i) / \\ln(S) $$ ",
+                  "where S is the number of species and pi is the proportion of occurrences ",
+                  "represented by species i."
+                )
+              ),
               p(strong("Williams' Evenness")),
-              p("Kvålseth (2015)"),
-              HTML("<br>"),
+              shiny::withMathJax(
+                p(
+                "An analysis of evenness properties by Kvålseth (2015) showed ",
+                "that an evenness index introduced by Williams in 1977 in an ",
+                "unpublished manuscript has two important properties which ",
+                "Pielou’s does not. The properties in question are complex ",
+                "mathematical properties known as the Schur-Concavity and ",
+                "value validity, but we attempt to describe them here more ",
+                "simply. If a measure of evenness is Schur-concave, it means ",
+                "that when the distribution of individuals becomes more evenly ",
+                "spread across species, the measure of evenness will stay the ",
+                "same or increase, but never decrease. Value validity means ",
+                "that an evenness index should provide sensible and meaningful ",
+                "values across its range for any given distribution of species ",
+                "abundances. Kvålseth referred to this evenness measure as E9 ",
+                "but we refer to it as Williams’ evenness.",
+                "Williams' evenness is calculated as: ",
+                "$$ 1 - \\left[ \\frac{\\left( S\\sum_{i=1}^{S} p_i^2 - 1 \\right) }{S - 1}\\right]^{1/2} $$ ",
+                "where S is the number of species and pi is the proportion of occurrences ",
+                "represented by species i."
+              )
+              ),
+              em("Hill Diversity"),
+              shiny::withMathJax(
+                p(
+                  "Hill (1973) introduced the concept of Hill diversity, which assumes ",
+                  "that the number and relative abundance of species are inseparable ",
+                  "components of diversity. Hill diversity uses a single equation to ",
+                  "calculate multiple measures of diversity by varying a single ",
+                  "parameter ℓ, which changes the emphasis on rare vs common species ",
+                  "(Roswell et al., 2019). It represents the mean rarity of sampled ",
+                  "species, and is calculated as: ",
+                  "$$ \\displaystyle D = \\left( \\sum_{i=1}^{S} p_i r_i^\\ell \\right)^{1/\\ell} $$ ",
+                  "where D is diversity, S is the number of species, pi is the proportion ",
+                  "of individuals belonging to species i, ri is the rarity of species i, ",
+                  "and ℓ determines the rarity scale for the mean. While ℓ can ",
+                  "theoretically take almost any value, three common measures of diversity ",
+                  "are special cases: species richness, and modified versions of the ",
+                  "Shannon and Simpson diversity indices (Roswell et al., 2019). These ",
+                  "three measures occur when ℓ takes the value of 1, 0 (or near-zero, ",
+                  "as ℓ cannot actually take the value of 0), or -1, respectively. ",
+                  "Richness uses an arithmetic scale (the arithmetic mean), thus giving ",
+                  "rare species a lot of leverage. By contrast, Hill-Shannon diversity ",
+                  "uses a logarithmic scale (the geometric mean), treating common and ",
+                  "rare species equally, and Hill-Simpson diversity uses a reciprocal ",
+                  "scale (the harmonic mean), giving common species higher leverage."
+                )
+              ),
+              p(strong("Species Richness")),
+              p(
+                "Using the Hill diversity equation, richness becomes simply S, ",
+                "the number of species, and is thus identical to richness ",
+                "calculated without Hill diversity."
+              ),
+              p(strong("Hill-Shannon Diversity")),
+              p(
+                "Hill-Shannon diversity is actually e (base of the natural log) raised ",
+                "to the power of the Shannon index. It is estimated for each year or ",
+                "cell count using the iNEXT package, standardized by coverage, as: ",
+                "$$ \\displaystyle e^{-\\sum_{i=1}^{S} p_i \\ln(p_i)} $$ ",
+                "where S is the number of species and pi is the proportion of occurrences ",
+                "represented by species i."
+              ),
+              p(strong("Hill-Simpson Diversity")),
+              shiny::withMathJax(
+              p(
+                "Hill-Simpson diversity is the inverse of the Simpson index. ",
+                "It is estimated using the iNEXT package for each year or cell, ",
+                "standardized by coverage, as:",
+                "$$ \\displaystyle \\frac{1}{\\sum_{i=1}^{S} p_i^2} $$",
+                "where S is the number of species and pi is the proportion of ",
+                "occurrences represented by species i.",
+                "Both Hill-Simpson and Hill-Shannon diversity describe a combination ",
+                "of richness and evenness that reduce the inadequacies of either ",
+                "measure alone."
+              )
+              ),
               em("Rarity"),
               p(
                 "Rarity is the scarcity or infrequency of a particular species in ",
@@ -1494,25 +1612,32 @@ ui <- fluidPage(
                 "2021; Rabinowitz, 1981). Rarity can also be a biodiversity ",
                 "indicator when summed over multiple species in an area, and may ",
                 "provide important insight for determining conservation ",
-                "priorities. It can be measured in different ways, but we will ",
-                "provide workflows to calculate rarity by abundance (using the ",
-                "number of occurrences as a proxy) and by area. When measured ",
-                "over time, rarity may indicate potential threats or changes in ",
-                "the environment."
+                "priorities. When measured over time, rarity may indicate ",
+                "potential threats or changes in the environment."
               ),
               p(strong("Abundance-Based Rarity")),
+              shiny::withMathJax(
               p(
-                "Abundance-based rarity is the inverse of the proportion of total ",
-                "occurrences represented by a particular species. The total ",
-                "summed rarity for each grid cell or year is calculated (sum the ",
-                "rarity values of each species present there)."
+                "Abundance-based rarity is the inverse of the proportion of total occurrences ",
+                "represented by a particular species. The total summed rarity for each grid ",
+                "cell or year is calculated (sum the rarity values of each species present ",
+                "there). It is calculated as: ",
+                "$$ \\sum_{i=1}^{S} 1/p_i$$ ",
+                "where S is the number of species and pi is the proportion of occurrences ",
+                "represented by species i."
+              )
               ),
               p(strong("Area-Based Rarity")),
-              p(
-                "Area-based rarity is the inverse of occupancy frequency ",
-                "(proportion of grid cells occupied) for a particular species. ",
-                "The total summed rarity for each grid cell or year is calculated ",
-                "(sum the rarity values of each species present there)."
+              shiny::withMathJax(
+                p(
+                "Area-based rarity is the inverse of occupancy frequency (proportion of grid ",
+                "cells occupied) for a particular species. The total summed rarity for each ",
+                "grid cell or year is calculated (sum the rarity values of each species ",
+                "present there). It is calculated as: ",
+                "$$ \\sum_{i=1}^{S} N/n_i$$ ",
+                "where S is the number of species, N is the total number of occupied grid ",
+                "cells, and ni is the number of grid cells occupied by species i."
+              )
               ),
               HTML("<br>"),
               p(strong("Mean Year of Occurrence")),
@@ -1526,7 +1651,24 @@ ui <- fluidPage(
                 "a recent mean year due to e.g., the sudden availability of large ",
                 "amounts of citizen science data."
               ),
-              HTML("<br>")  # Adding line break for spacing
+              HTML("<br>"),
+              p(strong("Taxonomic Distinctness")),
+              shiny::withMathJax(
+                p(
+                  "Taxonomic distinctness measures the taxonomic relatedness between ",
+                  "species, providing a measure of biodiversity that accounts for ",
+                  "evolutionary relationships. A distance matrix based on pairwise ",
+                  "taxonomic relationships is calculated for each cell using the taxize ",
+                  "package (Chamberlain & Szöcs, 2013; Chamberlain et al., 2020), then ",
+                  "taxonomic distinctness is calculated as the Taxonomic Distinctness ",
+                  "Index (TDI; Clarke & Warwick, 1999): ",
+                  "$$ \\displaystyle \\frac{\\sum \\sum_{i<j} \\frac{|R_i - R_j|}{L}}{\\frac{S(S-1)}{2}} $$ ",
+                  "where S is the number of species, Ri and Rj are the taxonomic ranks ",
+                  "of species i and j (from the GBIF Taxonomic Backbone), and L is the ",
+                  "maximum number of taxonomic ranks. The double summation syntax here ",
+                  "is to explicitly denote iteration over all unique pairs (i,j) with i < j."
+                )
+              )
           )
         ),
 
@@ -2169,7 +2311,15 @@ server <- function(input, output, session) {
                 "Density of Occurrences" = occ_density_map,
                 "Abundance-Based Rarity" = ab_rarity_map,
                 "Area-Based Rarity" = area_rarity_map,
-                "Mean Year of Occurrence" = newness_map
+                "Mean Year of Occurrence" = newness_map,
+                "Taxonomic Distinctness" = tax_distinct_map,
+                "Species Richness (Estimated by Coverage-Based Rarefaction)" - hill0_map,
+                "Hill-Shannon Diversity (Estimated by Coverage-Based Rarefaction)" - hill1_map,
+                "Hill-Simpson Diversity (Estimated by Coverage-Based Rarefaction)" - hill2_map,
+                "Species Occurrences" = spec_occ_map,
+                "Species Range" = spec_range_map,
+                "Occupancy Turnover" = NULL
+
               ),
               params
             )
@@ -2483,9 +2633,22 @@ server <- function(input, output, session) {
           paste0("Scale bar size is outside reasonable boundaries. ",
                  "Resetting to default."),
           type = "error")
-        scalebar_size <- NULL
+        scalebar_size <- 0.2
       } else {
         scalebar_size <- input$scalebar_size
+      }
+
+      if (input$scalebar_tickheight > 2 ||
+          input$scalebar_tickheight < 0 ||
+          is.na(input$scalebar_tickheight)
+      ) {
+        showNotification(
+          paste0("Scale bar tick height is outside reasonable boundaries. ",
+                 "Resetting to default."),
+          type = "error")
+        scalebar_tickheight <- 0.6
+      } else {
+        scalebar_tickheight <- input$scalebar_tickheight
       }
 
       if (input$scalebar_padx > 0.5 ||
@@ -2537,9 +2700,10 @@ server <- function(input, output, session) {
           bar_cols = c(input$scalebar_colour1, input$scalebar_colour2),
           text_cex = scalebar_fontsize,
           text_face = "bold",
-          text_col = input$scalebar_fontcolour
+          text_col = input$scalebar_fontcolour,
+          style = input$scalebar_style,
+          tick_height = scalebar_tickheight
         )
-
     }
 
     if (input$add_northarrow == TRUE) {
@@ -2871,7 +3035,14 @@ server <- function(input, output, session) {
           "Density of Occurrences" = occ_density_bg,
           "Abundance-Based Rarity" = ab_rarity_bg,
           "Area-Based Rarity" = area_rarity_bg,
-          "Mean Year of Occurrence" = newness_bg
+          "Mean Year of Occurrence" = newness_bg,
+          "Taxonomic Distinctness" = tax_distinct_bg,
+          "Species Richness (Estimated by Coverage-Based Rarefaction)" - hill0_bg,
+          "Hill-Shannon Diversity (Estimated by Coverage-Based Rarefaction)" - hill1_bg,
+          "Hill-Simpson Diversity (Estimated by Coverage-Based Rarefaction)" - hill2_bg,
+          "Species Occurrences" = spec_occ_bg,
+          "Species Range" = spec_range_bg,
+          "Occupancy Turnover" = occ_turnover_bg
         )
         HTML(chosen_ind)
       })
@@ -2892,8 +3063,21 @@ server <- function(input, output, session) {
       "necessarily indicate changes in local species composition, which ",
       "can occur without any change in richness. Although richness is ",
       "conceptually simple, it can be measured in different ways."
+    ),
+    p(strong("Observed Richness")),
+    p(
+      "Observed richness is calculated by summing the number of unique ",
+      "species observed for each year or each cell. Observed richness is ",
+      "highly dependent on the comprehensiveness of the dataset it is being ",
+      "applied to. If some regions are more intensively, carefully, or ",
+      "systematically sampled than others, this will likely result in higher ",
+      "observed richness. Observed richness also depends on the relative ",
+      "abundance and spatial aggregation of each species, with less abundant ",
+      "and less aggregated species less likely to be discovered during surveys ",
+      "(Hillebrand et al., 2018), as well as the detectability of each species. ",
     )
   )
+
   total_occ_bg <- paste(
     p(strong("Total Occurrences")),
     p(
@@ -2905,25 +3089,36 @@ server <- function(input, output, session) {
       "calculated indicators."
     )
   )
+
   pielou_evenness_bg <- paste(
+    em("Evenness"),
+    p(
+      "Species evenness is a commonly used indicator that measures how ",
+      "uniformly individuals are distributed across species in a region ",
+      "or over time. It provides a complement to richness by taking ",
+      "relative abundance into account. Although GBIF provides ",
+      "information about abundances as individual counts, the majority ",
+      "of entries lack this information. Hence, evenness can only be ",
+      "calculated using the proportions of observations rather than ",
+      "proportions of individuals. Strictly speaking, the evenness ",
+      "measures therefore indicate how uniformly species are ",
+      "represented in the respective data set rather than the true ",
+      "evenness of the ecological community."
+    ),
     p(strong("Pielou's Evenness")),
-    p(
-      "Species evenness is a commonly used indicator that measures how ",
-      "uniformly individuals are distributed across species in a region ",
-      "or over time. It provides a complement to richness by taking ",
-      "relative abundance into account. Although GBIF provides ",
-      "information about abundances as individual counts, the majority ",
-      "of entries lack this information. Hence, evenness can only be ",
-      "calculated using the proportions of observations rather than ",
-      "proportions of individuals. Strictly speaking, the evenness ",
-      "measures therefore indicate how uniformly species are ",
-      "represented in the respective data set rather than the true ",
-      "evenness of the ecological community."
-    ),
-    p("Pielou (1966)")
+    shiny::withMathJax(
+      p(
+        "Pielou’s evenness (1966) is a well-known and commonly ",
+        "used evenness measure. It is calculated as: ",
+        "$$ E = -\\sum_{i=1}^{S} p_i \\ln(p_i) / \\ln(S) $$ ",
+        "where S is the number of species and pi is the proportion of occurrences ",
+        "represented by species i."
+      )
+    )
   )
+
   williams_evenness_bg <- paste(
-    p(strong("Williams' Evenness")),
+    em("Evenness"),
     p(
       "Species evenness is a commonly used indicator that measures how ",
       "uniformly individuals are distributed across species in a region ",
@@ -2937,8 +3132,31 @@ server <- function(input, output, session) {
       "represented in the respective data set rather than the true ",
       "evenness of the ecological community."
     ),
-    p("Kvålseth (2015)")
+    p(strong("Williams' Evenness")),
+    shiny::withMathJax(
+      p(
+        "An analysis of evenness properties by Kvålseth (2015) showed ",
+        "that an evenness index introduced by Williams in 1977 in an ",
+        "unpublished manuscript has two important properties which ",
+        "Pielou’s does not. The properties in question are complex ",
+        "mathematical properties known as the Schur-Concavity and ",
+        "value validity, but we attempt to describe them here more ",
+        "simply. If a measure of evenness is Schur-concave, it means ",
+        "that when the distribution of individuals becomes more evenly ",
+        "spread across species, the measure of evenness will stay the ",
+        "same or increase, but never decrease. Value validity means ",
+        "that an evenness index should provide sensible and meaningful ",
+        "values across its range for any given distribution of species ",
+        "abundances. Kvålseth referred to this evenness measure as E9 ",
+        "but we refer to it as Williams’ evenness.",
+        "Williams' evenness is calculated as: ",
+        "$$ 1 - \\left[ \\frac{\\left( S\\sum_{i=1}^{S} p_i^2 - 1 \\right) }{S - 1}\\right]^{1/2} $$ ",
+        "where S is the number of species and pi is the proportion of occurrences ",
+        "represented by species i."
+      )
+    )
   )
+
   cum_richness_bg <- paste(
     em("Species Richness"),
     p(
@@ -2955,18 +3173,19 @@ server <- function(input, output, session) {
       "can occur without any change in richness. Although richness is ",
       "conceptually simple, it can be measured in different ways."
     ),
-    p(strong("Cumulative Species Richness")),
+    p(strong("Cumulative Richness")),
     p(
       "Cumulative richness is calculated by adding the newly observed ",
       "unique species each year to a cumulative sum. This indicator ",
       "provides an estimation of whether and how many new species are ",
       "still being discovered in a region. While an influx of alien ",
       "species could cause an increase in cumulative richness, a fast-",
-      "rising trend as shown in Fig. 2 is likely an indication that the ",
+      "rising trend is likely an indication that the ",
       "dataset is not comprehensive and therefore observed richness ",
       "will provide an underestimate of species richness."
     )
   )
+
   occ_density_bg <- paste(
     p(strong("Density of Occurrences")),
     p(
@@ -2975,6 +3194,7 @@ server <- function(input, output, session) {
       "information to total occurrences, but is adjusted for cell area."
     )
   )
+
   ab_rarity_bg <- paste(
     em("Rarity"),
     p(
@@ -2984,20 +3204,23 @@ server <- function(input, output, session) {
       "2021; Rabinowitz, 1981). Rarity can also be a biodiversity ",
       "indicator when summed over multiple species in an area, and may ",
       "provide important insight for determining conservation ",
-      "priorities. It can be measured in different ways, but we will ",
-      "provide workflows to calculate rarity by abundance (using the ",
-      "number of occurrences as a proxy) and by area. When measured ",
-      "over time, rarity may indicate potential threats or changes in ",
-      "the environment."
+      "priorities. When measured over time, rarity may indicate ",
+      "potential threats or changes in the environment."
     ),
     p(strong("Abundance-Based Rarity")),
-    p(
-      "Abundance-based rarity is the inverse of the proportion of total ",
-      "occurrences represented by a particular species. The total ",
-      "summed rarity for each grid cell or year is calculated (sum the ",
-      "rarity values of each species present there)."
+    shiny::withMathJax(
+      p(
+        "Abundance-based rarity is the inverse of the proportion of total occurrences ",
+        "represented by a particular species. The total summed rarity for each grid ",
+        "cell or year is calculated (sum the rarity values of each species present ",
+        "there). It is calculated as: ",
+        "$$ \\sum_{i=1}^{S} 1/p_i$$ ",
+        "where S is the number of species and pi is the proportion of occurrences ",
+        "represented by species i."
+      )
     )
   )
+
   area_rarity_bg <- paste(
     em("Rarity"),
     p(
@@ -3007,20 +3230,23 @@ server <- function(input, output, session) {
       "2021; Rabinowitz, 1981). Rarity can also be a biodiversity ",
       "indicator when summed over multiple species in an area, and may ",
       "provide important insight for determining conservation ",
-      "priorities. It can be measured in different ways, but we will ",
-      "provide workflows to calculate rarity by abundance (using the ",
-      "number of occurrences as a proxy) and by area. When measured ",
-      "over time, rarity may indicate potential threats or changes in ",
-      "the environment."
+      "priorities. When measured over time, rarity may indicate ",
+      "potential threats or changes in the environment."
     ),
     p(strong("Area-Based Rarity")),
-    p(
-      "Area-based rarity is the inverse of occupancy frequency ",
-      "(proportion of grid cells occupied) for a particular species. ",
-      "The total summed rarity for each grid cell or year is calculated ",
-      "(sum the rarity values of each species present there)."
+    shiny::withMathJax(
+      p(
+        "Area-based rarity is the inverse of occupancy frequency (proportion of grid ",
+        "cells occupied) for a particular species. The total summed rarity for each ",
+        "grid cell or year is calculated (sum the rarity values of each species ",
+        "present there). It is calculated as: ",
+        "$$ \\sum_{i=1}^{S} N/n_i$$ ",
+        "where S is the number of species, N is the total number of occupied grid ",
+        "cells, and ni is the number of grid cells occupied by species i."
+      )
     )
   )
+
   newness_bg <- paste(
     p(strong("Mean Year of Occurrence")),
     p(
@@ -3033,6 +3259,142 @@ server <- function(input, output, session) {
       "a recent mean year due to e.g., the sudden availability of large ",
       "amounts of citizen science data."
     )
+  )
+
+  tax_distinct_bg <- paste(
+    p(strong("Taxonomic Distinctness")),
+    shiny::withMathJax(
+      p(
+        "Taxonomic distinctness measures the taxonomic relatedness between ",
+        "species, providing a measure of biodiversity that accounts for ",
+        "evolutionary relationships. A distance matrix based on pairwise ",
+        "taxonomic relationships is calculated for each cell using the taxize ",
+        "package (Chamberlain & Szöcs, 2013; Chamberlain et al., 2020), then ",
+        "taxonomic distinctness is calculated as the Taxonomic Distinctness ",
+        "Index (TDI; Clarke & Warwick, 1999): ",
+        "$$ \\displaystyle \\frac{\\sum \\sum_{i<j} \\frac{|R_i - R_j|}{L}}{\\frac{S(S-1)}{2}} $$ ",
+        "where S is the number of species, Ri and Rj are the taxonomic ranks ",
+        "of species i and j (from the GBIF Taxonomic Backbone), and L is the ",
+        "maximum number of taxonomic ranks. The double summation syntax here ",
+        "is to explicitly denote iteration over all unique pairs (i,j) with i < j."
+      )
+    )
+  )
+
+  hill0_bg <- paste(
+    em("Hill Diversity"),
+    shiny::withMathJax(
+      p(
+        "Hill (1973) introduced the concept of Hill diversity, which assumes ",
+        "that the number and relative abundance of species are inseparable ",
+        "components of diversity. Hill diversity uses a single equation to ",
+        "calculate multiple measures of diversity by varying a single ",
+        "parameter ℓ, which changes the emphasis on rare vs common species ",
+        "(Roswell et al., 2019). It represents the mean rarity of sampled ",
+        "species, and is calculated as: ",
+        "$$ \\displaystyle D = \\left( \\sum_{i=1}^{S} p_i r_i^\\ell \\right)^{1/\\ell} $$ ",
+        "where D is diversity, S is the number of species, pi is the proportion ",
+        "of individuals belonging to species i, ri is the rarity of species i, ",
+        "and ℓ determines the rarity scale for the mean. While ℓ can ",
+        "theoretically take almost any value, three common measures of diversity ",
+        "are special cases: species richness, and modified versions of the ",
+        "Shannon and Simpson diversity indices (Roswell et al., 2019). These ",
+        "three measures occur when ℓ takes the value of 1, 0 (or near-zero, ",
+        "as ℓ cannot actually take the value of 0), or -1, respectively. ",
+        "Richness uses an arithmetic scale (the arithmetic mean), thus giving ",
+        "rare species a lot of leverage. By contrast, Hill-Shannon diversity ",
+        "uses a logarithmic scale (the geometric mean), treating common and ",
+        "rare species equally, and Hill-Simpson diversity uses a reciprocal ",
+        "scale (the harmonic mean), giving common species higher leverage."
+      )
+    ),
+    p(strong("Species Richness")),
+    p(
+      "Using the Hill diversity equation, richness becomes simply S, ",
+      "the number of species, and is thus identical to richness ",
+      "calculated without Hill diversity."
+    )
+  )
+
+  hill1_bg <- paste(
+    em("Hill Diversity"),
+    shiny::withMathJax(
+      p(
+        "Hill (1973) introduced the concept of Hill diversity, which assumes ",
+        "that the number and relative abundance of species are inseparable ",
+        "components of diversity. Hill diversity uses a single equation to ",
+        "calculate multiple measures of diversity by varying a single ",
+        "parameter ℓ, which changes the emphasis on rare vs common species ",
+        "(Roswell et al., 2019). It represents the mean rarity of sampled ",
+        "species, and is calculated as: ",
+        "$$ \\displaystyle D = \\left( \\sum_{i=1}^{S} p_i r_i^\\ell \\right)^{1/\\ell} $$ ",
+        "where D is diversity, S is the number of species, pi is the proportion ",
+        "of individuals belonging to species i, ri is the rarity of species i, ",
+        "and ℓ determines the rarity scale for the mean. While ℓ can ",
+        "theoretically take almost any value, three common measures of diversity ",
+        "are special cases: species richness, and modified versions of the ",
+        "Shannon and Simpson diversity indices (Roswell et al., 2019). These ",
+        "three measures occur when ℓ takes the value of 1, 0 (or near-zero, ",
+        "as ℓ cannot actually take the value of 0), or -1, respectively. ",
+        "Richness uses an arithmetic scale (the arithmetic mean), thus giving ",
+        "rare species a lot of leverage. By contrast, Hill-Shannon diversity ",
+        "uses a logarithmic scale (the geometric mean), treating common and ",
+        "rare species equally, and Hill-Simpson diversity uses a reciprocal ",
+        "scale (the harmonic mean), giving common species higher leverage."
+      )
+    ),
+    p(strong("Hill-Shannon Diversity")),
+    p(
+      "Hill-Shannon diversity is actually e (base of the natural log) raised ",
+      "to the power of the Shannon index. It is estimated for each year or ",
+      "cell count using the iNEXT package, standardized by coverage, as: ",
+      "$$ \\displaystyle e^{-\\sum_{i=1}^{S} p_i \\ln(p_i)} $$ ",
+      "where S is the number of species and pi is the proportion of occurrences ",
+      "represented by species i."
+    )
+  )
+
+  hill2_bg <- paste(
+    em("Hill Diversity"),
+    shiny::withMathJax(
+    p(
+      "Hill (1973) introduced the concept of Hill diversity, which assumes ",
+      "that the number and relative abundance of species are inseparable ",
+      "components of diversity. Hill diversity uses a single equation to ",
+      "calculate multiple measures of diversity by varying a single ",
+      "parameter ℓ, which changes the emphasis on rare vs common species ",
+      "(Roswell et al., 2019). It represents the mean rarity of sampled ",
+      "species, and is calculated as: ",
+      "$$ \\displaystyle D = \\left( \\sum_{i=1}^{S} p_i r_i^\\ell \\right)^{1/\\ell} $$ ",
+      "where D is diversity, S is the number of species, pi is the proportion ",
+      "of individuals belonging to species i, ri is the rarity of species i, ",
+      "and ℓ determines the rarity scale for the mean. While ℓ can ",
+      "theoretically take almost any value, three common measures of diversity ",
+      "are special cases: species richness, and modified versions of the ",
+      "Shannon and Simpson diversity indices (Roswell et al., 2019). These ",
+      "three measures occur when ℓ takes the value of 1, 0 (or near-zero, ",
+      "as ℓ cannot actually take the value of 0), or -1, respectively. ",
+      "Richness uses an arithmetic scale (the arithmetic mean), thus giving ",
+      "rare species a lot of leverage. By contrast, Hill-Shannon diversity ",
+      "uses a logarithmic scale (the geometric mean), treating common and ",
+      "rare species equally, and Hill-Simpson diversity uses a reciprocal ",
+      "scale (the harmonic mean), giving common species higher leverage."
+    ),
+    p(strong("Hill-Simpson Diversity")),
+    shiny::withMathJax(
+      p(
+        "Hill-Simpson diversity is the inverse of the Simpson index. ",
+        "It is estimated using the iNEXT package for each year or cell, ",
+        "standardized by coverage, as:",
+        "$$ \\displaystyle \\frac{1}{\\sum_{i=1}^{S} p_i^2} $$",
+        "where S is the number of species and pi is the proportion of ",
+        "occurrences represented by species i.",
+        "Both Hill-Simpson and Hill-Shannon diversity describe a combination ",
+        "of richness and evenness that reduce the inadequacies of either ",
+        "measure alone."
+      )
+    )
+  )
   )
 
   ############################ time series tab outputs
@@ -3063,7 +3425,14 @@ server <- function(input, output, session) {
                 "Density of Occurrences" = occ_density_ts,
                 "Abundance-Based Rarity" = ab_rarity_ts,
                 "Area-Based Rarity" = area_rarity_ts,
-                "Mean Year of Occurrence" = newness_ts
+                "Mean Year of Occurrence" = newness_ts,
+                "Taxonomic Distinctness" = tax_distinct_ts,
+                "Species Richness (Estimated by Coverage-Based Rarefaction)" = hill0_ts,
+                "Hill-Shannon Diversity (Estimated by Coverage-Based Rarefaction)" = hill1_ts,
+                "Hill-Simpson Diversity (Estimated by Coverage-Based Rarefaction)" = hill2_ts,
+                "Species Occurrences" = spec_occ_ts,
+                "Species Range" = spec_range_ts,
+                "Occupancy Turnover" = occ_turnover_ts
               ),
               params
             )
@@ -3344,6 +3713,12 @@ server <- function(input, output, session) {
         smooth_cilinewidth <- input$smooth_cilinewidth
       }
 
+      if (input$indicatorsToAnalyse == "Cumulative Species Richness") {
+        smoothed_trend <- FALSE
+      } else {
+        smoothed_trend <- input$smoothed_trend
+      }
+
       params <- list(
         x = plot_to_render_ts(),
         title = title,
@@ -3401,7 +3776,7 @@ server <- function(input, output, session) {
                                       size = caption_size,
                                       face = "italic")
         )
-
+      print(input$indicatorsToAnalyse)
       ts_plot
     })
   })
