@@ -1,4 +1,4 @@
-library(plotly)
+#library(plotly)
 library(shiny)
 library(shinyWidgets)
 library(b3gbi)
@@ -9,6 +9,7 @@ library(lubridate)
 library(shinyjs)
 library(jsonlite)
 library(colourpicker)
+library(ggplot2)
 library(ggspatial)
 
 # Check for a specific package version
@@ -21,7 +22,7 @@ if (packageVersion("b3gbi") < "0.4.3") {
 # type sovereignty, you get rnesov, then ADMIN is country, GEOUNIT is geounit,
 #      SOVEREIGNT is sovereignty
 # type map_units, you get rnemapunits, then ADMIN is country, etc..
-# type tiny_countries, you oget rnetiny, then ADMIN is country, etc...
+# type tiny_countries, you get rnetiny, then ADMIN is country, etc...
 continents <- readRDS("data/rnecontinents.RData")
 countries10 <- readRDS("data/rnecountries10.RData")
 sovereignties10 <- readRDS("data/rnesov10.RData")
@@ -132,7 +133,7 @@ ui <- fluidPage(
     sidebarPanel(
       tabsetPanel(
         tabPanel(
-          "Data cube",
+          "Data Cube",
           fileInput(
             inputId = "dataCube",
             label = HTML("Upload a data cube")
@@ -140,7 +141,7 @@ ui <- fluidPage(
         ),
 
         tabPanel(
-          "Input filters",
+          "Analysis & Filters",
           div(class = "scrollable-tab",
               # Indicator
               selectInput(
@@ -211,9 +212,9 @@ ui <- fluidPage(
                 inputId = "mapres",
                 label = "Map resolution",
                 choices = c(
-                  "110",
-                  "50",
-                  "10"
+                  "Small (110m)" = "110",
+                  "Medium (50m)" = "50",
+                  "Large (10m)" = "10"
                 ),
                 selected = "50"
               ),
@@ -1751,9 +1752,14 @@ server <- function(input, output, session) {
   })
 
   # Update region selection box when region options change
-  observeEvent(regionupdate, {
+  observeEvent({
+    input$spatiallevel
+    input$countrytype
+    input$mapres
+  }, {
     choices <- regionupdate()
-    updateSelectInput(
+    choices <- sort(choices)
+    updateSelectizeInput(
       inputId = "region",
       choices = choices
     )
@@ -1894,12 +1900,35 @@ server <- function(input, output, session) {
     }
   })
 
+  # Reset region selections to default when customregion is deselected
+  observeEvent(input$customregion, {
+    if (input$customregion == FALSE) {
+      print("Resetting selectize since checkbox is unchecked")
+      updateSelectInput(
+        session,
+        inputId = "countrytype",
+        selected = "countries"
+        )
+      updateSelectInput(
+        session,
+        inputId = "spatiallevel",
+        selected = "cube"
+        )
+      updateSelectizeInput(
+        session,
+        inputId = "region",
+        choices = character(0),
+        selected = ""
+      )
+    }
+  })
+
   # Change map resolution options based on selected country type
   reschoiceupdate <- reactive({
     if (input$countrytype == "tiny_countries") {
-      c("50", "110")
+      c("Small(110m)" = "110", "Medium (50m)" = "50")
     } else {
-      c("10", "50", "110")
+      c("Small (110m)" = "110" , "Medium (50m)" = "50", "Large (10m)" = "10")
     }
   })
 
@@ -2313,13 +2342,12 @@ server <- function(input, output, session) {
                 "Area-Based Rarity" = area_rarity_map,
                 "Mean Year of Occurrence" = newness_map,
                 "Taxonomic Distinctness" = tax_distinct_map,
-                "Species Richness (Estimated by Coverage-Based Rarefaction)" - hill0_map,
-                "Hill-Shannon Diversity (Estimated by Coverage-Based Rarefaction)" - hill1_map,
-                "Hill-Simpson Diversity (Estimated by Coverage-Based Rarefaction)" - hill2_map,
+                "Species Richness (Estimated by Coverage-Based Rarefaction)" = hill0_map,
+                "Hill-Shannon Diversity (Estimated by Coverage-Based Rarefaction)" = hill1_map,
+                "Hill-Simpson Diversity (Estimated by Coverage-Based Rarefaction)" = hill2_map,
                 "Species Occurrences" = spec_occ_map,
                 "Species Range" = spec_range_map,
                 "Occupancy Turnover" = NULL
-
               ),
               params
             )
@@ -3015,7 +3043,14 @@ server <- function(input, output, session) {
           "Density of Occurrences" = occ_density_bg,
           "Abundance-Based Rarity" = ab_rarity_bg,
           "Area-Based Rarity" = area_rarity_bg,
-          "Mean Year of Occurrence" = newness_bg
+          "Mean Year of Occurrence" = newness_bg,
+          "Taxonomic Distinctness" = tax_distinct_bg,
+          "Species Richness (Estimated by Coverage-Based Rarefaction)" = hill0_bg,
+          "Hill-Shannon Diversity (Estimated by Coverage-Based Rarefaction)" = hill1_bg,
+          "Hill-Simpson Diversity (Estimated by Coverage-Based Rarefaction)" = hill2_bg,
+          "Species Occurrences" = spec_occ_bg,
+          "Species Range" = spec_range_bg,
+          "Occupancy Turnover" = NULL
         )
         HTML(chosen_ind)
       })
@@ -3037,9 +3072,9 @@ server <- function(input, output, session) {
           "Area-Based Rarity" = area_rarity_bg,
           "Mean Year of Occurrence" = newness_bg,
           "Taxonomic Distinctness" = tax_distinct_bg,
-          "Species Richness (Estimated by Coverage-Based Rarefaction)" - hill0_bg,
-          "Hill-Shannon Diversity (Estimated by Coverage-Based Rarefaction)" - hill1_bg,
-          "Hill-Simpson Diversity (Estimated by Coverage-Based Rarefaction)" - hill2_bg,
+          "Species Richness (Estimated by Coverage-Based Rarefaction)" = hill0_bg,
+          "Hill-Shannon Diversity (Estimated by Coverage-Based Rarefaction)" = hill1_bg,
+          "Hill-Simpson Diversity (Estimated by Coverage-Based Rarefaction)" = hill2_bg,
           "Species Occurrences" = spec_occ_bg,
           "Species Range" = spec_range_bg,
           "Occupancy Turnover" = occ_turnover_bg
