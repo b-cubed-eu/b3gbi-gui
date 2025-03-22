@@ -1711,6 +1711,15 @@ ui <- fluidPage(
                   "style='color: blue; text-decoration: none;'>B-Cubed ",
                   "website</a>.</div>",
                   "<br>",
+                  "To cite this app:<br><br>",
+                  "Dove S, Breugelmans L, De Nolf M, Diesmos A, ",
+                  "Dillen M, Matos F, Pili A & Sica Y (2025). b3gbi Shiny GUI: ",
+                  "A graphical user interface for calculating general ",
+                  "biodiversity indicators on GBIF data cubes. [R Shiny ",
+                  "Application] ",
+                  "https://bcc9vd-shawn-dove.shinyapps.io/b3gbi-gui/ (Original ",
+                  "work published 2025)",
+                  "<br><br>",
                   "B-Cubed (Biodiversity Building Blocks for Policy) receives ",
                   "funding from the European Union’s Horizon Europe Research ",
                   "and Innovation Programme (ID No 101059592).",
@@ -1719,6 +1728,14 @@ ui <- fluidPage(
                 )
               ),
               HTML("<br>")  # Adding line break for spacing
+          )
+        ),
+        ########################### References tab
+        tabPanel(
+          title = "References",
+          div(class = "scrollable-tab",
+          "References used in this app:",
+          HTML("<br>")
           )
         )
       )
@@ -1903,7 +1920,6 @@ server <- function(input, output, session) {
   # Reset region selections to default when customregion is deselected
   observeEvent(input$customregion, {
     if (input$customregion == FALSE) {
-      print("Resetting selectize since checkbox is unchecked")
       updateSelectInput(
         session,
         inputId = "countrytype",
