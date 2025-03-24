@@ -6,7 +6,7 @@ html, body {
   color: #fff;
 }
 body {
-  min-height: 100vh;
+  height: auto;
 }
 
 h2 {
@@ -22,7 +22,7 @@ h3 {
 	font-style: normal;
 }
 p {
-	font-size: 14px; 
+	font-size: 14px;
 	color: #555;
 }
 
@@ -53,23 +53,29 @@ p {
   background-color: #267270 !important;
   color: #fff;
   font-weight: 400;
-  min-height: 100vh;
   border-left: 1px solid #ddd;
   border-right: 1px solid #ddd;
   padding: 10px;
+  height: auto;
 }
 
 
 .col-sm-8 .tab-content {
   background-color: #fff;
   color: #000;
-  min-height: 100vh;
   border-left: 1px solid #ddd;
   border-right: 1px solid #ddd;
   padding: 10px;
+  height: auto;
 }
 
 
 .btn {
   background-color: #6cddb4;
-}	
+}
+
+.scrollable-tab {
+  overflow-y: auto;
+  overflow-x: hidden;
+  height: 60vh;
+}
