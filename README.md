@@ -1,5 +1,5 @@
 
-#### Welcome to the B-Cubed General Biodiversity Indicators Graphical User Interface
+## Welcome to the B-Cubed General Biodiversity Indicators Graphical User Interface
 
 This is a Shiny graphical front-end for the b3gbi R package
 (<https://www.github.com/b-cubed-eu/b3gbi>).
