@@ -1694,6 +1694,15 @@ ui <- fluidPage(
               )
           )
         ),
+        ########################### References tab
+        tabPanel(
+          title = "References",
+          div(class = "scrollable-tab",
+              "References used in this app:",
+              "COMING SOON!",
+              HTML("<br>")
+          )
+        ),
 
         ########################### About tab
         tabPanel(
@@ -1751,15 +1760,8 @@ ui <- fluidPage(
               ),
               HTML("<br>")  # Adding line break for spacing
           )
-        ),
-        ########################### References tab
-        tabPanel(
-          title = "References",
-          div(class = "scrollable-tab",
-          "References used in this app:",
-          HTML("<br>")
-          )
         )
+
       )
     )
   )
