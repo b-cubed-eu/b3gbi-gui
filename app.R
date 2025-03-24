@@ -3332,6 +3332,34 @@ server <- function(input, output, session) {
     )
   )
 
+  occ_turnover_bg <- paste(
+    p(strong("Occupancy Turnover")),
+    shiny::withMathJax(
+      p(
+        "Occupancy turnover measures the change in species composition over ",
+        "time, reflecting the rate at which species appear or disappear from a ",
+        "given area. It provides insights into the dynamic nature of ",
+        "ecological communities, highlighting shifts in species distributions ",
+        "and potential environmental changes. High turnover rates may indicate ",
+        "rapid community restructuring, potentially driven by factors such as ",
+        "habitat alteration, climate change, or invasive species. Analyzing ",
+        "occupancy turnover can be crucial for understanding ecosystem ",
+        "stability, identifying areas of conservation concern, and assessing ",
+        "the effectiveness of management strategies. <br><br>",
+        "Occupancy turnover can be calculated in different ways, but here we ",
+        "use the Jaccard dissimilarity index (Jaccard, 1901) to measure the ",
+        "similarity between two sets of species occurrences. The Jaccard index ",
+        "is calculated as: <br><br>",
+        "$$ \\displaystyle ( J = \\frac{b + c}{a + b + c} \\) $$ <br><br>",
+        "where \\( a \\) is the number of species present in both time periods, ",
+        "\\( b \\) is the number of species present only in the first time ",
+        "period, and \\( c \\) is the number of species present only in the ",
+        "second time period. The index ranges from 0 (no turnover) to 1 ",
+        "(complete turnover). <br><br>",
+      )
+    )
+  )
+
   hill0_bg <- paste(
     em("Hill Diversity"),
     shiny::withMathJax(
