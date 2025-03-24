@@ -3579,9 +3579,6 @@ server <- function(input, output, session) {
               last_year = input$daterange[2]
             )
 
-            print(paste("input$species type:", typeof(input$species)))
-            print(paste("input$species value:", input$species))
-
             ts_plot <- do.call(
               switch(input$indicatorsToAnalyse,
                 "Observed Species Richness" = obs_richness_ts,
