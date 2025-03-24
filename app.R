@@ -133,10 +133,32 @@ ui <- fluidPage(
     sidebarPanel(
       tabsetPanel(
         tabPanel(
-          "Data Cube",
+          "Data",
           fileInput(
             inputId = "dataCube",
-            label = HTML("Upload a data cube")
+            label = HTML("Upload a data cube"),
+            accept = ".csv"
+          ),
+          div(style = "display: flex; align-items: center;",
+              div(class = "checkbox-container",
+                  checkboxInput(
+                    inputId = "shapefile",
+                    label = "",
+                    value = F
+                  )
+              ),
+              div(class = "custom-inline",
+                  fileInput(
+                    inputId = "shapefile_zip",
+                    label = HTML("Add external shape file (.zip)"),
+                    accept = ".zip"
+                  )
+              )
+          ),
+          checkboxInput(
+            inputId = "invert_shapefile",
+            label = "Invert shapefile (not working properly)",
+            value = F
           )
         ),
 
@@ -1768,6 +1790,30 @@ server <- function(input, output, session) {
     r$dataCube1 <- r$dataCube
   })
 
+  shapefile_path <- reactive({
+    req(input$shapefile_zip)
+
+    temp_dir <- tempdir()
+    zip_path <- input$shapefile_zip$datapath
+
+    tryCatch({
+      unzip(zip_path, exdir = temp_dir)
+
+      shp_file <- list.files(temp_dir, pattern = "\\.shp$", full.names = TRUE)[1]
+
+      if (!is.na(shp_file)) {
+        return(shp_file)
+      } else {
+        return("Error: .shp file not found within the zip.")
+      }
+    }, error = function(e) {
+      return(paste("Error during unzipping or file processing:", e$message))
+    })
+
+
+
+  })
+
   # Update region selection box when region options change
   observeEvent({
     input$spatiallevel
@@ -2334,6 +2380,12 @@ server <- function(input, output, session) {
               output_crs <- paste0("EPSG: ", input$output_crs)
             }
 
+            if (!is.null(input$shapefile_zip) & input$shapefile == TRUE) {
+              shapefile <- shapefile_path()
+            } else {
+              shapefile <- NULL
+            }
+
             params <- list(
               data = r$dataCube1,
               cell_size = input$cellsize,
@@ -2343,7 +2395,10 @@ server <- function(input, output, session) {
               ne_type = input$countrytype,
               ne_scale = mapres,
               region = region_param,
-              output_crs = output_crs
+              output_crs = output_crs,
+              shapefile_path = shapefile,
+              invert = input$invert_shapefile,
+              crs_unit_convert = input$crs_unit_convert
             )
 
             map <- do.call(
@@ -2624,6 +2679,20 @@ server <- function(input, output, session) {
       legend_limits = legend_limits,
       legend_title_wrap_length = legend_title_wrap_length
     )
+
+    if ((input$indicatorsToAnalyse == "Species Occurrences" ||
+         input$indicatorsToAnalyse == "Species Range") &&
+        length(input$species) > 0) {
+      if (length(input$species) > 1) {
+        showNotification(
+          paste0("Visualization options for this indicator currently only work ",
+          "properly if you select a single species. Hopefully it will be ",
+          "fixed soon."), type = "error")
+      }
+
+      params$species <- c(input$species)
+
+    }
 
     # Create plot
     map_plot <- do.call(plot, params)
@@ -3312,6 +3381,20 @@ server <- function(input, output, session) {
     )
   )
 
+  spec_occ_bg <- paste(
+    p(strong("Species Occurrences")),
+    p(
+      "Species occurrences are considered an essential biodiversity variable ",
+      "(EBV). They are mapped by calculating the total number of occurrences ",
+      "of a given species for each cell. This represents the occurrence ",
+      "frequency distribution, and also indicates the observed species ",
+      "distribution. The number of occurrences can act as a proxy for relative ",
+      "abundance of species with a similar detectability, which is an ",
+      "important aspect of biodiversity although not an indicator when ",
+      "calculated in isolation."
+    )
+  )
+
   tax_distinct_bg <- paste(
     p(strong("Taxonomic Distinctness")),
     shiny::withMathJax(
@@ -3465,6 +3548,9 @@ server <- function(input, output, session) {
               first_year = input$daterange[1],
               last_year = input$daterange[2]
             )
+
+            print(paste("input$species type:", typeof(input$species)))
+            print(paste("input$species value:", input$species))
 
             ts_plot <- do.call(
               switch(input$indicatorsToAnalyse,
@@ -3804,6 +3890,21 @@ server <- function(input, output, session) {
         wrap_length = wrap_length
       )
 
+      if ((input$indicatorsToAnalyse == "Species Occurrences" ||
+          input$indicatorsToAnalyse == "Species Range") &&
+          length(input$species) > 0) {
+        if (length(input$species) > 1) {
+          showNotification(
+            paste0(
+              "Visualization options for this indicator currently only work ",
+              "properly if you select a single species. Hopefully it will be ",
+              "fixed soon."
+            ), type = "error"
+          )
+        }
+        params$species <- c(input$species)
+      }
+
       # Plot diversity metric
       ts_plot <- do.call(plot, params)
 
@@ -3827,7 +3928,7 @@ server <- function(input, output, session) {
                                       size = caption_size,
                                       face = "italic")
         )
-      print(input$indicatorsToAnalyse)
+
       ts_plot
     })
   })
