@@ -13,8 +13,8 @@ library(ggplot2)
 library(ggspatial)
 
 # Check for a specific package version
-if (packageVersion("b3gbi") < "0.4.3") {
-  stop("This app requires b3gbi version 0.4.3 or higher.")
+if (packageVersion("b3gbi") < "0.5.2") {
+  stop("This app requires b3gbi version 0.5.2 or higher.")
 }
 
 # tiny countries not available at 10
