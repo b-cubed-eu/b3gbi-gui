@@ -11,6 +11,7 @@ library(jsonlite)
 library(colourpicker)
 library(ggplot2)
 library(ggspatial)
+library(shinyvalidate)
 
 # Check for a specific package version
 if (packageVersion("b3gbi") < "0.5.2") {
@@ -1780,6 +1781,31 @@ server <- function(input, output, session) {
 
   options(shiny.maxRequestSize = 500 * 1024^2)
 
+  ################ INPUT VALIDATION ################
+
+  # Create an InputValidator object (shinyvalidate)
+  ivplot <-InputValidator$new()
+
+  # Add validation rules
+  ivplot$add_rule("plot_height", sv_required())
+
+  ivplot$add_rule("plot_height", function(x) {
+    if (x < 100 || x > 2000) {
+      return("Height must be between 100 and 2000.")
+    }
+  })
+
+  ivplot$add_rule("plot_width", sv_required())
+
+  ivplot$add_rule("plot_width", function(x) {
+    if (x < 100 || x > 2000) {
+      return("Width must be between 100 and 2000.")
+    }
+  })
+
+  # Start displaying errors in the UI
+  ivplot$enable()
+
   ################################ GENERAL reactives and observers
 
   r <- reactiveValues(dataCube = NULL, dataCube1 = NULL)
@@ -2357,6 +2383,12 @@ server <- function(input, output, session) {
   # create map from imported cube
   plot_to_render_map <- eventReactive(input$plot_map_bt, {
     req(r$dataCube1)
+
+    if(!ivplot$is_valid()) {
+      showNotification("Invalid input detected. Please check the input fields.",
+                       type = "error")
+      return(NULL)
+    }
 
     if (!input$mapres %in% c("10", "50", "110")) {
       showNotification("Map resolution is not properly selected.", type = "error")
@@ -2961,29 +2993,29 @@ server <- function(input, output, session) {
 
   observeEvent(input$plot_map_bt, {
     output$plot_map_container <- renderUI({
-      plotOutput("plot_map",
-                 width = paste0(reactive({
-                   width_val <- input$plot_width
-                   if (is.na(width_val) || width_val < 100 || width_val > 2000) {
-                     showNotification(
-                       "Warning: width is not valid. Setting to default value of 600."
-                     )
-                     600
-                   } else {
-                     width_val
-                   }
-                 })(), "px"),
-                 height = paste0(reactive({
-                   height_val <- input$plot_height
-                   if (is.na(height_val) || height_val < 100 || height_val > 2000) {
-                     showNotification(
-                       "Warning: height is not valid. Setting to default value of 400."
-                     )
-                     400
-                   } else {
-                     height_val
-                   }
-                 })(), "px")
+      plotOutput("plot_map"#,
+                 # width = paste0(reactive({
+                 #   width_val <- input$plot_width
+                 #   if (is.na(width_val) || width_val < 100 || width_val > 2000) {
+                 #     showNotification(
+                 #       "Warning: width is not valid. Setting to default value of 600."
+                 #     )
+                 #     600
+                 #   } else {
+                 #     width_val
+                 #   }
+                 # })(), "px"),
+                 # height = paste0(reactive({
+                 #   height_val <- input$plot_height
+                 #   if (is.na(height_val) || height_val < 100 || height_val > 2000) {
+                 #     showNotification(
+                 #       "Warning: height is not valid. Setting to default value of 400."
+                 #     )
+                 #     400
+                 #   } else {
+                 #     height_val
+                 #   }
+                 # })(), "px")
       )
     })
 
@@ -3567,6 +3599,12 @@ server <- function(input, output, session) {
   plot_to_render_ts <- eventReactive(input$plot_ts_bt, {
     req(r$dataCube1)
 
+    if(!ivplot$is_valid()) {
+      showNotification("Invalid input detected. Please check the input fields.",
+                       type = "error")
+      return(NULL)
+    }
+
     tryCatch(
       {
         withCallingHandlers(
@@ -3616,353 +3654,360 @@ server <- function(input, output, session) {
     )
   })
 
+  # output time series from imported cube
+  plot_to_print_ts <- reactive({
+    req(plot_to_render_ts())
+
+    ribboncolour <- if (input$ci_vis_type == "None") NA else input$ribboncolour
+
+    gridlines <- if (input$ts_gridlines == "TRUE") FALSE else TRUE
+
+    if (
+      input$title == ""
+    ) {
+      title <- NULL
+    } else {
+      title <- input$title
+    }
+
+    if (
+      is.null(input$ts_x_label) ||
+      length(input$ts_x_label) == 0 ||
+      input$ts_x_label == ""
+    ) {
+      xlabel <- NULL
+    } else {
+      xlabel <- input$ts_x_label
+    }
+
+    if (
+      is.null(input$ts_y_label) ||
+      length(input$ts_y_label) == 0 ||
+      input$ts_y_label == ""
+    ) {
+      ylabel <- NULL
+    } else {
+      ylabel <- input$ts_y_label
+    }
+
+    # Check if subtitle is provided
+    if (input$subtitle == "") {
+      subtitle <- NULL
+    } else {
+      subtitle <- input$subtitle
+    }
+
+    # Check if caption is provided
+    if (input$caption == "") {
+      caption <- NULL
+    } else {
+      caption <- input$caption
+    }
+
+    # Check that title, subtitle and caption font size inputs are ok
+    if (input$title_size < 8 ||
+        input$title_size > 40 ||
+        is.na(input$title_size)
+    ) {
+      showNotification(
+        paste0("Title font size is outside reasonable boundaries.",
+               "Resetting to default."),
+        type = "error")
+      title_size <- NULL
+    } else {
+      title_size <- input$title_size
+    }
+
+    if (input$subtitle_size < 6 ||
+        input$subtitle_size > 30 ||
+        is.na(input$subtitle_size)
+    ) {
+      showNotification(
+        paste0("Subtitle font size is outside reasonable boundaries.",
+               "Resetting to default."),
+        type = "error")
+      subtitle_size <- NULL
+    } else {
+      subtitle_size <- input$subtitle_size
+    }
+
+    if (input$caption_size < 4 ||
+        input$caption_size > 20 ||
+        is.na(input$caption_size)
+    ) {
+      showNotification(
+        paste0("Caption font size is outside reasonable boundaries. ",
+               "Resetting to default."),
+        type = "error")
+      caption_size <- NULL
+    } else {
+      caption_size <- input$caption_size
+    }
+
+    if (input$wrap_length < 20 ||
+        input$wrap_length > 200 ||
+        is.na(input$wrap_length)
+    ) {
+      showNotification(
+        paste0("Title wrap length is outside reasonable boundaries. ",
+               "Resetting to default."),
+        type = "error")
+      wrap_length <- NULL
+    } else {
+      wrap_length <- input$wrap_length
+    }
+
+    if (input$suppress_y == TRUE) {
+      y_axis_text <- element_blank()
+    } else {
+      y_axis_text <- element_text()
+    }
+
+    if (input$suppress_yt == TRUE) {
+      y_axis_title <- element_blank()
+    } else {
+      y_axis_title <- element_text()
+    }
+
+    if (input$suppress_x == TRUE) {
+      x_axis_text <- element_blank()
+    } else {
+      x_axis_text <- element_text()
+    }
+
+    if (input$suppress_xt == TRUE) {
+      x_axis_title <- element_blank()
+    } else {
+      x_axis_title <- element_text()
+    }
+
+    if (input$ts_x_breaks > 100 ||
+        input$ts_x_breaks < 2 ||
+        is.na(input$ts_x_breaks)
+    ) {
+      showNotification(
+        paste0("Number of X axis breaks outside of reasonable range. ",
+               "Resetting to default."),
+        type = "error"
+      )
+      ts_x_breaks <- 10
+    } else {
+      ts_x_breaks <- input$ts_x_breaks
+    }
+
+    if (input$ts_y_breaks > 100 ||
+        input$ts_y_breaks < 2 ||
+        is.na(input$ts_y_breaks)
+    ) {
+      showNotification(
+        paste0("Number of X axis breaks outside of reasonable range. ",
+               "Resetting to default."),
+        type = "error"
+      )
+      ts_y_breaks <- 6
+    } else {
+      ts_y_breaks <- input$ts_y_breaks
+    }
+
+    # Confidence intervals for indicator lines or points
+    if (input$ci_vis_type == "Ribbon") {
+      vis_type <- "ribbon"
+    } else if (input$ci_vis_type == "Error Bars") {
+      vis_type <- "error_bars"
+    } else {
+      vis_type <- "error_bars"
+      error_alpha <- 0
+    }
+
+    error_alpha <- input$error_alpha
+
+    if (input$error_thickness <= 0 ||
+        input$error_thickness > 10 ||
+        is.na(input$error_thickness)
+    ) {
+      showNotification(
+        paste0("Error bar thickness outside of reasonable range.",
+               "Resetting to default."),
+        type = "error"
+      )
+      error_thickness <- 1
+    } else {
+      error_thickness <- input$error_thickness
+    }
+
+    if (input$error_width <= 0 ||
+        input$error_width > 10 ||
+        is.na(input$error_width)) {
+      showNotification(
+        paste0("Error bar width outside of reasonable range.",
+               "Resetting to default."),
+        type = "error"
+      )
+      error_width <- 1
+    } else {
+      error_width <- input$error_width
+    }
+
+    if (input$linewidth <= 0 ||
+        input$linewidth > 10 ||
+        is.na(input$linewidth)
+    ) {
+      showNotification(
+        paste0("Indicator line width outside of reasonable range.",
+               "Resetting to default."),
+        type = "error"
+      )
+      linewidth <- 1
+    } else {
+      linewidth <- input$linewidth
+    }
+
+    if (input$smooth_linewidth <= 0 ||
+        input$smooth_linewidth > 10 ||
+        is.na(input$smooth_linewidth)
+    ) {
+      showNotification(
+        paste0("Trend line width outside of reasonable range.",
+               "Resetting to default."),
+        type = "error"
+      )
+      smooth_linewidth <- 1
+    } else {
+      smooth_linewidth <- input$smooth_linewidth
+    }
+
+    if (input$smooth_cilinewidth <= 0 ||
+        input$smooth_cilinewidth > 10 ||
+        is.na(input$smooth_cilinewidth)) {
+      showNotification(
+        paste0("Trend envelope edge width outside of reasonable range.",
+               "Resetting to default."),
+        type = "error"
+      )
+      smooth_cilinewidth <- 1
+    } else {
+      smooth_cilinewidth <- input$smooth_cilinewidth
+    }
+
+    if (input$indicatorsToAnalyse == "Cumulative Species Richness") {
+      smoothed_trend <- FALSE
+    } else {
+      smoothed_trend <- input$smoothed_trend
+    }
+
+    params <- list(
+      x = plot_to_render_ts(),
+      title = title,
+      suppress_y = FALSE,
+      smoothed_trend = input$smoothed_trend,
+      x_label = xlabel,
+      y_label = ylabel,
+      x_expand = c(input$ts_x_expand_left, input$ts_x_expand_right),
+      y_expand = c(input$ts_y_expand_bottom, input$ts_y_expand_top),
+      x_breaks = ts_x_breaks,
+      y_breaks = ts_y_breaks,
+      gridoff = gridlines,
+      ci_type = vis_type,
+      point_line = input$point_line,
+      pointsize = input$pointsize,
+      linewidth = linewidth,
+      linecolour = input$linecolour,
+      linealpha = input$linealpha,
+      error_width = error_width,
+      error_thickness = error_thickness,
+      error_alpha = error_alpha,
+      ribboncolour = ribboncolour,
+      ribbonalpha = input$ribbonalpha,
+      smooth_linetype = input$smooth_linetype,
+      smooth_linewidth = smooth_linewidth,
+      trendlinecolour = input$trendlinecolour,
+      trendlinealpha = input$trendlinealpha,
+      smooth_cilinewidth = smooth_cilinewidth,
+      envelopecolour = input$envelopecolour,
+      envelopealpha = input$envelopealpha,
+      smooth_cialpha = input$smooth_cialpha,
+      wrap_length = wrap_length
+    )
+
+    if ((input$indicatorsToAnalyse == "Species Occurrences" ||
+         input$indicatorsToAnalyse == "Species Range") &&
+        length(input$species) > 0) {
+      if (length(input$species) > 1) {
+        showNotification(
+          paste0(
+            "Visualization options for this indicator currently only work ",
+            "properly if you select a single species. Hopefully it will be ",
+            "fixed soon."
+          ), type = "error"
+        )
+      }
+      params$species <- c(input$species)
+    }
+
+    # Plot diversity metric
+    ts_plot <- do.call(plot, params)
+
+    # Add other options to plot
+    ts_plot <- ts_plot +
+      labs(title = title,
+           subtitle = subtitle,
+           caption = caption) +
+      theme(
+        axis.title.x = x_axis_title,
+        axis.text.x = x_axis_text,
+        axis.title.y = y_axis_title,
+        axis.text.y = y_axis_text,
+        plot.title = element_text(color = input$title_color,
+                                  size = title_size,
+                                  face = "bold",
+                                  hjust = 0),
+        plot.subtitle = element_text(color = input$subtitle_color,
+                                     size = subtitle_size),
+        plot.caption = element_text(color = input$caption_color,
+                                    size = caption_size,
+                                    face = "italic")
+      )
+
+    ts_plot
+  })
+
   observeEvent(input$plot_ts_bt, {
     output$plot_ts_container <- renderUI({
       plotOutput("plot_ts",
-                 width = paste0(reactive({
-                   width_val <- input$plot_width
-                   if (is.na(width_val) || width_val < 100 || width_val > 2000) {
-                     showNotification(
-                       "Warning: width is not valid. Setting to default value of 600."
-                     )
-                     600
-                   } else {
-                     width_val
-                   }
-                 })(), "px"),
-                 height = paste0(reactive({
-                   height_val <- input$plot_height
-                   if (is.na(height_val) || height_val < 100 || height_val > 2000) {
-                     showNotification(
-                       "Warning: height is not valid. Setting to default value of 400."
-                     )
-                     400
-                   } else {
-                     height_val
-                   }
-                 })(), "px"))
-    })
-    # output time series from imported cube
-    output$plot_ts <- renderPlot({
-      req(plot_to_render_ts())
-
-      ribboncolour <- if (input$ci_vis_type == "None") NA else input$ribboncolour
-
-      gridlines <- if (input$ts_gridlines == "TRUE") FALSE else TRUE
-
-      if (
-        input$title == ""
-      ) {
-        title <- NULL
-      } else {
-        title <- input$title
-      }
-
-      if (
-        is.null(input$ts_x_label) ||
-        length(input$ts_x_label) == 0 ||
-        input$ts_x_label == ""
-      ) {
-        xlabel <- NULL
-      } else {
-        xlabel <- input$ts_x_label
-      }
-
-      if (
-        is.null(input$ts_y_label) ||
-        length(input$ts_y_label) == 0 ||
-        input$ts_y_label == ""
-      ) {
-        ylabel <- NULL
-      } else {
-        ylabel <- input$ts_y_label
-      }
-
-      # Check if subtitle is provided
-      if (input$subtitle == "") {
-        subtitle <- NULL
-      } else {
-        subtitle <- input$subtitle
-      }
-
-      # Check if caption is provided
-      if (input$caption == "") {
-        caption <- NULL
-      } else {
-        caption <- input$caption
-      }
-
-      # Check that title, subtitle and caption font size inputs are ok
-      if (input$title_size < 8 ||
-          input$title_size > 40 ||
-          is.na(input$title_size)
-          ) {
-        showNotification(
-          paste0("Title font size is outside reasonable boundaries.",
-                 "Resetting to default."),
-          type = "error")
-        title_size <- NULL
-      } else {
-        title_size <- input$title_size
-      }
-
-      if (input$subtitle_size < 6 ||
-          input$subtitle_size > 30 ||
-          is.na(input$subtitle_size)
-          ) {
-        showNotification(
-          paste0("Subtitle font size is outside reasonable boundaries.",
-                 "Resetting to default."),
-          type = "error")
-        subtitle_size <- NULL
-      } else {
-        subtitle_size <- input$subtitle_size
-      }
-
-      if (input$caption_size < 4 ||
-          input$caption_size > 20 ||
-          is.na(input$caption_size)
-          ) {
-        showNotification(
-          paste0("Caption font size is outside reasonable boundaries. ",
-                 "Resetting to default."),
-          type = "error")
-        caption_size <- NULL
-      } else {
-        caption_size <- input$caption_size
-      }
-
-      if (input$wrap_length < 20 ||
-          input$wrap_length > 200 ||
-          is.na(input$wrap_length)
-      ) {
-        showNotification(
-          paste0("Title wrap length is outside reasonable boundaries. ",
-                 "Resetting to default."),
-          type = "error")
-        wrap_length <- NULL
-      } else {
-        wrap_length <- input$wrap_length
-      }
-
-      if (input$suppress_y == TRUE) {
-        y_axis_text <- element_blank()
-      } else {
-        y_axis_text <- element_text()
-      }
-
-      if (input$suppress_yt == TRUE) {
-        y_axis_title <- element_blank()
-      } else {
-        y_axis_title <- element_text()
-      }
-
-      if (input$suppress_x == TRUE) {
-        x_axis_text <- element_blank()
-      } else {
-        x_axis_text <- element_text()
-      }
-
-      if (input$suppress_xt == TRUE) {
-        x_axis_title <- element_blank()
-      } else {
-        x_axis_title <- element_text()
-      }
-
-      if (input$ts_x_breaks > 100 ||
-          input$ts_x_breaks < 2 ||
-          is.na(input$ts_x_breaks)
-          ) {
-        showNotification(
-          paste0("Number of X axis breaks outside of reasonable range. ",
-                 "Resetting to default."),
-          type = "error"
-        )
-        ts_x_breaks <- 10
-      } else {
-        ts_x_breaks <- input$ts_x_breaks
-      }
-
-      if (input$ts_y_breaks > 100 ||
-          input$ts_y_breaks < 2 ||
-          is.na(input$ts_y_breaks)
-          ) {
-        showNotification(
-          paste0("Number of X axis breaks outside of reasonable range. ",
-                 "Resetting to default."),
-          type = "error"
-        )
-        ts_y_breaks <- 6
-      } else {
-        ts_y_breaks <- input$ts_y_breaks
-      }
-
-      # Confidence intervals for indicator lines or points
-      if (input$ci_vis_type == "Ribbon") {
-        vis_type <- "ribbon"
-      } else if (input$ci_vis_type == "Error Bars") {
-        vis_type <- "error_bars"
-      } else {
-        vis_type <- "error_bars"
-        error_alpha <- 0
-      }
-
-      error_alpha <- input$error_alpha
-
-      if (input$error_thickness <= 0 ||
-          input$error_thickness > 10 ||
-          is.na(input$error_thickness)
-          ) {
-        showNotification(
-          paste0("Error bar thickness outside of reasonable range.",
-                 "Resetting to default."),
-          type = "error"
-        )
-        error_thickness <- 1
-      } else {
-        error_thickness <- input$error_thickness
-      }
-
-      if (input$error_width <= 0 ||
-          input$error_width > 10 ||
-          is.na(input$error_width)) {
-        showNotification(
-          paste0("Error bar width outside of reasonable range.",
-                 "Resetting to default."),
-          type = "error"
-        )
-        error_width <- 1
-      } else {
-        error_width <- input$error_width
-      }
-
-      if (input$linewidth <= 0 ||
-          input$linewidth > 10 ||
-          is.na(input$linewidth)
-          ) {
-        showNotification(
-          paste0("Indicator line width outside of reasonable range.",
-                 "Resetting to default."),
-          type = "error"
-        )
-        linewidth <- 1
-      } else {
-        linewidth <- input$linewidth
-      }
-
-      if (input$smooth_linewidth <= 0 ||
-          input$smooth_linewidth > 10 ||
-          is.na(input$smooth_linewidth)
-          ) {
-        showNotification(
-          paste0("Trend line width outside of reasonable range.",
-                 "Resetting to default."),
-          type = "error"
-        )
-        smooth_linewidth <- 1
-      } else {
-        smooth_linewidth <- input$smooth_linewidth
-      }
-
-      if (input$smooth_cilinewidth <= 0 ||
-          input$smooth_cilinewidth > 10 ||
-          is.na(input$smooth_cilinewidth)) {
-        showNotification(
-          paste0("Trend envelope edge width outside of reasonable range.",
-                 "Resetting to default."),
-          type = "error"
-        )
-        smooth_cilinewidth <- 1
-      } else {
-        smooth_cilinewidth <- input$smooth_cilinewidth
-      }
-
-      if (input$indicatorsToAnalyse == "Cumulative Species Richness") {
-        smoothed_trend <- FALSE
-      } else {
-        smoothed_trend <- input$smoothed_trend
-      }
-
-      params <- list(
-        x = plot_to_render_ts(),
-        title = title,
-        suppress_y = FALSE,
-        smoothed_trend = input$smoothed_trend,
-        x_label = xlabel,
-        y_label = ylabel,
-        x_expand = c(input$ts_x_expand_left, input$ts_x_expand_right),
-        y_expand = c(input$ts_y_expand_bottom, input$ts_y_expand_top),
-        x_breaks = ts_x_breaks,
-        y_breaks = ts_y_breaks,
-        gridoff = gridlines,
-        ci_type = vis_type,
-        point_line = input$point_line,
-        pointsize = input$pointsize,
-        linewidth = linewidth,
-        linecolour = input$linecolour,
-        linealpha = input$linealpha,
-        error_width = error_width,
-        error_thickness = error_thickness,
-        error_alpha = error_alpha,
-        ribboncolour = ribboncolour,
-        ribbonalpha = input$ribbonalpha,
-        smooth_linetype = input$smooth_linetype,
-        smooth_linewidth = smooth_linewidth,
-        trendlinecolour = input$trendlinecolour,
-        trendlinealpha = input$trendlinealpha,
-        smooth_cilinewidth = smooth_cilinewidth,
-        envelopecolour = input$envelopecolour,
-        envelopealpha = input$envelopealpha,
-        smooth_cialpha = input$smooth_cialpha,
-        wrap_length = wrap_length
+                 width = input$plot_width,
+                 height = input$plot_height#,
+      #            width = paste0(reactive({
+      #              width_val <- input$plot_width
+      #              if (is.na(width_val) || width_val < 100 || width_val > 2000) {
+      #                showNotification(
+      #                  "Warning: width is not valid. Setting to default value of 600."
+      #                )
+      #                600
+      #              } else {
+      #                width_val
+      #              }
+      #            })(), "px"),
+      #            height = paste0(reactive({
+      #              height_val <- input$plot_height
+      #              if (is.na(height_val) || height_val < 100 || height_val > 2000) {
+      #                showNotification(
+      #                  "Warning: height is not valid. Setting to default value of 400."
+      #                )
+      #                400
+      #              } else {
+      #                height_val
+      #              }
+      #            })(), "px")
       )
+    })
 
-      if ((input$indicatorsToAnalyse == "Species Occurrences" ||
-          input$indicatorsToAnalyse == "Species Range") &&
-          length(input$species) > 0) {
-        if (length(input$species) > 1) {
-          showNotification(
-            paste0(
-              "Visualization options for this indicator currently only work ",
-              "properly if you select a single species. Hopefully it will be ",
-              "fixed soon."
-            ), type = "error"
-          )
-        }
-        params$species <- c(input$species)
-      }
-
-      # Plot diversity metric
-      ts_plot <- do.call(plot, params)
-
-      # Add other options to plot
-      ts_plot <- ts_plot +
-        labs(title = title,
-             subtitle = subtitle,
-             caption = caption) +
-        theme(
-          axis.title.x = x_axis_title,
-          axis.text.x = x_axis_text,
-          axis.title.y = y_axis_title,
-          axis.text.y = y_axis_text,
-          plot.title = element_text(color = input$title_color,
-                                    size = title_size,
-                                    face = "bold",
-                                    hjust = 0),
-          plot.subtitle = element_text(color = input$subtitle_color,
-                                       size = subtitle_size),
-          plot.caption = element_text(color = input$caption_color,
-                                      size = caption_size,
-                                      face = "italic")
-        )
-
-      ts_plot
+    output$plot_ts <- renderPlot({
+      req(plot_to_print_ts())
+      plot_to_print_ts()
     })
   })
 
-  plot_to_print_ts <- reactive({
-    plot(plot_to_render_ts())
-  })
+
 
   output$downloadGo_ts <- downloadHandler(
     filename = function() {
