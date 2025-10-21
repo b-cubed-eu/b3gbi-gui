@@ -1028,13 +1028,13 @@
     },
     "renv": {
       "Package": "renv",
-      "Version": "1.0.2",
+      "Version": "1.1.5",
       "Source": "Repository",
-      "Repository": "CRAN",
+      "Repository": "RSPM",
       "Requirements": [
         "utils"
       ],
-      "Hash": "4b22ac016fe54028b88d0c68badbd061"
+      "Hash": "770fcbc2c4616e8fbcb187cccd46a6b1"
     },
     "reshape2": {
       "Package": "reshape2",
