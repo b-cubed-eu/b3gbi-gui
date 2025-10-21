@@ -4158,7 +4158,8 @@ server <- function(input, output, session) {
         envelopecolour = input$envelopecolour,
         envelopealpha = input$envelopealpha,
         smooth_cialpha = input$smooth_cialpha,
-        title_wrap_length = title_wrap_length
+        title_wrap_length = title_wrap_length)
+
     # Add other options to plot
     ts_plot <- ts_plot +
       labs(title = title,
