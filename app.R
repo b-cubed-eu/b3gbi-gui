@@ -14,8 +14,8 @@ library(ggspatial)
 library(shinyvalidate)
 
 # Check for a specific package version
-if (packageVersion("b3gbi") < "0.5.2") {
-  stop("This app requires b3gbi version 0.5.2 or higher.")
+if (packageVersion("b3gbi") < "0.8.6") {
+  stop("This app requires b3gbi version 0.8.6 or higher.")
 }
 
 # tiny countries not available at 10
@@ -229,7 +229,18 @@ ui <- fluidPage(
                     )
                 )
               ),
-
+              # Include land areas or not
+              checkboxInput(
+                "include_land",
+                "Include land areas",
+                value = TRUE
+              ),
+              # Include ocean areas or not
+              checkboxInput(
+                "include_ocean",
+                "Include ocean areas",
+                value = TRUE
+              ),
               # Map resolution
               selectInput(
                 inputId = "mapres",
@@ -352,7 +363,7 @@ ui <- fluidPage(
                 fluidRow(
                   column(width = 6,
                          numericInput(
-                           "wrap_length",
+                           "title_wrap_length",
                            label = paste("Title Wrap Length (max. characters ",
                                          "on a single line)"),
                            min = 20,
@@ -808,14 +819,13 @@ ui <- fluidPage(
                   )
                 ),
                 checkboxInput(
-                  "europe_crop_eea",
-                  paste0("Crop to mainland Europe (only applies to continental ",
-                         "Europe and EEA grid"),
+                  "crop_to_grid",
+                  "Crop map to edges of grid",
                   value = FALSE
                 ),
                 checkboxInput(
-                  "crop_to_grid",
-                  "Crop map to edges of grid",
+                  "crop_by_region",
+                  "Crop map to chosen region",
                   value = FALSE
                 ),
                 div(class = "checkbox-container",
@@ -826,7 +836,7 @@ ui <- fluidPage(
                 ),
                 div(class = "custom-inline",
                     colourInput(
-                      "panel_bg",
+                      "ocean_fill_colour",
                       "Customize Background (Ocean) Colour",
                       allowTransparent = TRUE,
                       value = ""
@@ -982,6 +992,21 @@ ui <- fluidPage(
                   "Grid Lines",
                   value = TRUE
                 ),
+                checkboxInput(
+                  "panel_gridlines",
+                  "Panel Grid Lines",
+                  value = FALSE
+                ),
+                checkboxInput(
+                  "grid_outline",
+                  "Visible Grid Outline",
+                  value = FALSE
+                ),
+                # checkboxInput(
+                #   "complete_grid_outline",
+                #   "Complete Grid Outline",
+                #   value = FALSE
+                # ),
                 tags$hr(),
                 checkboxInput(
                   "add_scalebar",
@@ -2374,7 +2399,7 @@ server <- function(input, output, session) {
     if (input$custom_bg == FALSE) {
       updateTextInput(
         session,
-        inputId = "panel_bg",
+        inputId = "ocean_fill_colour",
         value = "#92c5f0"
       )
     }
@@ -2529,9 +2554,11 @@ server <- function(input, output, session) {
               ne_scale = mapres,
               region = region_param,
               output_crs = output_crs,
+              shapefile_crs = NULL,
               shapefile_path = shapefile,
               invert = input$invert_shapefile,
-              crs_unit_convert = input$crs_unit_convert
+              include_land = input$include_land,
+              include_ocean = input$include_ocean
             )
 
             map <- do.call(
@@ -2639,7 +2666,7 @@ server <- function(input, output, session) {
 
     # Check if title is provided
     if (input$title == "") {
-      title <- NULL
+      title <- "auto"
     } else {
       title <- input$title
     }
@@ -2675,10 +2702,10 @@ server <- function(input, output, session) {
     }
 
     # Check if panel background colour is provided
-    if (input$panel_bg == "" || is.null(input$panel_bg)) {
-      panel_bg <- NULL
+    if (input$ocean_fill_colour == "" || is.null(input$ocean_fill_colour)) {
+      ocean_fill_colour <- NULL
     } else {
-      panel_bg <- input$panel_bg
+      ocean_fill_colour <- input$ocean_fill_colour
     }
 
     # Check if subtitle is provided
@@ -2735,17 +2762,17 @@ server <- function(input, output, session) {
       caption_size <- input$caption_size
     }
 
-    if (input$wrap_length < 20 ||
-        input$wrap_length > 200 ||
-        is.na(input$wrap_length)
+    if (input$title_wrap_length < 20 ||
+        input$title_wrap_length > 200 ||
+        is.na(input$title_wrap_length)
     ) {
       showNotification(
         paste0("Title wrap length is outside reasonable boundaries. ",
                "Resetting to default."),
         type = "error")
-      wrap_length <- NULL
+      title_wrap_length <- NULL
     } else {
-      wrap_length <- input$wrap_length
+      title_wrap_length <- input$title_wrap_length
     }
 
     if (input$legend_title_wrap_length < 10 ||
@@ -2787,11 +2814,11 @@ server <- function(input, output, session) {
       yaxis_fontsize <- input$yaxis_fontsize
     }
 
-    if (input$gridlines == TRUE) {
-      gridlines <- element_line()
-    } else {
-      gridlines <- element_blank()
-    }
+    mapres <- switch(input$mapres,
+                     "110" = "small",
+                     "50" = "medium",
+                     "10" = "large"
+    )
 
     if ((is.null(input$species) || length(input$species) == 0) &&
         (input$indicatorsToAnalyse == "Species Occurrences" ||
@@ -2805,20 +2832,37 @@ server <- function(input, output, session) {
     params <- list(
       x = plot_to_render_map(),
       title = title,
-      title_wrap_length = wrap_length,
+      title_wrap_length = title_wrap_length,
       xlims = xlims,
       ylims = ylims,
       trans = trans,
       bcpower = bcpower,
       breaks = breaks,
       labels = labels,
-      Europe_crop_EEA = input$europe_crop_eea,
+      output_crs = NULL,
       crop_to_grid = input$crop_to_grid,
-      panel_bg = panel_bg,
+      crop_by_region = input$crop_by_region,
+      ocean_fill_colour = ocean_fill_colour,
       land_fill_colour = land_fill_colour,
+      grid_fill_colour = NULL,
+      grid_line_colour = NULL,
+      grid_outline_colour = NULL,
+      grid_line_width = NULL,
+      grid_outline_width = NULL,
+      grid_fill_transparency = NULL,
+      grid_line_transparency = NULL,
       legend_title = legend_title,
       legend_limits = legend_limits,
-      legend_title_wrap_length = legend_title_wrap_length
+      legend_title_wrap_length = legend_title_wrap_length,
+      visible_gridlines = input$gridlines,
+      visible_grid_outline = input$grid_outline,
+      visible_panel_gridlines = input$panel_gridlines,
+    #  complete_grid_outline = input$complete_grid_outline,
+      map_expansion_factor = 0.5,
+      layers = NULL,
+      layer_colours = NULL,
+      layer_fill_colours = NULL,
+      scale = mapres
     )
 
     if ((input$indicatorsToAnalyse == "Species Occurrences" ||
@@ -2849,7 +2893,7 @@ server <- function(input, output, session) {
       theme(
         axis.text.x = element_text(size = xaxis_fontsize),
         axis.text.y = element_text(size = yaxis_fontsize),
-        panel.grid = gridlines,
+      #  panel.grid = gridlines,
         plot.title = element_text(color = input$title_color,
                                   size = title_size,
                                   face = "bold"),
@@ -3879,18 +3923,18 @@ server <- function(input, output, session) {
       caption_size <- input$caption_size
     }
 
-    if (input$wrap_length < 20 ||
-        input$wrap_length > 200 ||
-        is.na(input$wrap_length)
-    ) {
-      showNotification(
-        paste0("Title wrap length is outside reasonable boundaries. ",
-               "Resetting to default."),
-        type = "error")
-      wrap_length <- NULL
-    } else {
-      wrap_length <- input$wrap_length
-    }
+      if (input$title_wrap_length < 20 ||
+          input$title_wrap_length > 200 ||
+          is.na(input$title_wrap_length)
+      ) {
+        showNotification(
+          paste0("Title wrap length is outside reasonable boundaries. ",
+                 "Resetting to default."),
+          type = "error")
+        title_wrap_length <- NULL
+      } else {
+        title_wrap_length <- input$title_wrap_length
+      }
 
     if (input$suppress_y == TRUE) {
       y_axis_text <- element_blank()
@@ -4083,6 +4127,38 @@ server <- function(input, output, session) {
     # Plot diversity metric
     ts_plot <- do.call(plot, params)
 
+      params <- list(
+        x = plot_to_render_ts(),
+        title = title,
+        suppress_y = FALSE,
+        smoothed_trend = input$smoothed_trend,
+        x_label = xlabel,
+        y_label = ylabel,
+        x_expand = c(input$ts_x_expand_left, input$ts_x_expand_right),
+        y_expand = c(input$ts_y_expand_bottom, input$ts_y_expand_top),
+        x_breaks = ts_x_breaks,
+        y_breaks = ts_y_breaks,
+        gridlines = gridlines,
+        ci_type = vis_type,
+        point_line = input$point_line,
+        pointsize = input$pointsize,
+        linewidth = linewidth,
+        linecolour = input$linecolour,
+        linealpha = input$linealpha,
+        error_width = error_width,
+        error_thickness = error_thickness,
+        error_alpha = error_alpha,
+        ribboncolour = ribboncolour,
+        ribbonalpha = input$ribbonalpha,
+        smooth_linetype = input$smooth_linetype,
+        smooth_linewidth = smooth_linewidth,
+        trendlinecolour = input$trendlinecolour,
+        trendlinealpha = input$trendlinealpha,
+        smooth_cilinewidth = smooth_cilinewidth,
+        envelopecolour = input$envelopecolour,
+        envelopealpha = input$envelopealpha,
+        smooth_cialpha = input$smooth_cialpha,
+        title_wrap_length = title_wrap_length
     # Add other options to plot
     ts_plot <- ts_plot +
       labs(title = title,
