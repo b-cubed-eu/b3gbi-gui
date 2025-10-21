@@ -1086,8 +1086,13 @@
     "rnaturalearth": {
       "Package": "rnaturalearth",
       "Version": "1.1.0.9000",
-      "Source": "Repository",
-      "Repository": "https://ropensci.r-universe.dev",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "rnaturalearth",
+      "RemoteUsername": "ropensci",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "429de8f231a69651bf2b325d21d74f2bc1a1b83e",
       "Requirements": [
         "R",
         "cli",
@@ -1097,7 +1102,7 @@
         "terra",
         "utils"
       ],
-      "Hash": "ed0a90feb21fb2ce2a1e0d8136bbdbd7"
+      "Hash": "5a00185de87960a9156e4411013cf1c8"
     },
     "rnaturalearthdata": {
       "Package": "rnaturalearthdata",
