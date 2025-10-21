@@ -11,6 +11,7 @@ library(jsonlite)
 library(colourpicker)
 library(ggplot2)
 library(ggspatial)
+library(shinyvalidate)
 
 # Check for a specific package version
 if (packageVersion("b3gbi") < "0.8.6") {
@@ -106,18 +107,18 @@ ui <- fluidPage(
       HTML(
         paste0(
           "<p><span style='font-size: 18px;'><br>Welcome to the B-Cubed: ",
-          "Biodiversity Indicators Shiny app!</span><br><br>The B-Cubed: ",
-          "Biodiversity Indicators Shiny app uses the R package <a href='",
-          "https://github.com/b-cubed-eu/b3gbi' style='color: blue; ",
-          "text-decoration: none;'>b3gbi</a> to calculate and visualise widely ",
-          "used biodiversity indicators from a data cube; either one created ",
-          "using <a href='https://www.gbif.org/' style='color: blue; ",
-          "text-decoration: none;'>GBIF</a> or one created from your own data.",
-          "<br><br>Start by uploading your data cube using the file browser in ",
-          "the left-hand panel. You can also use this panel to choose the ",
-          "biodiversity indicator(s), taxa, geographical area, and temporal ",
-          "window of interest for your data. Use the tabs to visualize the ",
-          "outputs.<br></p>"
+          "General Biodiversity Indicators Shiny app!</span><br><br>The ",
+          "B-Cubed:  General Biodiversity Indicators Shiny app uses the R ",
+          "package <a href='https://github.com/b-cubed-eu/b3gbi' ",
+          "style='color: blue; text-decoration: none;'>b3gbi</a> to calculate ",
+          "and visualise widely used biodiversity indicators from a data ",
+          "cube; either one created using <a href='https://www.gbif.org/' ",
+          "style='color: blue; text-decoration: none;'>GBIF</a> or one ",
+          "created from your own data. <br><br>Start by uploading your data ",
+          "cube using the file browser in the left-hand panel. You can also ",
+          "use this panel to choose the biodiversity indicator(s), taxa, ",
+          "geographical area, and temporal window of interest for your data. ",
+          "Use the tabs to visualize the outputs.<br></p>"
         )
       ),
       style = "font-size: 16px; color: #555;"
@@ -1716,6 +1717,56 @@ ui <- fluidPage(
                   "maximum number of taxonomic ranks. The double summation syntax here ",
                   "is to explicitly denote iteration over all unique pairs (i,j) with i < j."
                 )
+              ),
+              HTML("<br>"),
+              p(strong("Occupancy Turnover")),
+              shiny::withMathJax(
+                p(
+                  "Occupancy turnover measures the change in species composition over ",
+                  "time, reflecting the rate at which species appear or disappear from a ",
+                  "given area. It provides insights into the dynamic nature of ",
+                  "ecological communities, highlighting shifts in species distributions ",
+                  "and potential environmental changes. High turnover rates may indicate ",
+                  "rapid community restructuring, potentially driven by factors such as ",
+                  "habitat alteration, climate change, or invasive species. Analyzing ",
+                  "occupancy turnover can be crucial for understanding ecosystem ",
+                  "stability, identifying areas of conservation concern, and assessing ",
+                  "the effectiveness of management strategies.",
+                  "Occupancy turnover can be calculated in different ways, but here we ",
+                  "use the Jaccard dissimilarity index (Jaccard, 1901) to measure the ",
+                  "similarity between two sets of species occurrences. The Jaccard index ",
+                  "is calculated as:",
+                  "$$ \\displaystyle J = \\frac{b + c}{a + b + c} $$",
+                  "where a is the number of species present in both time periods, ",
+                  "b is the number of species present only in the first time ",
+                  "period, and c is the number of species present only in the ",
+                  "second time period. The index ranges from 0 (no turnover) to 1 ",
+                  "(complete turnover).",
+                )
+              ),
+              HTML("<br>"),
+              p(strong("Species Occurrences")),
+              p(
+                "Species occurrences are considered an essential biodiversity variable ",
+                "(EBV). They are mapped by calculating the total number of occurrences ",
+                "of a given species for each cell. This represents the occurrence ",
+                "frequency distribution, and also indicates the observed species ",
+                "distribution. The number of occurrences can act as a proxy for relative ",
+                "abundance of species with a similar detectability, which is an ",
+                "important aspect of biodiversity although not an indicator when ",
+                "calculated in isolation."
+              ),
+              HTML("<br>"),
+              p(strong("Species Range")),
+              p(
+                "Species range is the area over which a species is found.",
+                "Plotting it on a map results in coloured cells where the ",
+                "species was observed. As a time series it is calculated by summing the ",
+                "number of cells in which a species was observed each year. Species ",
+                "range is an important indicator of species distribution and can ",
+                "provide insights into the spatial extent of species occurrences. It ",
+                "can be used to assess the geographic distribution of species and ",
+                "evaluate the effectiveness of conservation strategies."
               )
           )
         ),
@@ -1724,8 +1775,57 @@ ui <- fluidPage(
           title = "References",
           div(class = "scrollable-tab",
               "References used in this app:",
-              "COMING SOON!",
-              HTML("<br>")
+              HTML(
+                "<br><br>",
+                "<p>Chamberlain, S., & Szöcs, E. (2013). taxize: taxonomic ",
+                "search and retrieval in R. <i>F1000Research</i>, 2. ",
+                "<a href = 'https://doi.org/10.12688/f1000research.2-191.v2'",
+                "target = 'new'>https://doi.org/10.12688/f1000research.2-191",
+                ".v2</a>",
+                "<p>Chamberlain, S., Szöcs, E., Foster, Z., Boettiger, C., ",
+                "Ram, K., Bartomeus, I., Baumgartner, J., O'Donnell, J., ",
+                "Oksanen, J., Tzovaras, B.G., Marchand, P., Tran, V., Salmon",
+                ", M., Li, G., & Grenié, M. (2020). taxize: Taxonomic ",
+                "Information from Around the Web. R package version 0.9.98. ",
+                "<a href = 'https://github.com/ropensci/taxize' target = ",
+                "'new'>https://github.com/ropensci/taxize</a></p>",
+                "<p>Clarke, K.R., & Warwick, R.M. (1999). The taxonomic ",
+                "distinctness measure of biodiversity: weighting of step ",
+                "lengths between hierarchical levels. Marine Ecology ",
+                "Progress Series, 184, 21-29.</p>",
+                "<p>Hill, M.O. (1973). Diversity and evenness: a unifying ",
+                "notation and its consequences. <i>Ecology, 54</i>(2), ",
+                "427-432.</p>",
+                "<p>Hillebrand, H., Blasius, B., Borer, E.T., Chase, J.M., ",
+                "Downing, J.A., Eriksson, B.K., Filstrup, C.T., Harpole, ",
+                "W.S., Hodapp, D., Larsen, S., Lewandowska, A.M., Seabloom, ",
+                "E.W., Van de Waal, D.B., & Ryabov, A.B. (2018). ",
+                "Biodiversity change is uncoupled from species richness ",
+                "trends: consequences for conservation and monitoring. ",
+                "<i>Journal of Applied Ecology, 55</i>(1), 169-184.</p>",
+                "<p>Jaccard, P. (1901). Étude Comparative de la ",
+                "distribution florale dans une portion des Alpes et des ",
+                "Jura. <i>Bulletin de la Société Vaudoise des Sciences ",
+                "Naturelles</i>, 37, 547-579.</p>",
+                "<p>Kvålseth, T.O. (2015). Evenness indices once again: ",
+                "critical analysis of properties. <i>SpringerPlus, 4</i>(1)",
+                ", 1-12.</p>",
+                "<p>Maciel, E.A. (2021).  An index for assessing the rare ",
+                "species of a community. <i>Ecological Indicators</i>, 124, ",
+                "107424.</p>",
+                "<p>Magurran, A.E. (1988). <i>Ecological diversity and its ",
+                "measurement.</i> Princeton University Press.</p>",
+                "<p>Pielou, E.C. (1966). The measurement of diversity in ",
+                "different types of biological collections. <i>Journal of ",
+                "Theoretical Biology</i>, 13, 131-144.</p>",
+                "<p>Rabinowitz, D. (1981). Seven forms of rarity. In: ",
+                "Synge, H. (Ed.). <i>The biological aspects of rare plant ",
+                "conservation.</i> Chichester: John Wiley & Sons, 205-217.",
+                "</p>",
+                "<p>Roswell, M., Dushoff, J., & Winfree, R. (2021). A ",
+                "conceptual guide to measuring species diversity. <i>Oikos, ",
+                "130</i>(3), 321-338.</p><br>"
+              ),
           )
         ),
 
@@ -1804,6 +1904,31 @@ ui <- fluidPage(
 server <- function(input, output, session) {
 
   options(shiny.maxRequestSize = 500 * 1024^2)
+
+  ################ INPUT VALIDATION ################
+
+  # Create an InputValidator object (shinyvalidate)
+  ivplot <-InputValidator$new()
+
+  # Add validation rules
+  ivplot$add_rule("plot_height", sv_required())
+
+  ivplot$add_rule("plot_height", function(x) {
+    if (x < 100 || x > 2000) {
+      return("Height must be between 100 and 2000.")
+    }
+  })
+
+  ivplot$add_rule("plot_width", sv_required())
+
+  ivplot$add_rule("plot_width", function(x) {
+    if (x < 100 || x > 2000) {
+      return("Width must be between 100 and 2000.")
+    }
+  })
+
+  # Start displaying errors in the UI
+  ivplot$enable()
 
   ################################ GENERAL reactives and observers
 
@@ -2383,6 +2508,12 @@ server <- function(input, output, session) {
   plot_to_render_map <- eventReactive(input$plot_map_bt, {
     req(r$dataCube1)
 
+    if(!ivplot$is_valid()) {
+      showNotification("Invalid input detected. Please check the input fields.",
+                       type = "error")
+      return(NULL)
+    }
+
     if (!input$mapres %in% c("10", "50", "110")) {
       showNotification("Map resolution is not properly selected.", type = "error")
       return(NULL)
@@ -2689,6 +2820,14 @@ server <- function(input, output, session) {
                      "10" = "large"
     )
 
+    if ((is.null(input$species) || length(input$species) == 0) &&
+        (input$indicatorsToAnalyse == "Species Occurrences" ||
+         input$indicatorsToAnalyse == "Species Range")) {
+      showNotification(
+        paste0("Please select a single species using the 'Subset by family'",
+        " and 'Subset by species' filters."), type = "error")
+    }
+
     # Prepare parameters for plot
     params <- list(
       x = plot_to_render_map(),
@@ -2731,9 +2870,13 @@ server <- function(input, output, session) {
         length(input$species) > 0) {
       if (length(input$species) > 1) {
         showNotification(
-          paste0("Visualization options for this indicator currently only work ",
-          "properly if you select a single species. Hopefully it will be ",
-          "fixed soon."), type = "error")
+          paste0(
+            "Visualization options for this indicator currently only work ",
+            "properly if you select a single species. Hopefully it will be ",
+            "fixed soon. For now, please select only one species."
+          ), type = "error"
+        )
+        return(NULL)
       }
 
       params$species <- c(input$species)
@@ -3005,29 +3148,29 @@ server <- function(input, output, session) {
 
   observeEvent(input$plot_map_bt, {
     output$plot_map_container <- renderUI({
-      plotOutput("plot_map",
-                 width = paste0(reactive({
-                   width_val <- input$plot_width
-                   if (is.na(width_val) || width_val < 100 || width_val > 2000) {
-                     showNotification(
-                       "Warning: width is not valid. Setting to default value of 600."
-                     )
-                     600
-                   } else {
-                     width_val
-                   }
-                 })(), "px"),
-                 height = paste0(reactive({
-                   height_val <- input$plot_height
-                   if (is.na(height_val) || height_val < 100 || height_val > 2000) {
-                     showNotification(
-                       "Warning: height is not valid. Setting to default value of 400."
-                     )
-                     400
-                   } else {
-                     height_val
-                   }
-                 })(), "px")
+      plotOutput("plot_map"#,
+                 # width = paste0(reactive({
+                 #   width_val <- input$plot_width
+                 #   if (is.na(width_val) || width_val < 100 || width_val > 2000) {
+                 #     showNotification(
+                 #       "Warning: width is not valid. Setting to default value of 600."
+                 #     )
+                 #     600
+                 #   } else {
+                 #     width_val
+                 #   }
+                 # })(), "px"),
+                 # height = paste0(reactive({
+                 #   height_val <- input$plot_height
+                 #   if (is.na(height_val) || height_val < 100 || height_val > 2000) {
+                 #     showNotification(
+                 #       "Warning: height is not valid. Setting to default value of 400."
+                 #     )
+                 #     400
+                 #   } else {
+                 #     height_val
+                 #   }
+                 # })(), "px")
       )
     })
 
@@ -3441,6 +3584,20 @@ server <- function(input, output, session) {
     )
   )
 
+  spec_range_bg <- paste(
+    p(strong("Species Range")),
+    p(
+      "Species range is the area over which a species is found.",
+      "Plotting it on a map results in coloured cells where the ",
+      "species was observed. As a time series it is calculated by summing the ",
+      "number of cells in which a species was observed each year. Species ",
+      "range is an important indicator of species distribution and can ",
+      "provide insights into the spatial extent of species occurrences. It ",
+      "can be used to assess the geographic distribution of species and ",
+      "evaluate the effectiveness of conservation strategies."
+    )
+  )
+
   tax_distinct_bg <- paste(
     p(strong("Taxonomic Distinctness")),
     shiny::withMathJax(
@@ -3474,17 +3631,17 @@ server <- function(input, output, session) {
         "habitat alteration, climate change, or invasive species. Analyzing ",
         "occupancy turnover can be crucial for understanding ecosystem ",
         "stability, identifying areas of conservation concern, and assessing ",
-        "the effectiveness of management strategies. <br><br>",
+        "the effectiveness of management strategies.",
         "Occupancy turnover can be calculated in different ways, but here we ",
         "use the Jaccard dissimilarity index (Jaccard, 1901) to measure the ",
         "similarity between two sets of species occurrences. The Jaccard index ",
-        "is calculated as: <br><br>",
-        "$$ \\displaystyle ( J = \\frac{b + c}{a + b + c} \\) $$ <br><br>",
-        "where \\( a \\) is the number of species present in both time periods, ",
-        "\\( b \\) is the number of species present only in the first time ",
-        "period, and \\( c \\) is the number of species present only in the ",
+        "is calculated as:",
+        "$$ \\displaystyle J = \\frac{b + c}{a + b + c} $$",
+        "where a is the number of species present in both time periods, ",
+        "b is the number of species present only in the first time ",
+        "period, and c is the number of species present only in the ",
         "second time period. The index ranges from 0 (no turnover) to 1 ",
-        "(complete turnover). <br><br>",
+        "(complete turnover).",
       )
     )
   )
@@ -3611,6 +3768,22 @@ server <- function(input, output, session) {
   plot_to_render_ts <- eventReactive(input$plot_ts_bt, {
     req(r$dataCube1)
 
+    if(!ivplot$is_valid()) {
+      showNotification("Invalid input detected. Please check the input fields.",
+                       type = "error")
+      return(NULL)
+    }
+
+
+    if ((is.null(input$species) || length(input$species) == 0) &&
+        (input$indicatorsToAnalyse == "Species Occurrences" ||
+         input$indicatorsToAnalyse == "Species Range")) {
+      showNotification(
+        paste0("Please select a single species using the 'Subset by family'",
+               " and 'Subset by species' filters."), type = "error")
+      return(NULL)
+    }
+
     tryCatch(
       {
         withCallingHandlers(
@@ -3660,121 +3833,95 @@ server <- function(input, output, session) {
     )
   })
 
-  observeEvent(input$plot_ts_bt, {
-    output$plot_ts_container <- renderUI({
-      plotOutput("plot_ts",
-                 width = paste0(reactive({
-                   width_val <- input$plot_width
-                   if (is.na(width_val) || width_val < 100 || width_val > 2000) {
-                     showNotification(
-                       "Warning: width is not valid. Setting to default value of 600."
-                     )
-                     600
-                   } else {
-                     width_val
-                   }
-                 })(), "px"),
-                 height = paste0(reactive({
-                   height_val <- input$plot_height
-                   if (is.na(height_val) || height_val < 100 || height_val > 2000) {
-                     showNotification(
-                       "Warning: height is not valid. Setting to default value of 400."
-                     )
-                     400
-                   } else {
-                     height_val
-                   }
-                 })(), "px"))
-    })
-    # output time series from imported cube
-    output$plot_ts <- renderPlot({
-      req(plot_to_render_ts())
+  # output time series from imported cube
+  plot_to_print_ts <- reactive({
+    req(plot_to_render_ts())
 
-      ribboncolour <- if (input$ci_vis_type == "None") NA else input$ribboncolour
+    ribboncolour <- if (input$ci_vis_type == "None") NA else input$ribboncolour
 
-      gridlines <- if (input$ts_gridlines == "TRUE") FALSE else TRUE
+    gridlines <- if (input$ts_gridlines == "TRUE") FALSE else TRUE
 
-      if (
-        input$title == ""
-      ) {
-        title <- NULL
-      } else {
-        title <- input$title
-      }
+    if (
+      input$title == ""
+    ) {
+      title <- NULL
+    } else {
+      title <- input$title
+    }
 
-      if (
-        is.null(input$ts_x_label) ||
-        length(input$ts_x_label) == 0 ||
-        input$ts_x_label == ""
-      ) {
-        xlabel <- NULL
-      } else {
-        xlabel <- input$ts_x_label
-      }
+    if (
+      is.null(input$ts_x_label) ||
+      length(input$ts_x_label) == 0 ||
+      input$ts_x_label == ""
+    ) {
+      xlabel <- NULL
+    } else {
+      xlabel <- input$ts_x_label
+    }
 
-      if (
-        is.null(input$ts_y_label) ||
-        length(input$ts_y_label) == 0 ||
-        input$ts_y_label == ""
-      ) {
-        ylabel <- NULL
-      } else {
-        ylabel <- input$ts_y_label
-      }
+    if (
+      is.null(input$ts_y_label) ||
+      length(input$ts_y_label) == 0 ||
+      input$ts_y_label == ""
+    ) {
+      ylabel <- NULL
+    } else {
+      ylabel <- input$ts_y_label
+    }
 
-      # Check if subtitle is provided
-      if (input$subtitle == "") {
-        subtitle <- NULL
-      } else {
-        subtitle <- input$subtitle
-      }
+    # Check if subtitle is provided
+    if (input$subtitle == "") {
+      subtitle <- NULL
+    } else {
+      subtitle <- input$subtitle
+    }
 
-      # Check if caption is provided
-      if (input$caption == "") {
-        caption <- NULL
-      } else {
-        caption <- input$caption
-      }
+    # Check if caption is provided
+    if (input$caption == "") {
+      caption <- NULL
+    } else {
+      caption <- input$caption
+    }
 
-      # Check that title, subtitle and caption font size inputs are ok
-      if (input$title_size < 8 ||
-          input$title_size > 40 ||
-          is.na(input$title_size)
-          ) {
-        showNotification(
-          paste0("Title font size is outside reasonable boundaries.",
-                 "Resetting to default."),
-          type = "error")
-        title_size <- NULL
-      } else {
-        title_size <- input$title_size
-      }
+    # Check that title, subtitle and caption font size inputs are ok
+    if (input$title_size < 8 ||
+        input$title_size > 40 ||
+        is.na(input$title_size)
+    ) {
+      showNotification(
+        paste0("Title font size is outside reasonable boundaries.",
+               "Resetting to default."),
+        type = "error")
+      title_size <- NULL
+    } else {
+      title_size <- input$title_size
+    }
 
-      if (input$subtitle_size < 6 ||
-          input$subtitle_size > 30 ||
-          is.na(input$subtitle_size)
-          ) {
-        showNotification(
-          paste0("Subtitle font size is outside reasonable boundaries.",
-                 "Resetting to default."),
-          type = "error")
-        subtitle_size <- NULL
-      } else {
-        subtitle_size <- input$subtitle_size
-      }
+    if (input$subtitle_size < 6 ||
+        input$subtitle_size > 30 ||
+        is.na(input$subtitle_size)
+    ) {
+      showNotification(
+        paste0("Subtitle font size is outside reasonable boundaries.",
+               "Resetting to default."),
+        type = "error")
+      subtitle_size <- NULL
+    } else {
+      subtitle_size <- input$subtitle_size
+    }
 
-      if (input$caption_size < 4 ||
-          input$caption_size > 20 ||
-          is.na(input$caption_size)
-          ) {
-        showNotification(
-          paste0("Caption font size is outside reasonable boundaries. ",
-                 "Resetting to default."),
-          type = "error")
-        caption_size <- NULL
-      } else {
-        caption_size <- input$caption_size
-      }
+    if (input$caption_size < 4 ||
+        input$caption_size > 20 ||
+        is.na(input$caption_size)
+    ) {
+      showNotification(
+        paste0("Caption font size is outside reasonable boundaries. ",
+               "Resetting to default."),
+        type = "error")
+      caption_size <- NULL
+    } else {
+      caption_size <- input$caption_size
+    }
 
       if (input$title_wrap_length < 20 ||
           input$title_wrap_length > 200 ||
@@ -3789,143 +3936,196 @@ server <- function(input, output, session) {
         title_wrap_length <- input$title_wrap_length
       }
 
-      if (input$suppress_y == TRUE) {
-        y_axis_text <- element_blank()
-      } else {
-        y_axis_text <- element_text()
-      }
+    if (input$suppress_y == TRUE) {
+      y_axis_text <- element_blank()
+    } else {
+      y_axis_text <- element_text()
+    }
 
-      if (input$suppress_yt == TRUE) {
-        y_axis_title <- element_blank()
-      } else {
-        y_axis_title <- element_text()
-      }
+    if (input$suppress_yt == TRUE) {
+      y_axis_title <- element_blank()
+    } else {
+      y_axis_title <- element_text()
+    }
 
-      if (input$suppress_x == TRUE) {
-        x_axis_text <- element_blank()
-      } else {
-        x_axis_text <- element_text()
-      }
+    if (input$suppress_x == TRUE) {
+      x_axis_text <- element_blank()
+    } else {
+      x_axis_text <- element_text()
+    }
 
-      if (input$suppress_xt == TRUE) {
-        x_axis_title <- element_blank()
-      } else {
-        x_axis_title <- element_text()
-      }
+    if (input$suppress_xt == TRUE) {
+      x_axis_title <- element_blank()
+    } else {
+      x_axis_title <- element_text()
+    }
 
-      if (input$ts_x_breaks > 100 ||
-          input$ts_x_breaks < 2 ||
-          is.na(input$ts_x_breaks)
-          ) {
+    if (input$ts_x_breaks > 100 ||
+        input$ts_x_breaks < 2 ||
+        is.na(input$ts_x_breaks)
+    ) {
+      showNotification(
+        paste0("Number of X axis breaks outside of reasonable range. ",
+               "Resetting to default."),
+        type = "error"
+      )
+      ts_x_breaks <- 10
+    } else {
+      ts_x_breaks <- input$ts_x_breaks
+    }
+
+    if (input$ts_y_breaks > 100 ||
+        input$ts_y_breaks < 2 ||
+        is.na(input$ts_y_breaks)
+    ) {
+      showNotification(
+        paste0("Number of X axis breaks outside of reasonable range. ",
+               "Resetting to default."),
+        type = "error"
+      )
+      ts_y_breaks <- 6
+    } else {
+      ts_y_breaks <- input$ts_y_breaks
+    }
+
+    # Confidence intervals for indicator lines or points
+    if (input$ci_vis_type == "Ribbon") {
+      vis_type <- "ribbon"
+    } else if (input$ci_vis_type == "Error Bars") {
+      vis_type <- "error_bars"
+    } else {
+      vis_type <- "error_bars"
+      error_alpha <- 0
+    }
+
+    error_alpha <- input$error_alpha
+
+    if (input$error_thickness <= 0 ||
+        input$error_thickness > 10 ||
+        is.na(input$error_thickness)
+    ) {
+      showNotification(
+        paste0("Error bar thickness outside of reasonable range.",
+               "Resetting to default."),
+        type = "error"
+      )
+      error_thickness <- 1
+    } else {
+      error_thickness <- input$error_thickness
+    }
+
+    if (input$error_width <= 0 ||
+        input$error_width > 10 ||
+        is.na(input$error_width)) {
+      showNotification(
+        paste0("Error bar width outside of reasonable range.",
+               "Resetting to default."),
+        type = "error"
+      )
+      error_width <- 1
+    } else {
+      error_width <- input$error_width
+    }
+
+    if (input$linewidth <= 0 ||
+        input$linewidth > 10 ||
+        is.na(input$linewidth)
+    ) {
+      showNotification(
+        paste0("Indicator line width outside of reasonable range.",
+               "Resetting to default."),
+        type = "error"
+      )
+      linewidth <- 1
+    } else {
+      linewidth <- input$linewidth
+    }
+
+    if (input$smooth_linewidth <= 0 ||
+        input$smooth_linewidth > 10 ||
+        is.na(input$smooth_linewidth)
+    ) {
+      showNotification(
+        paste0("Trend line width outside of reasonable range.",
+               "Resetting to default."),
+        type = "error"
+      )
+      smooth_linewidth <- 1
+    } else {
+      smooth_linewidth <- input$smooth_linewidth
+    }
+
+    if (input$smooth_cilinewidth <= 0 ||
+        input$smooth_cilinewidth > 10 ||
+        is.na(input$smooth_cilinewidth)) {
+      showNotification(
+        paste0("Trend envelope edge width outside of reasonable range.",
+               "Resetting to default."),
+        type = "error"
+      )
+      smooth_cilinewidth <- 1
+    } else {
+      smooth_cilinewidth <- input$smooth_cilinewidth
+    }
+
+    if (input$indicatorsToAnalyse == "Cumulative Species Richness") {
+      smoothed_trend <- FALSE
+    } else {
+      smoothed_trend <- input$smoothed_trend
+    }
+
+    params <- list(
+      x = plot_to_render_ts(),
+      title = title,
+      suppress_y = FALSE,
+      smoothed_trend = input$smoothed_trend,
+      x_label = xlabel,
+      y_label = ylabel,
+      x_expand = c(input$ts_x_expand_left, input$ts_x_expand_right),
+      y_expand = c(input$ts_y_expand_bottom, input$ts_y_expand_top),
+      x_breaks = ts_x_breaks,
+      y_breaks = ts_y_breaks,
+      gridoff = gridlines,
+      ci_type = vis_type,
+      point_line = input$point_line,
+      pointsize = input$pointsize,
+      linewidth = linewidth,
+      linecolour = input$linecolour,
+      linealpha = input$linealpha,
+      error_width = error_width,
+      error_thickness = error_thickness,
+      error_alpha = error_alpha,
+      ribboncolour = ribboncolour,
+      ribbonalpha = input$ribbonalpha,
+      smooth_linetype = input$smooth_linetype,
+      smooth_linewidth = smooth_linewidth,
+      trendlinecolour = input$trendlinecolour,
+      trendlinealpha = input$trendlinealpha,
+      smooth_cilinewidth = smooth_cilinewidth,
+      envelopecolour = input$envelopecolour,
+      envelopealpha = input$envelopealpha,
+      smooth_cialpha = input$smooth_cialpha,
+      wrap_length = wrap_length
+    )
+
+    if ((input$indicatorsToAnalyse == "Species Occurrences" ||
+         input$indicatorsToAnalyse == "Species Range") &&
+        length(input$species) > 0) {
+      if (length(input$species) > 1) {
         showNotification(
-          paste0("Number of X axis breaks outside of reasonable range. ",
-                 "Resetting to default."),
-          type = "error"
+          paste0(
+            "Visualization options for this indicator currently only work ",
+            "properly if you select a single species. Hopefully it will be ",
+            "fixed soon. For now, please select only one species."
+          ), type = "error"
         )
-        ts_x_breaks <- 10
-      } else {
-        ts_x_breaks <- input$ts_x_breaks
+        return(NULL)
       }
+      params$species <- c(input$species)
+    }
 
-      if (input$ts_y_breaks > 100 ||
-          input$ts_y_breaks < 2 ||
-          is.na(input$ts_y_breaks)
-          ) {
-        showNotification(
-          paste0("Number of X axis breaks outside of reasonable range. ",
-                 "Resetting to default."),
-          type = "error"
-        )
-        ts_y_breaks <- 6
-      } else {
-        ts_y_breaks <- input$ts_y_breaks
-      }
-
-      # Confidence intervals for indicator lines or points
-      if (input$ci_vis_type == "Ribbon") {
-        vis_type <- "ribbon"
-      } else if (input$ci_vis_type == "Error Bars") {
-        vis_type <- "error_bars"
-      } else {
-        vis_type <- "error_bars"
-        error_alpha <- 0
-      }
-
-      error_alpha <- input$error_alpha
-
-      if (input$error_thickness <= 0 ||
-          input$error_thickness > 10 ||
-          is.na(input$error_thickness)
-          ) {
-        showNotification(
-          paste0("Error bar thickness outside of reasonable range.",
-                 "Resetting to default."),
-          type = "error"
-        )
-        error_thickness <- 1
-      } else {
-        error_thickness <- input$error_thickness
-      }
-
-      if (input$error_width <= 0 ||
-          input$error_width > 10 ||
-          is.na(input$error_width)) {
-        showNotification(
-          paste0("Error bar width outside of reasonable range.",
-                 "Resetting to default."),
-          type = "error"
-        )
-        error_width <- 1
-      } else {
-        error_width <- input$error_width
-      }
-
-      if (input$linewidth <= 0 ||
-          input$linewidth > 10 ||
-          is.na(input$linewidth)
-          ) {
-        showNotification(
-          paste0("Indicator line width outside of reasonable range.",
-                 "Resetting to default."),
-          type = "error"
-        )
-        linewidth <- 1
-      } else {
-        linewidth <- input$linewidth
-      }
-
-      if (input$smooth_linewidth <= 0 ||
-          input$smooth_linewidth > 10 ||
-          is.na(input$smooth_linewidth)
-          ) {
-        showNotification(
-          paste0("Trend line width outside of reasonable range.",
-                 "Resetting to default."),
-          type = "error"
-        )
-        smooth_linewidth <- 1
-      } else {
-        smooth_linewidth <- input$smooth_linewidth
-      }
-
-      if (input$smooth_cilinewidth <= 0 ||
-          input$smooth_cilinewidth > 10 ||
-          is.na(input$smooth_cilinewidth)) {
-        showNotification(
-          paste0("Trend envelope edge width outside of reasonable range.",
-                 "Resetting to default."),
-          type = "error"
-        )
-        smooth_cilinewidth <- 1
-      } else {
-        smooth_cilinewidth <- input$smooth_cilinewidth
-      }
-
-      if (input$indicatorsToAnalyse == "Cumulative Species Richness") {
-        smoothed_trend <- FALSE
-      } else {
-        smoothed_trend <- input$smoothed_trend
-      }
+    # Plot diversity metric
+    ts_plot <- do.call(plot, params)
 
       params <- list(
         x = plot_to_render_ts(),
@@ -3959,54 +4159,67 @@ server <- function(input, output, session) {
         envelopealpha = input$envelopealpha,
         smooth_cialpha = input$smooth_cialpha,
         title_wrap_length = title_wrap_length
+    # Add other options to plot
+    ts_plot <- ts_plot +
+      labs(title = title,
+           subtitle = subtitle,
+           caption = caption) +
+      theme(
+        axis.title.x = x_axis_title,
+        axis.text.x = x_axis_text,
+        axis.title.y = y_axis_title,
+        axis.text.y = y_axis_text,
+        plot.title = element_text(color = input$title_color,
+                                  size = title_size,
+                                  face = "bold",
+                                  hjust = 0),
+        plot.subtitle = element_text(color = input$subtitle_color,
+                                     size = subtitle_size),
+        plot.caption = element_text(color = input$caption_color,
+                                    size = caption_size,
+                                    face = "italic")
       )
 
-      if ((input$indicatorsToAnalyse == "Species Occurrences" ||
-          input$indicatorsToAnalyse == "Species Range") &&
-          length(input$species) > 0) {
-        if (length(input$species) > 1) {
-          showNotification(
-            paste0(
-              "Visualization options for this indicator currently only work ",
-              "properly if you select a single species. Hopefully it will be ",
-              "fixed soon."
-            ), type = "error"
-          )
-        }
-        params$species <- c(input$species)
-      }
+    ts_plot
+  })
 
-      # Plot diversity metric
-      ts_plot <- do.call(plot, params)
+  observeEvent(input$plot_ts_bt, {
+    output$plot_ts_container <- renderUI({
+      plotOutput("plot_ts",
+                 width = input$plot_width,
+                 height = input$plot_height#,
+      #            width = paste0(reactive({
+      #              width_val <- input$plot_width
+      #              if (is.na(width_val) || width_val < 100 || width_val > 2000) {
+      #                showNotification(
+      #                  "Warning: width is not valid. Setting to default value of 600."
+      #                )
+      #                600
+      #              } else {
+      #                width_val
+      #              }
+      #            })(), "px"),
+      #            height = paste0(reactive({
+      #              height_val <- input$plot_height
+      #              if (is.na(height_val) || height_val < 100 || height_val > 2000) {
+      #                showNotification(
+      #                  "Warning: height is not valid. Setting to default value of 400."
+      #                )
+      #                400
+      #              } else {
+      #                height_val
+      #              }
+      #            })(), "px")
+      )
+    })
 
-      # Add other options to plot
-      ts_plot <- ts_plot +
-        labs(title = title,
-             subtitle = subtitle,
-             caption = caption) +
-        theme(
-          axis.title.x = x_axis_title,
-          axis.text.x = x_axis_text,
-          axis.title.y = y_axis_title,
-          axis.text.y = y_axis_text,
-          plot.title = element_text(color = input$title_color,
-                                    size = title_size,
-                                    face = "bold",
-                                    hjust = 0),
-          plot.subtitle = element_text(color = input$subtitle_color,
-                                       size = subtitle_size),
-          plot.caption = element_text(color = input$caption_color,
-                                      size = caption_size,
-                                      face = "italic")
-        )
-
-      ts_plot
+    output$plot_ts <- renderPlot({
+      req(plot_to_print_ts())
+      plot_to_print_ts()
     })
   })
 
-  plot_to_print_ts <- reactive({
-    plot(plot_to_render_ts())
-  })
+
 
   output$downloadGo_ts <- downloadHandler(
     filename = function() {
