@@ -1,0 +1,60 @@
+Package: b3gbiGUI
+Type: Package
+Title: B-Cubed General Biodiversity Indicators Shiny Application
+Version: 0.1.0
+Authors@R: 
+    c(person(given = "B-Cubed",
+             family = "Consortium",
+             role = c("aut", "cre"),
+             email = "contact@b-cubed.eu"),
+      person(given = "Shawn",
+             family = "Dove",
+             role = "aut"))
+Description: A Shiny web application for calculating and visualizing 
+    biodiversity indicators from GBIF data cubes using the b3gbi R package.
+    Provides an interactive interface for data exploration, spatial analysis,
+    and time series visualization of various biodiversity metrics.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.0
+Depends: 
+    R (>= 4.1.0)
+Imports:
+    b3gbi (>= 0.8.6),
+    shiny (>= 1.7.0),
+    shinyWidgets (>= 0.7.0),
+    DT (>= 0.26),
+    stringr (>= 1.5.0),
+    rnaturalearthdata (>= 0.1.0),
+    lubridate (>= 1.9.0),
+    shinyjs (>= 2.1),
+    jsonlite (>= 1.8.0),
+    colourpicker (>= 1.2.0),
+    ggplot2 (>= 3.4.0),
+    ggspatial (>= 1.1.6),
+    shinyvalidate (>= 0.1.0),
+    dplyr (>= 1.1.0),
+    tidyr (>= 1.3.0),
+    tibble (>= 3.2.0),
+    sf (>= 1.0.0),
+    utils,
+    stats,
+    tools,
+    grDevices,
+    graphics
+Suggests:
+    testthat (>= 3.1.0),
+    shinytest2 (>= 0.2.0),
+    lintr (>= 3.0.0),
+    styler (>= 1.9.0),
+    covr (>= 3.6.0),
+    devtools (>= 2.4.0),
+    roxygen2 (>= 7.2.0),
+    knitr (>= 1.42),
+    rmarkdown (>= 2.21),
+    pkgdown (>= 2.0.0)
+VignetteBuilder: knitr
+URL: https://github.com/b-cubed-eu/b3gbi-gui
+BugReports: https://github.com/b-cubed-eu/b3gbi-gui/issues
+SystemRequirements: C++17, GDAL (>= 2.0.1), GEOS (>= 3.4.0), PROJ (>= 4.8.0)
