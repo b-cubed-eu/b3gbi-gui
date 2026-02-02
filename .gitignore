@@ -49,3 +49,9 @@ po/*~
 rsconnect/
 
 www/*.webp
+
+# Planning directory (not for public repo)
+/plan/
+
+# Planning directory (not for public repo)
+/plan/
