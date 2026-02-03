@@ -487,6 +487,464 @@ viz_timeseries_options_ui <- function() {
 }
 
 
+#' Create Map Visualization Options UI
+#' 
+#' @return UI elements for map visualization options section
+viz_map_options_ui <- function() {
+  tagList(
+    checkboxInput(
+      "map_options",
+      "Show Map Visualization Options"
+    ),
+    conditionalPanel(
+      condition = "input.map_options == true",
+      tags$hr(),
+      checkboxInput(
+        "custom_output_crs",
+        "Manually Define Output CRS (Coordinate Reference System)",
+        value = FALSE
+      ),
+      conditionalPanel(
+        condition = "input.custom_output_crs == true",
+        div(class = "checkbox-container"),
+        div(class = "custom-inline",
+            textInput(
+              "output_crs",
+              "EPSG code",
+              value = "",
+              placeholder = "e.g. 4326"
+            ),
+            checkboxInput(
+              "crs_unit_convert",
+              paste("Force conversion even if input and output units ",
+                    "do not match (e.g. degrees to km; can lead to invalid ",
+                    "output)")
+            )
+        )
+      ),
+      checkboxInput(
+        "custom_map_axes",
+        "Custom X and Y Axis Limits"
+      ),
+      conditionalPanel(
+        condition = "input.custom_map_axes == true",
+        div(class = "checkbox-container"),
+        div(class = "custom-inline",
+            fluidRow(
+              column(width = 6,
+                     textInput(
+                       "xcoord_min",
+                       "Min X",
+                       value = ""
+                     )
+              ),
+              column(width = 6,
+                     textInput(
+                       "xcoord_max",
+                       "Max X",
+                       value = ""
+                     )
+              )
+            ),
+            fluidRow(
+              column(width = 6,
+                     textInput(
+                       "ycoord_min",
+                       "Min Y",
+                       value = ""
+                     )
+              ),
+              column(width = 6,
+                     textInput(
+                       "ycoord_max",
+                       "Max Y",
+                       value = ""
+                     )
+              )
+            )
+        )
+      ),
+      checkboxInput(
+        "crop_to_grid",
+        "Crop map to edges of grid",
+        value = FALSE
+      ),
+      checkboxInput(
+        "crop_by_region",
+        "Crop map to chosen region",
+        value = FALSE
+      ),
+      div(class = "checkbox-container",
+          checkboxInput(
+            "custom_bg",
+            ""
+          )
+      ),
+      div(class = "custom-inline",
+          colourInput(
+            "ocean_fill_colour",
+            "Customize Background (Ocean) Colour",
+            allowTransparent = TRUE,
+            value = ""
+          )
+      ),
+      div(class = "checkbox-container",
+          checkboxInput(
+            "custom_land_fill",
+            ""
+          )
+      ),
+      div(class = "custom-inline",
+          colourInput(
+            "land_fill_colour",
+            "Customize Colour for Land Areas Outside of Grid",
+            allowTransparent = TRUE,
+            value = ""
+          )
+      ),
+      div(class = "checkbox-container",
+          style = "vertical-align: top;",
+          checkboxInput(
+            "trans_yesno",
+            ""
+          )
+      ),
+      div(class = "custom-inline",
+          selectInput(
+            "trans",
+            "Apply Scale Transformation to Indicator Values",
+            choices = c(
+              'Exponential Transformation' = "exp",
+              'Square-root Transformation' = "sqrt",
+              'Log Transformation' = "log",
+              'Log10 Transformation' = "log10",
+              'Log1p Transformation' = "log1p",
+              'Log2 Transformation' = "log2",
+              'Pseudo-log Transformation' = "psseudo_log",
+              'Reciprocal Transformation' = "reciprocal",
+              'Reverse Transformation' = "reverse",
+              'Box-Cox Transformation' = "boxcox",
+              'Modulus Transformation' = "modulus",
+              'Yeo-Johnson Transformation' = "yj"
+            ),
+            selected = "exp"
+          ),
+          conditionalPanel(
+            condition = "input.trans == 'boxcox' ||
+            input.trans == 'yj' ||
+            input.trans == 'modulus'",
+            numericInput(
+              "bcpower",
+              "Box-Cox Power",
+              min = -5,
+              max = 5,
+              step = 0.5,
+              value = 1
+            )
+          )
+      ),
+      tags$hr(),
+      HTML("<span style='font-size: 16px;'><b><u>Legend Customization ",
+           "Options</b></u></span><br><br>"),
+      textInput(
+        "breaks",
+        "Custom Break Points for Legend (comma separated)",
+        value = ""
+      ),
+      textInput(
+        inputId = "labels",
+        label = paste0(
+          "Labels for Custom Legend Break Points (must have same ",
+          "number of labels as breaks)"
+        ),
+        value = ""
+      ),
+      textInput(
+        "legend_title",
+        "Custom Legend Title",
+        value = ""
+      ),
+      checkboxInput(
+        "legend_limits",
+        "Custom Legend Scale Limits"
+      ),
+      conditionalPanel(
+        condition = "input.legend_limits == true",
+        div(class = "checkbox-container"),
+        div(class = "custom-inline",
+            fluidRow(
+              column(width = 6,
+                     textInput(
+                       "legend_min",
+                       "Min",
+                       value = ""
+                     )
+              ),
+              column(width = 6,
+                     textInput(
+                       "legend_max",
+                       "Max",
+                       value = ""
+                     )
+              )
+            )
+        )
+      ),
+      numericInput(
+        "legend_title_wrap_length",
+        "Legend Title Wrap Length (max characters on one line)",
+        min = 10,
+        max = 100,
+        step = 2,
+        value = 20
+      ),
+      tags$hr(),
+      HTML("<span style='font-size: 16px;'><b><u>Axis Customization ",
+           "Options</b></u></span><br><br>"),
+      fluidRow(
+        column(width = 6,
+               numericInput(
+                 "xaxis_fontsize",
+                 "X-Axis Label Font Size",
+                 min = 2,
+                 max = 30,
+                 step = 0.5,
+                 value = 12
+               )
+        ),
+        column(width = 6,
+               numericInput(
+                 "yaxis_fontsize",
+                 "Y-Axis Label Font Size",
+                 min = 2,
+                 max = 30,
+                 step = 0.5,
+                 value = 12
+               )
+        )
+      ),
+      textInput(
+        "xbreaks",
+        "Custom X-Axis Break Points (comma separated)",
+        value = ""
+      ),
+      textInput(
+        "ybreaks",
+        "Custom Y-Axis Break Points (comma separated)",
+        value = ""
+      ),
+      checkboxInput(
+        "gridlines",
+        "Grid Lines",
+        value = TRUE
+      ),
+      checkboxInput(
+        "panel_gridlines",
+        "Panel Grid Lines",
+        value = FALSE
+      ),
+      checkboxInput(
+        "grid_outline",
+        "Visible Grid Outline",
+        value = FALSE
+      ),
+      tags$hr(),
+      checkboxInput(
+        "add_scalebar",
+        "Add a Scale Bar to the Map"
+      ),
+      conditionalPanel(
+        condition = "input.add_scalebar === true",
+        div(class = "checkbox-container"),
+        div(class = "custom-inline",
+            selectInput(
+              "scalebar_location",
+              "Scale Bar Location (on map)",
+              choices = c(
+                "bottom left" = "bl",
+                "bottom right" = "br",
+                "top left" = "tl",
+                "top right" = "tr"
+              ),
+              selected = "tr"
+            ),
+            numericInput(
+              "scalebar_padx",
+              "Scale Bar X-Axis Padding",
+              min = 0.01,
+              max = 0.5,
+              step = 0.01,
+              value = 0.01
+            ),
+            numericInput(
+              "scalebar_pady",
+              "Scale Bar Y-Axis Padding",
+              min = 0,
+              max = 0.5,
+              step = 0.01,
+              value = 0.02
+            ),
+            numericInput(
+              "scalebar_size",
+              "Scale Bar Width (approximate)",
+              min = 0.1,
+              max = 1,
+              step = 0.01,
+              value = 0.2
+            ),
+            numericInput(
+              "scalebar_height",
+              "Scale Bar Height",
+              min = 0.01,
+              max = 0.1,
+              step = 0.01,
+              value = 0.02
+            ),
+            selectInput(
+              "scalebar_style",
+              "Scale Bar Style",
+              choices = c(
+                "bar",
+                "ticks"
+              )
+            ),
+            conditionalPanel(
+              condition = "input.scalebar_style === 'ticks'",
+              numericInput(
+                "scalebar_tickheight",
+                "Scale Bar Tick Height",
+                min = 0,
+                max = 2,
+                step = 0.05,
+                value = 0.6
+              )
+            ),
+            conditionalPanel(
+              condition = "input.scalebar_style === 'bar'",
+              colourInput(
+                "scalebar_colour1",
+                "Scale Bar Colour 1",
+                value = "black"
+              ),
+              colourInput(
+                "scalebar_colour2",
+                "Scale Bar Colour 2",
+                value = "white"
+              )
+            ),
+            numericInput(
+              "scalebar_fontsize",
+              "Scale Bar Font Size",
+              min = 0,
+              max = 10,
+              step = 0.1,
+              value = 0.8
+            ),
+            colourInput(
+              "scalebar_fontcolour",
+              "Scale Bar Font Colour",
+              value = "black"
+            )
+        )
+      ),
+      checkboxInput(
+        "add_northarrow",
+        "Add a North Arrow to the Map",
+        value = FALSE
+      ),
+      conditionalPanel(
+        condition = "input.add_northarrow === true",
+        div(class = "checkbox-container"),
+        div(class = "custom-inline",
+            selectInput(
+              "northarrow_location",
+              "North Arrow Location (on map)",
+              choices = c(
+                "bottom left" = "bl",
+                "bottom right" = "br",
+                "top left" = "tl",
+                "top right" = "tr"
+              ),
+              selected = "tr"
+            ),
+            numericInput(
+              "northarrow_padx",
+              "North Arrow X-Axis Padding",
+              min = 0,
+              max = 0.5,
+              step = 0.01,
+              value = 0
+            ),
+            numericInput(
+              "northarrow_pady",
+              "North Arrow Y-Axis Padding",
+              min = 0,
+              max = 0.5,
+              step = 0.01,
+              value = 0.02
+            ),
+            selectInput(
+              "northarrow_style",
+              "North Arrow Style",
+              choices = c(
+                "orienteering",
+                "fancy_orienteering",
+                "minimal",
+                "nautical"
+              ),
+              selected = "fancy_orienteering"
+            ),
+            numericInput(
+              "northarrow_height",
+              "North Arrow Height",
+              min = 0.01,
+              max = 1,
+              step = 0.01,
+              value = 0.1
+            ),
+            numericInput(
+              "northarrow_width",
+              "North Arrow Width",
+              min = 0.01,
+              max = 1,
+              step = 0.01,
+              value = 0.1
+            ),
+            colourInput(
+              "northarrow_fillcolour1",
+              "North Arrow Fill Colour 1",
+              value = "black"
+            ),
+            colourInput(
+              "northarrow_fillcolour2",
+              "North Arrow Fill Colour 2",
+              value = "white"
+            ),
+            colourInput(
+              "northarrow_linecolour",
+              "North Arrow Line Colour",
+              value = "black"
+            ),
+            colourInput(
+              "northarrow_textcolour",
+              "North Arrow Text Colour",
+              value = "black"
+            ),
+            numericInput(
+              "northarrow_textsize",
+              "North Arrow Text Size",
+              min = 0,
+              max = 100,
+              step = 0.5,
+              value = 10
+            )
+        )
+      )
+    )
+  )
+}
+
+
 #' Create Analysis & Filters Tab UI
 #' 
 #' @return UI elements for analysis and filtering section
