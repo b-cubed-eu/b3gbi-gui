@@ -4,6 +4,146 @@
 # Functions are designed to be called from the main UI definition
 #
 
+#' Create General Visualization Options UI
+#' 
+#' @return UI elements for general visualization options section
+viz_general_options_ui <- function() {
+  tagList(
+    checkboxInput(
+      "gen_options",
+      "Show General Visualization Options"
+    ),
+    conditionalPanel(
+      condition = "input.gen_options == true",
+      tags$hr(),
+      fluidRow(
+        column(width = 6,
+               numericInput(
+                 "plot_width",
+                 label = "Plot Width (in pixels)",
+                 min = 100,
+                 max = 2000,
+                 step = 10,
+                 value = 600
+               )
+        ),
+        column(width = 6,
+               numericInput(
+                 "plot_height",
+                 label = "Plot Height (in pixels)",
+                 min = 100,
+                 max = 2000,
+                 step = 10,
+                 value = 400
+               )
+        )
+      ),
+      textInput(
+        "title",
+        label = "Plot Title"
+      ),
+      textInput(
+        "subtitle",
+        label = "Plot Subtitle"
+      ),
+      fluidRow(
+        column(width = 6,
+               numericInput(
+                 "title_size",
+                 label = "Title Font Size",
+                 min = 8,
+                 max = 40,
+                 step = 1,
+                 value = 13
+               )
+        ),
+        column(width = 6,
+               numericInput(
+                 "subtitle_size",
+                 label = "Subtitle Font Size",
+                 min = 6,
+                 max = 30,
+                 step = 1,
+                 value = 11
+               )
+        )
+      ),
+      fluidRow(
+        column(width = 6,
+               numericInput(
+                 "title_wrap_length",
+                 label = paste("Title Wrap Length (max. characters ",
+                               "on a single line)"),
+                 min = 20,
+                 max = 200,
+                 step = 5,
+                 value = 60
+               )
+        ),
+        column(width = 6,
+               numericInput(
+                 "subtitle_wrap_length",
+                 label = paste("Subtitle Wrap Length (max. ",
+                               "characters on a single line)"),
+                 min = 20,
+                 max = 200,
+                 step = 5,
+                 value = 60
+               )
+        )
+      ),
+      fluidRow(
+        column(width = 6,
+               colourInput(
+                 "title_color",
+                 label = "Title Colour",
+                 value = "black"
+               )
+        ),
+        column(width = 6,
+               colourInput(
+                 "subtitle_color",
+                 label = "Subtitle Colour",
+                 value = "black"
+               )
+        )
+      ),
+      textInput(
+        "caption",
+        label = "Plot Caption"
+      ),
+      fluidRow(
+        column(width = 6,
+               numericInput(
+                 "caption_size",
+                 label = "Caption Font Size",
+                 min = 6,
+                 max = 20,
+                 step = 1,
+                 value = 9
+               )
+        ),
+        column(width = 6,
+               numericInput(
+                 "caption_wrap_length",
+                 label = "Caption Wrap Length",
+                 min = 20,
+                 max = 200,
+                 step = 5,
+                 value = 60
+               )
+        )
+      ),
+      colourInput(
+        "caption_color",
+        label = "Caption Colour",
+        value = "black"
+      ),
+      tags$hr()
+    )
+  )
+}
+
 #' Create Data Tab UI
 #' 
 #' @return UI elements for data upload section
@@ -36,10 +176,6 @@ data_tab_ui <- function() {
 #' @return UI elements for visualization options
 viz_options_tab_ui <- function() {
   tagList(
-    checkboxInput(
-      inputId = "map_options",
-      "Show Map Visualization Options"
-    ),
     viz_general_options_ui(),
     viz_timeseries_options_ui(),
     viz_map_options_ui()
