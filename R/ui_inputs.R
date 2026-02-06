@@ -167,8 +167,9 @@ data_tab_ui <- function() {
               inputId = "shapefile_zip",
               label = HTML("Add external shape file (.zip)"),
               accept = ".zip"
+            )
+        )
     )
-  )
 }
 
 #' Create Visualization Options Tab UI
