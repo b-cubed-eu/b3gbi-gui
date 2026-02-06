@@ -21,10 +21,15 @@ if (packageVersion("b3gbi") < "0.8.6") {
   stop("This app requires b3gbi version 0.8.6 or higher.")
 }
 
-# Source all modular R components
+# Source all modular R components with error handling
 module_files <- list.files(path = "R", pattern = "\\.R$", full.names = TRUE)
+module_files <- module_files[!grepl("~$|\\#", module_files)]  # Exclude backup/temp files
 for (file in module_files) {
-  source(file)
+  tryCatch({
+    source(file, local = TRUE)
+  }, error = function(e) {
+    stop(paste("Error sourcing", basename(file), ":", e$message))
+  })
 }
 
 # Load spatial data
