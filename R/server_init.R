@@ -77,6 +77,10 @@ initialize_server_modules <- function(input, output, session,
   # Time series plot
   ts_plot_module <- server_timeseries_plot(input, output, session, r)
 
+  # Create output renderers (must be called to register outputs)
+  map_plot_module$render_map()
+  ts_plot_module$render_ts()
+
   message("All server modules initialized successfully!")
 
   # Return list of all reactive objects
