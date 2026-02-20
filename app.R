@@ -77,6 +77,28 @@ ui <- fluidPage(
     )
   ),
   
+  # Welcome text
+  div(
+    HTML(
+      paste0(
+        "<p><span style='font-size: 18px;'><br>Welcome to the B-Cubed: ",
+        "General Biodiversity Indicators Shiny app!</span><br><br>The ",
+        "B-Cubed: General Biodiversity Indicators Shiny app uses the R ",
+        "package <a href='https://github.com/b-cubed-eu/b3gbi' ",
+        "style='color: blue; text-decoration: none;'>b3gbi</a> to calculate ",
+        "and visualise widely used biodiversity indicators from a data ",
+        "cube; either one created using <a href='https://www.gbif.org/' ",
+        "style='color: blue; text-decoration: none;'>GBIF</a> or one ",
+        "created from your own data. <br><br>Start by uploading your data ",
+        "cube using the file browser in the left-hand panel. You can also ",
+        "use this panel to choose the biodiversity indicator(s), taxa, ",
+        "geographical area, and temporal window of interest for your data. ",
+        "Use the tabs to visualize the outputs.<br></p>"
+      )
+    ),
+    style = "font-size: 16px; color: #555;"
+  ),
+  
   # Sidebar with input tabs
   sidebarLayout(
     sidebarPanel(
@@ -96,7 +118,11 @@ ui <- fluidPage(
         tabPanel("Summary", summary_tab_output_ui()),
         tabPanel("Map", map_tab_output_ui()),
         tabPanel("Time Series", timeseries_tab_output_ui()),
-        tabPanel("Table", datatable_tab_output_ui())
+        tabPanel("Table", datatable_tab_output_ui()),
+        tabPanel("Export", export_tab_output_ui()),
+        tabPanel("Background", background_tab_output_ui()),
+        tabPanel("References", references_tab_output_ui()),
+        tabPanel("About", about_tab_output_ui())
       ),
       width = 9
     )
@@ -121,6 +147,34 @@ server <- function(input, output, session) {
   plot_to_print_ts <- server_modules$plot_to_print_ts
   parsed_inputs <- server_modules$parsed_inputs
   iv <- server_modules$iv
+  
+  # Track button clicks
+  map_clicks <- reactiveVal(0)
+  ts_clicks <- reactiveVal(0)
+  
+  observeEvent(input$plot_map_bt, {
+    map_clicks(map_clicks() + 1)
+    message("APP: Plot Map button clicked! Count: ", map_clicks())
+  })
+  
+  observeEvent(input$plot_ts_bt, {
+    ts_clicks(ts_clicks() + 1)
+    message("APP: Plot Time Series button clicked! Count: ", ts_clicks())
+  })
+  
+  # Debug output
+  output$debug_info <- renderPrint({
+    list(
+      dataCube1_exists = !is.null(r$dataCube1),
+      dataCube1_class = if(!is.null(r$dataCube1)) class(r$dataCube1) else "NULL",
+      indicator_selected = input$indicatorsToAnalyse,
+      indicator_is_null = is.null(input$indicatorsToAnalyse),
+      map_button_clicks = map_clicks(),
+      ts_button_clicks = ts_clicks(),
+      plot_map_reactive_exists = !is.null(plot_to_print_map),
+      plot_ts_reactive_exists = !is.null(plot_to_print_ts)
+    )
+  })
 }
 
 # Run the application
