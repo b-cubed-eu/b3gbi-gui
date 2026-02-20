@@ -58,14 +58,14 @@ calc_indicator_map <- function(data, indicator, cell_size, spatiallevel,
   if (!inherits(data, "processed_cube")) {
     stop("Invalid data cube provided")
   }
-  
+
   # Get the appropriate indicator function
   indicator_fn <- get_indicator_function(indicator, "map")
-  
+
   if (is.null(indicator_fn)) {
     stop(paste("Indicator", indicator, "is not available for mapping"))
   }
-  
+
   # Build parameter list
   params <- list(
     data = data,
@@ -83,12 +83,12 @@ calc_indicator_map <- function(data, indicator, cell_size, spatiallevel,
     include_land = include_land,
     include_ocean = include_ocean
   )
-  
+
   # Add species if provided
   if (!is.null(species)) {
     params$species <- species
   }
-  
+
   # Call the indicator function
   tryCatch({
     do.call(indicator_fn, params)
@@ -110,47 +110,60 @@ calc_indicator_map <- function(data, indicator, cell_size, spatiallevel,
 #'
 #' @keywords internal
 get_indicator_function <- function(indicator, type = "map") {
-  # Map of indicator names to functions
+  # Map of indicator display names to function names in b3gbi
+  # Store as strings to avoid evaluation errors during sourcing
   indicator_map <- list(
     map = list(
-      "Observed Richness" = b3gbi::obs_richness_map,
-      "Total Occurrences" = b3gbi::total_occ_map,
-      "Newness" = b3gbi::newness_map,
-      "Evenness" = b3gbi::evenness_map,
-      "Spec. Profile" = b3gbi::spec_profile_map,
-      "Species Occurrences" = b3gbi::species_occurrence_map,
-      "Species Range" = b3gbi::species_range_map,
-      "Hill Diversity" = b3gbi::hill_diversity_map,
-      "Hill Evenness" = b3gbi::hill_evenness_map,
-      "Density" = b3gbi::density_map,
-      "Whorl" = b3gbi::whorl_map
+      "Observed Species Richness" = "obs_richness_map",
+      "Total Occurrences" = "total_occ_map",
+      "Pielou's Evenness" = "pielou_evenness_map",
+      "Williams' Evenness" = "williams_evenness_map",
+      "Cumulative Species Richness" = "cum_richness_map",
+      "Density of Occurrences" = "occ_density_map",
+      "Abundance-Based Rarity" = "ab_rarity_map",
+      "Area-Based Rarity" = "area_rarity_map",
+      "Mean Year of Occurrence" = "newness_map",
+      "Taxonomic Distinctness" = "tax_distinct_map",
+      "Species Richness (Estimated by Coverage-Based Rarefaction)" = "hill0_map",
+      "Hill-Shannon Diversity (Estimated by Coverage-Based Rarefaction)" = "hill1_map",
+      "Hill-Simpson Diversity (Estimated by Coverage-Based Rarefaction)" = "hill2_map",
+      "Species Occurrences" = "spec_occ_map",
+      "Species Range" = "spec_range_map",
+      "Occupancy Turnover" = "occ_turnover_map"
     ),
     ts = list(
-      "Observed Richness" = b3gbi::obs_richness_ts,
-      "Total Occurrences" = b3gbi::total_occ_ts,
-      "Newness" = b3gbi::newness_ts,
-      "Evenness" = b3gbi::evenness_ts,
-      "Spec. Profile" = b3gbi::spec_profile_ts,
-      "Species Occurrences" = b3gbi::species_occurrence_ts,
-      "Hill Diversity" = b3gbi::hill_diversity_ts,
-      "Hill Evenness" = b3gbi::hill_evenness_ts,
-      "Density" = b3gbi::density_ts,
-      "Whorl" = b3gbi::whorl_ts
+      "Observed Species Richness" = "obs_richness_ts",
+      "Total Occurrences" = "total_occ_ts",
+      "Pielou's Evenness" = "pielou_evenness_ts",
+      "Williams' Evenness" = "williams_evenness_ts",
+      "Cumulative Species Richness" = "cum_richness_ts",
+      "Density of Occurrences" = "occ_density_ts",
+      "Abundance-Based Rarity" = "ab_rarity_ts",
+      "Area-Based Rarity" = "area_rarity_ts",
+      "Mean Year of Occurrence" = "newness_ts",
+      "Taxonomic Distinctness" = "tax_distinct_ts",
+      "Species Richness (Estimated by Coverage-Based Rarefaction)" = "hill0_ts",
+      "Hill-Shannon Diversity (Estimated by Coverage-Based Rarefaction)" = "hill1_ts",
+      "Hill-Simpson Diversity (Estimated by Coverage-Based Rarefaction)" = "hill2_ts",
+      "Species Occurrences" = "spec_occ_ts",
+      "Species Range" = "spec_range_ts",
+      "Occupancy Turnover" = "occ_turnover_ts"
     )
   )
-  
-  fn <- indicator_map[[type]][[indicator]]
-  
-  if (is.null(fn)) {
-    # Try to construct function name dynamically
+
+  fn_name <- indicator_map[[type]][[indicator]]
+
+  if (is.null(fn_name)) {
     fn_name <- paste0(indicator, "_", type)
-    fn <- tryCatch({
-      get(fn_name, envir = asNamespace("b3gbi"))
-    }, error = function(e) {
-      NULL
-    })
   }
-  
+
+  # Look up the function in b3gbi namespace
+  fn <- tryCatch({
+    get(fn_name, envir = asNamespace("b3gbi"))
+  }, error = function(e) {
+    NULL
+  })
+
   fn
 }
 

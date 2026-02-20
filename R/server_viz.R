@@ -196,12 +196,39 @@ server_parsed_inputs <- function(input, output, session) {
 #'   - render_map: function to render the map output
 #'
 #' @export
-server_map_plot <- function(input, output, session, r, parsed_inputs, ivplot,
-                           plot_to_render_map) {
+server_map_plot <- function(input, output, session, r, parsed_inputs) {
 
-  # Main map plot reactive
-  plot_to_print_map <- reactive({
-    req(plot_to_render_map())
+  # Use eventReactive to create plot when button is clicked
+  plot_to_print_map <- eventReactive(input$plot_map_bt, {
+    req(r$dataCube1)
+    req(input$indicatorsToAnalyse)
+
+    # Convert mapres from numeric to expected values
+    mapres_converted <- switch(input$mapres,
+                               "110" = "small",
+                               "50" = "medium",
+                               "10" = "large",
+                               input$mapres)
+
+    # Calculate the indicator with error handling
+    indicator_result <- tryCatch({
+      calc_indicator_map(
+        data = r$dataCube1,
+        indicator = input$indicatorsToAnalyse,
+        cell_size = input$cellsize,
+        spatiallevel = input$spatiallevel,
+        first_year = input$daterange[1],
+        last_year = input$daterange[2],
+        countrytype = input$countrytype,
+        mapres = mapres_converted
+      )
+    }, error = function(e) {
+      message("ERROR in calc_indicator_map: ", e$message)
+      showNotification(paste("Error calculating map:", e$message), type = "error")
+      NULL
+    })
+
+    req(indicator_result)
 
     # Check if custom coordinates are provided and format appropriately
     if (input$xcoord_min == "" && input$xcoord_max == "") {
@@ -424,12 +451,12 @@ server_map_plot <- function(input, output, session, r, parsed_inputs, ivplot,
          input$indicatorsToAnalyse == "Species Range")) {
       showNotification(
         paste0("Please select a single species using the 'Subset by family'",
-        " and 'Subset by species' filters."), type = "error")
+         " and 'Subset by species' filters."), type = "error")
     }
 
     # Prepare parameters for plot
     params <- list(
-      x = plot_to_render_map(),
+      x = indicator_result,
       title = title,
       title_wrap_length = title_wrap_length,
       xlims = xlims,
@@ -481,7 +508,7 @@ server_map_plot <- function(input, output, session, r, parsed_inputs, ivplot,
 
     }
 
-    # Create plot
+    # Create plot using params which already contains x = indicator_result
     map_plot <- do.call(plot, params)
 
     # Add other options to plot
@@ -497,8 +524,8 @@ server_map_plot <- function(input, output, session, r, parsed_inputs, ivplot,
         plot.subtitle = element_text(color = input$subtitle_color,
                                      size = subtitle_size),
         plot.caption = element_text(color = input$caption_color,
-                                    size = caption_size,
-                                    face = "italic")
+                                     size = caption_size,
+                                     face = "italic")
       )
 
     if (!is.null(xbreaks)) {
@@ -705,13 +732,14 @@ server_map_plot <- function(input, output, session, r, parsed_inputs, ivplot,
         )
     }
 
-    # Return the plot object
     map_plot
-
   })
 
   # Render function for map plot
   render_map <- function() {
+    output$plot_map_container <- renderUI({
+      plotOutput("plot_map", height = "600px")
+    })
     output$plot_map <- renderPlot({
       req(plot_to_print_map())
       plot_to_print_map()
@@ -744,11 +772,31 @@ server_map_plot <- function(input, output, session, r, parsed_inputs, ivplot,
 #'   - render_ts: function to render the time series output
 #'
 #' @export
-server_timeseries_plot <- function(input, output, session, r, plot_to_render_ts) {
+server_timeseries_plot <- function(input, output, session, r, parsed_inputs) {
 
-  # Main time series plot reactive
-  plot_to_print_ts <- reactive({
-    req(plot_to_render_ts())
+  # Calculate indicator when plot button is clicked
+  plot_to_print_ts <- eventReactive(input$plot_ts_bt, {
+    req(r$dataCube1)
+    req(input$indicatorsToAnalyse)
+
+    message("DEBUG: Plot time series button clicked, starting calculation...")
+
+    # Calculate the indicator with error handling
+    indicator_result <- tryCatch({
+      calc_indicator_ts(
+        data = r$dataCube1,
+        indicator = input$indicatorsToAnalyse,
+        cell_size = input$cellsize,
+        spatiallevel = input$spatiallevel,
+        first_year = input$daterange[1],
+        last_year = input$daterange[2],
+        countrytype = input$countrytype
+      )
+    }, error = function(e) {
+      message("ERROR in calc_indicator_ts: ", e$message)
+      showNotification(paste("Error calculating time series:", e$message), type = "error")
+      NULL
+    })
 
     ribboncolour <- if (input$ci_vis_type == "None") NA else input$ribboncolour
 
@@ -988,7 +1036,7 @@ server_timeseries_plot <- function(input, output, session, r, plot_to_render_ts)
     }
 
     params <- list(
-      x = plot_to_render_ts(),
+      x = indicator_result,
       title = title,
       suppress_y = FALSE,
       smoothed_trend = input$smoothed_trend,
@@ -1017,8 +1065,7 @@ server_timeseries_plot <- function(input, output, session, r, plot_to_render_ts)
       smooth_cilinewidth = smooth_cilinewidth,
       envelopecolour = input$envelopecolour,
       envelopealpha = input$envelopealpha,
-      smooth_cialpha = input$smooth_cialpha,
-      wrap_length = title_wrap_length
+      smooth_cialpha = input$smooth_cialpha
     )
 
     if ((input$indicatorsToAnalyse == "Species Occurrences" ||
@@ -1066,6 +1113,9 @@ server_timeseries_plot <- function(input, output, session, r, plot_to_render_ts)
 
   # Render function for time series plot
   render_ts <- function() {
+    output$plot_ts_container <- renderUI({
+      plotOutput("plot_ts", height = "500px")
+    })
     output$plot_ts <- renderPlot({
       req(plot_to_print_ts())
       plot_to_print_ts()

@@ -1,11 +1,11 @@
 # UI Inputs Module
-# 
+#
 # This file contains all sidebar input UI components extracted from app.R
 # Functions are designed to be called from the main UI definition
 #
 
 #' Create General Visualization Options UI
-#' 
+#'
 #' @return UI elements for general visualization options section
 viz_general_options_ui <- function() {
   tagList(
@@ -145,7 +145,7 @@ viz_general_options_ui <- function() {
 }
 
 #' Create Data Tab UI
-#' 
+#'
 #' @return UI elements for data upload section
 data_tab_ui <- function() {
   tagList(
@@ -169,11 +169,17 @@ data_tab_ui <- function() {
               accept = ".zip"
             )
         )
+    ),
+    checkboxInput(
+      inputId = "invert_shapefile",
+      label = "Invert shapefile (not working properly)",
+      value = FALSE
     )
+  )
 }
 
 #' Create Visualization Options Tab UI
-#' 
+#'
 #' @return UI elements for visualization options
 viz_options_tab_ui <- function() {
   tagList(
@@ -185,7 +191,7 @@ viz_options_tab_ui <- function() {
 
 
 #' Create Time Series Visualization Options UI
-#' 
+#'
 #' @return UI elements for time series visualization options section
 viz_timeseries_options_ui <- function() {
   tagList(
@@ -500,7 +506,7 @@ viz_timeseries_options_ui <- function() {
 
 
 #' Create Map Visualization Options UI
-#' 
+#'
 #' @return UI elements for map visualization options section
 viz_map_options_ui <- function() {
   tagList(
@@ -958,7 +964,7 @@ viz_map_options_ui <- function() {
 
 
 #' Create Analysis & Filters Tab UI
-#' 
+#'
 #' @return UI elements for analysis and filtering section
 analysis_tab_ui <- function() {
   tagList(
@@ -969,14 +975,14 @@ analysis_tab_ui <- function() {
       multiple = FALSE,
       choices = as.character(sapply(b3gbi::available_indicators, "[[", 2))
     ),
-    
+
     # Custom Region
     checkboxInput(
       inputId = "customregion",
       label = "Customize Region",
       value = FALSE
     ),
-    
+
     conditionalPanel(
       condition = "input.customregion === true",
       div(class = "checkbox-container"),
@@ -1029,7 +1035,7 @@ analysis_tab_ui <- function() {
           )
       )
     ),
-    
+
     # Include land/ocean
     checkboxInput(
       "include_land",
@@ -1041,7 +1047,7 @@ analysis_tab_ui <- function() {
       "Include ocean areas",
       value = TRUE
     ),
-    
+
     # Map resolution
     selectInput(
       inputId = "mapres",
@@ -1053,7 +1059,7 @@ analysis_tab_ui <- function() {
       ),
       selected = "50"
     ),
-    
+
     # Spatial resolution
     numericInput(
       "cellsize",
@@ -1064,7 +1070,7 @@ analysis_tab_ui <- function() {
       step = 1,
       value = 10
     ),
-    
+
     # Date range
     sliderInput("daterange",
                 "Date range:",
@@ -1073,7 +1079,7 @@ analysis_tab_ui <- function() {
                 value = c(1100, year(Sys.Date())),
                 sep = ""
     ),
-    
+
     # Family selection
     selectInput(
       inputId = "family",
@@ -1081,7 +1087,7 @@ analysis_tab_ui <- function() {
       choices = NULL,
       multiple = TRUE
     ),
-    
+
     # Species selection
     selectInput(
       inputId = "species",

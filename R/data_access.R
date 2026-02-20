@@ -27,8 +27,9 @@ NULL
 #' cube <- get_data_cube(r)
 #' }
 get_data_cube <- function(r) {
-  if (!inherits(r, "ReactiveValues")) {
-    stop("r must be a ReactiveValues object")
+  # Check if r is a reactive-like object (reactiveValues or similar)
+  if (!is.list(r) && !inherits(r, "reactivevalues") && !inherits(r, "ReactiveValues")) {
+    stop("r must be a reactiveValues object")
   }
   
   r$dataCube
@@ -52,8 +53,9 @@ get_data_cube <- function(r) {
 #' cube <- get_filtered_data_cube(r)
 #' }
 get_filtered_data_cube <- function(r) {
-  if (!inherits(r, "ReactiveValues")) {
-    stop("r must be a ReactiveValues object")
+  # Check if r is a reactive-like object (reactiveValues or similar)
+  if (!is.list(r) && !inherits(r, "reactivevalues") && !inherits(r, "ReactiveValues")) {
+    stop("r must be a reactiveValues object")
   }
   
   # Return filtered cube if available, otherwise original
@@ -113,8 +115,9 @@ get_cube_data <- function(r, filtered = TRUE) {
 #' set_data_cube(r, cube)
 #' }
 set_data_cube <- function(r, cube) {
-  if (!inherits(r, "ReactiveValues")) {
-    stop("r must be a ReactiveValues object")
+  # Check if r is a reactive-like object (reactiveValues or similar)
+  if (!is.list(r) && !inherits(r, "reactivevalues") && !inherits(r, "ReactiveValues")) {
+    stop("r must be a reactiveValues object")
   }
   
   if (!inherits(cube, "processed_cube")) {
@@ -147,8 +150,9 @@ set_data_cube <- function(r, cube) {
 #' update_filtered_data(r, filtered$data)
 #' }
 update_filtered_data <- function(r, filtered_data) {
-  if (!inherits(r, "ReactiveValues")) {
-    stop("r must be a ReactiveValues object")
+  # Check if r is a reactive-like object (reactiveValues or similar)
+  if (!is.list(r) && !inherits(r, "reactivevalues") && !inherits(r, "ReactiveValues")) {
+    stop("r must be a reactiveValues object")
   }
   
   if (!is.data.frame(filtered_data)) {
@@ -188,8 +192,9 @@ update_filtered_data <- function(r, filtered_data) {
 #' clear_data_cubes(r, keep_original = TRUE)
 #' }
 clear_data_cubes <- function(r, keep_original = FALSE) {
-  if (!inherits(r, "ReactiveValues")) {
-    stop("r must be a ReactiveValues object")
+  # Check if r is a reactive-like object (reactiveValues or similar)
+  if (!is.list(r) && !inherits(r, "reactivevalues") && !inherits(r, "ReactiveValues")) {
+    stop("r must be a reactiveValues object")
   }
   
   r$dataCube1 <- NULL
@@ -260,8 +265,9 @@ is_data_loaded <- function(r, check_filtered = FALSE) {
 #' }
 #' }
 get_data_status <- function(r) {
-  if (!inherits(r, "ReactiveValues")) {
-    stop("r must be a ReactiveValues object")
+  # Check if r is a reactive-like object (reactiveValues or similar)
+  if (!is.list(r) && !inherits(r, "reactivevalues") && !inherits(r, "ReactiveValues")) {
+    stop("r must be a reactiveValues object")
   }
   
   loaded <- !is.null(r$dataCube)
